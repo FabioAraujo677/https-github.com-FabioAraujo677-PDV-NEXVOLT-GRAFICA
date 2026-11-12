@@ -1,0 +1,60 @@
+{
+  "rewrites": [
+    {
+      "source": "/api",
+      "destination": "/api"
+    },
+    {
+      "source": "/api/(.*)",
+      "destination": "/api"
+    },
+    {
+      "source": "/root",
+      "destination": "/api"
+    },
+    {
+      "source": "/root/(.*)",
+      "destination": "/api"
+    },
+    {
+      "source": "/roots",
+      "destination": "/api"
+    },
+    {
+      "source": "/roots/(.*)",
+      "destination": "/api"
+    },
+    {
+      "source": "/root-items(.*)",
+      "destination": "/api"
+    },
+    {
+      "source": "/root_items(.*)",
+      "destination": "/api"
+    },
+    {
+      "source": "/root-item(.*)",
+      "destination": "/api"
+    },
+    {
+      "source": "/root_item(.*)",
+      "destination": "/api"
+    },
+    {
+      "source": "/items(.*)",
+      "destination": "/api"
+    },
+    {
+      "source": "/item(.*)",
+      "destination": "/api"
+    },
+    {
+      "source": "/v1",
+      "destination": "/api"
+    },
+    {
+      "source": "/v1/(.*)",
+      "destination": "/api"
+    }
+  ]
+}

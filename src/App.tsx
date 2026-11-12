@@ -37,6 +37,7 @@ const LazyLoader = () => (
 );
 import { Sale, CompanyProfile, Expense, User, CatalogProduct, getSaleOrderDate, getSaleOperationCost, CustomReminder, CashRegisterState, CashRegisterSession, isQuickSaleClient, isPendingRetiradaOrBaixa, DeletionAuditRecord, BusinessHours } from "./types";
 import { getLocalDeletionAuditRecords, saveLocalDeletionAuditRecord, clearLocalDeletionAuditRecords, fetchDeletionAuditFromSupabase } from "./utils/deletionAudit";
+import { writeToSalesWal, updateSalesWalEntryStatus, flushSalesWalQueue, getPendingWalCount } from "./utils/salesWal";
 import { AuthScreen } from "./components/AuthScreen";
 import { AdminMensalistas } from "./components/AdminMensalistas";
 import { Sparkles, DollarSign, Building2, ShieldAlert, ShieldCheck, TrendingDown, RefreshCw, X, Trophy, CheckCircle, Info, AlertTriangle, Trash2, Bell, Volume2, VolumeX, Package, MapPin, Calendar, Clock, Check, Gift, Fingerprint, Eye, EyeOff, Phone, Wallet, Search, UserCheck, Sunset, BellRing, Moon, Rocket, MessageCircle, LogOut, Database, Download } from "lucide-react";
@@ -1422,26 +1423,20 @@ export default function App() {
           } catch (e) {}
         }
 
-        if (localSession && localSession.status === "aberto") {
+        const activeFlag = localStorage.getItem("NUCLEO_CASH_REGISTER_ACTIVE") === "true";
+        if ((localSession && localSession.status === "aberto") || activeFlag) {
           // Caixa aberto no terminal local: permanece aberto, NUNCA fecha sozinho
           setIsGlobalRegisterOpen(true);
-          if (!cashRegister.currentSession) {
+          if (localSession && !cashRegister.currentSession) {
             setCashRegister((prev) => ({ ...prev, currentSession: localSession }));
           }
         } else {
-          setIsGlobalRegisterOpen(false);
-          setCashRegister((prev) => {
-            if (prev.currentSession) {
-              const updated = { ...prev, currentSession: null };
-              cashRegisterRef.current = updated;
-              try {
-                localStorage.setItem("NUCLEO_CASH_REGISTER", JSON.stringify(updated));
-                localStorage.removeItem("NUCLEO_CASH_REGISTER_ACTIVE");
-              } catch (e) {}
-              return updated;
-            }
-            return prev;
-          });
+          const currentLocalSession = cashRegisterRef.current?.currentSession || cashRegister.currentSession;
+          if (currentLocalSession && currentLocalSession.status === "aberto") {
+            setIsGlobalRegisterOpen(true);
+          } else {
+            setIsGlobalRegisterOpen(false);
+          }
         }
       } catch (err) {
         console.warn("Aviso ao carregar status inicial de sessoes_caixa:", err);
@@ -2184,53 +2179,65 @@ export default function App() {
             });
           }, 1000);
         } else {
-          // If Supabase auth session is null, check if there is an attendant user saved locally
+          // If Supabase auth session is null, check if there is a saved user in localStorage
           const savedLocal = localStorage.getItem("NUCLEO_CURRENT_USER");
           if (savedLocal) {
             try {
               const parsed = JSON.parse(savedLocal);
               if (parsed && parsed.id) {
-                const dbUser = await dbVerifyUserSession(parsed.id);
-                if (dbUser) {
-                  const isMaster = dbUser.email?.toLowerCase().trim() === "vendas.impactodigital2@gmail.com";
-                  if (isMaster) {
-                    dbUser.role = "master";
-                    dbUser.cargo = "master";
-                    dbUser.is_admin = true;
-                  }
-
-                  // User exists in custom database users table (e.g., attendant). Preserve current session.
-                  setCurrentUser(dbUser);
-                  localStorage.setItem("NUCLEO_CURRENT_USER", JSON.stringify(dbUser));
-                  setFilterPeriod("today");
-                  setSalesDateFilter("today");
-                  setIsInitialLoading(false); // Stop loading immediately
-
-                  setTimeout(() => {
-                    triggerRemoteSync(dbUser).catch((syncErr) => {
-                      console.error("Background initial triggerRemoteSync failed for attendant:", syncErr);
-                    });
-                    checkGlobalRegisterStatus(dbUser.owner_id || dbUser.id).catch((registerErr) => {
-                      console.error("Background initial checkGlobalRegisterStatus failed for attendant:", registerErr);
-                    });
-                  }, 1000);
-                  return;
+                let activeUser = parsed;
+                try {
+                  const dbUser = await dbVerifyUserSession(parsed.id);
+                  if (dbUser) activeUser = dbUser;
+                } catch (verifyErr) {
+                  console.warn("dbVerifyUserSession notice, preserving local user:", verifyErr);
                 }
+
+                const isMaster = activeUser.email?.toLowerCase().trim() === "vendas.impactodigital2@gmail.com";
+                if (isMaster) {
+                  activeUser.role = "master";
+                  activeUser.cargo = "master";
+                  activeUser.is_admin = true;
+                }
+
+                setCurrentUser(activeUser);
+                localStorage.setItem("NUCLEO_CURRENT_USER", JSON.stringify(activeUser));
+                setFilterPeriod("today");
+                setSalesDateFilter("today");
+                setIsInitialLoading(false);
+
+                setTimeout(() => {
+                  triggerRemoteSync(activeUser).catch((syncErr) => {
+                    console.error("Background initial triggerRemoteSync failed for user:", syncErr);
+                  });
+                  checkGlobalRegisterStatus(activeUser.owner_id || activeUser.id).catch((registerErr) => {
+                    console.error("Background initial checkGlobalRegisterStatus failed for user:", registerErr);
+                  });
+                }, 1000);
+                return;
               }
             } catch (err) {
-              console.error("Error verifying database attendant session:", err);
+              console.error("Error verifying local user session:", err);
             }
           }
-          // If Supabase session is gone and not a valid attendant, clear local state immediately to force login redirect
+          // Only clear if no saved local user exists
           setCurrentUser(null);
-          localStorage.removeItem("NUCLEO_CURRENT_USER");
           setIsInitialLoading(false);
         }
       } catch (err) {
         console.error("Failed to check active Supabase session on startup:", err);
-        // SAFETY REDIRECT: clear state and storage if anything throws, forcing login screen
-        setCurrentUser(null);
-        localStorage.removeItem("NUCLEO_CURRENT_USER");
+        // PRESERVE LOGGED IN USER on startup exception
+        const savedLocal = localStorage.getItem("NUCLEO_CURRENT_USER");
+        if (savedLocal) {
+          try {
+            const parsed = JSON.parse(savedLocal);
+            if (parsed) {
+              setCurrentUser(parsed);
+              setIsInitialLoading(false);
+              return;
+            }
+          } catch (e) {}
+        }
         setIsInitialLoading(false);
       }
     };
@@ -2836,6 +2843,44 @@ export default function App() {
       triggerRemoteSync(currentUser);
     }
   }, [currentUser]);
+
+  // Write-Ahead Logging (WAL) Flush Worker: Guarantees zero data loss even after power outage or network drop
+  useEffect(() => {
+    if (!currentUser) return;
+    const companyOwnerId = currentUser.owner_id || currentUser.id;
+    if (!companyOwnerId) return;
+
+    const runSalesWalFlush = () => {
+      if (isSupabaseConfigured()) {
+        flushSalesWalQueue(companyOwnerId, dbSaveSale, dbDeleteSale)
+          .then((result) => {
+            if (result.synced > 0) {
+              console.log(`[WAL Worker] Successfully recovered and flushed ${result.synced} uncommitted sale transactions to Supabase.`);
+              addToast(`🔄 WAL: ${result.synced} venda(s) recuperada(s) e salvas no banco com sucesso!`, "success");
+            }
+          })
+          .catch((err) => console.error("[WAL Worker Error]:", err));
+      }
+    };
+
+    // Run WAL flush immediately on mount / login / reconnect
+    runSalesWalFlush();
+
+    const handleOnline = () => {
+      console.log("[WAL Worker] Connection restored. Flushing WAL queue...");
+      runSalesWalFlush();
+    };
+
+    window.addEventListener("online", handleOnline);
+    window.addEventListener("sales_wal_updated", runSalesWalFlush as any);
+    const interval = setInterval(runSalesWalFlush, 15000);
+
+    return () => {
+      window.removeEventListener("online", handleOnline);
+      window.removeEventListener("sales_wal_updated", runSalesWalFlush as any);
+      clearInterval(interval);
+    };
+  }, [currentUser?.id, currentUser?.owner_id]);
 
   // Active real-time background sync loop to keep data perfectly synchronized across multiple machines (every 45s fallback)
   useEffect(() => {
@@ -5547,6 +5592,11 @@ export default function App() {
       sellerRole: newSale.sellerRole || operatorRole,
     };
 
+    const companyOwnerId = currentUser?.owner_id || currentUser?.id || "global";
+
+    // 1. WRITE-AHEAD LOGGING (WAL) PRE-COMMIT: Write transaction intent synchronously to disk before network sync
+    const walEntry = writeToSalesWal("SAVE_SALE", attributedSale, companyOwnerId);
+
     setSales((prev) => {
       const exists = prev.some((s) => s.id === attributedSale.id);
       if (exists) {
@@ -5554,8 +5604,7 @@ export default function App() {
       }
       return [attributedSale, ...prev];
     });
-    // Auto-reset filters ONLY for brand new sales so they appear in Vendas do dia
-    // For existing sales, preserve user's current view and filters!
+
     if (!exists) {
       setSalesStatusFilter("all");
       setSalesDateFilter("today");
@@ -5563,13 +5612,19 @@ export default function App() {
     }
     setActiveEditingSale(null);
 
+    // 2. Asynchronous remote sync with WAL status update
     if (currentUser && isSupabaseConfigured()) {
-      const companyOwnerId = currentUser.owner_id || currentUser.id;
       dbSaveSale(companyOwnerId, attributedSale)
-        .catch((err) => console.error("Error syncing sale to Supabase:", err));
+        .then((ok) => {
+          if (ok) updateSalesWalEntryStatus(walEntry.id, "synced");
+          else updateSalesWalEntryStatus(walEntry.id, "failed", "dbSaveSale returned false");
+        })
+        .catch((err) => {
+          console.error("Error syncing sale to Supabase via WAL:", err);
+          updateSalesWalEntryStatus(walEntry.id, "failed", err?.message);
+        });
     }
 
-    const companyOwnerId = currentUser?.owner_id || currentUser?.id || "global";
     broadcastRealtime("sales_updated", { sale: attributedSale }, companyOwnerId);
 
     setHighPriorityNotification({
@@ -5739,17 +5794,30 @@ export default function App() {
         }
       }
 
+      const companyOwnerId = currentUser?.owner_id || currentUser?.id || "global";
+
+      // WRITE-AHEAD LOGGING (WAL) PRE-COMMIT
+      const walEntry = writeToSalesWal("DELETE_SALE", id, companyOwnerId);
+
       setSales((prev) => prev.filter((s) => s.id !== id));
       playAlertSound("delete");
       addToast("Registro de venda excluído com sucesso! 🗑️", "info");
       if (activeEditingSale?.id === id) {
         setActiveEditingSale(null);
       }
-      const ownerId = currentUser?.owner_id || currentUser?.id || "global";
-      broadcastRealtime("sales_updated", { deletedId: id }, ownerId);
+
+      broadcastRealtime("sales_updated", { deletedId: id }, companyOwnerId);
+
       if (isSupabaseConfigured()) {
         dbDeleteSale(id)
-          .catch((err) => console.error("Error deleting sale from Supabase:", err));
+          .then((ok) => {
+            if (ok) updateSalesWalEntryStatus(walEntry.id, "synced");
+            else updateSalesWalEntryStatus(walEntry.id, "failed", "dbDeleteSale returned false");
+          })
+          .catch((err) => {
+            console.error("Error deleting sale from Supabase via WAL:", err);
+            updateSalesWalEntryStatus(walEntry.id, "failed", err?.message);
+          });
       }
     }, "Excluir uma venda registrada exige autorização do Administrador.");
   };

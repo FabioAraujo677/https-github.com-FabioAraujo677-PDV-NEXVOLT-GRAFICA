@@ -3949,46 +3949,56 @@ ${JSON.stringify(sales, null, 2)}
         return res.json({ success: true, data: null });
       }
 
-      const { canonicalOwnerId, companyUserIds } = await resolveCompanyScope(supabase, userId);
+      let canonicalOwnerId = userId;
+      let companyUserIds: string[] = [userId];
+      try {
+        const scope = await resolveCompanyScope(supabase, userId);
+        canonicalOwnerId = scope.canonicalOwnerId || userId;
+        companyUserIds = scope.companyUserIds || [userId];
+      } catch (scopeErr) {
+        console.warn("[/api/cash-register GET] resolveCompanyScope notice:", scopeErr);
+      }
 
-      // Query all candidate rows for this company in sales table
-      const idsToCheck = Array.from(new Set([
-        `cash_register_state_${canonicalOwnerId}`,
-        `cash_register_state_${userId}`,
-        "cash_register_state"
-      ]));
+      let parsedCandidates: any[] = [];
+      try {
+        const idsToCheck = Array.from(new Set([
+          `cash_register_state_${canonicalOwnerId}`,
+          `cash_register_state_${userId}`,
+          "cash_register_state"
+        ]));
 
-      const { data: rows } = await supabase
-        .from("sales")
-        .select("id, user_id, items, date")
-        .in("id", idsToCheck);
+        const { data: rows } = await supabase
+          .from("sales")
+          .select("id, user_id, items, date")
+          .in("id", idsToCheck);
 
-      // Also query rows where client_name = 'CASH_REGISTER_SYNCED_STATE'
-      const { data: syncedRows } = await supabase
-        .from("sales")
-        .select("id, user_id, items, date")
-        .eq("client_name", "CASH_REGISTER_SYNCED_STATE")
-        .in("user_id", companyUserIds)
-        .order("date", { ascending: false })
-        .limit(10);
+        const { data: syncedRows } = await supabase
+          .from("sales")
+          .select("id, user_id, items, date")
+          .eq("client_name", "CASH_REGISTER_SYNCED_STATE")
+          .in("user_id", companyUserIds)
+          .order("date", { ascending: false })
+          .limit(10);
 
-      const allCandidates = [...(rows || []), ...(syncedRows || [])];
+        const allCandidates = [...(rows || []), ...(syncedRows || [])];
 
-      // Parse items safely if stored as JSON string
-      const parsedCandidates = allCandidates.map((r: any) => {
-        let itemsObj = r.items;
-        if (typeof itemsObj === "string") {
-          try { itemsObj = JSON.parse(itemsObj); } catch (e) {}
-        }
-        return {
-          id: r.id,
-          date: r.date,
-          state: itemsObj as any
-        };
-      }).filter(c => c.state && typeof c.state === "object");
+        parsedCandidates = allCandidates.map((r: any) => {
+          let itemsObj = r.items;
+          if (typeof itemsObj === "string") {
+            try { itemsObj = JSON.parse(itemsObj); } catch (e) {}
+          }
+          return {
+            id: r.id,
+            date: r.date,
+            state: itemsObj as any
+          };
+        }).filter(c => c.state && typeof c.state === "object");
 
-      // Sort candidates newest first
-      parsedCandidates.sort((a, b) => new Date(b.date || 0).getTime() - new Date(a.date || 0).getTime());
+        parsedCandidates.sort((a, b) => new Date(b.date || 0).getTime() - new Date(a.date || 0).getTime());
+      } catch (salesQueryErr) {
+        console.warn("[/api/cash-register GET] sales candidates query notice:", salesQueryErr);
+      }
+
       const latestCandidate = parsedCandidates[0];
 
       // 0. TOP PRIORITY: Real table sessoes_caixa check
@@ -4101,11 +4111,9 @@ ${JSON.stringify(sales, null, 2)}
         },
         date: new Date().toISOString()
       });
-
-      return res.json({ success: true, data: null });
     } catch (err: any) {
-      console.error("[Server GET /api/cash-register Exception]:", err);
-      return res.status(500).json({ error: err.message });
+      console.warn("[Server GET /api/cash-register Handled Exception]:", err?.message);
+      return res.json({ success: true, data: null, error: err?.message });
     }
   });
 

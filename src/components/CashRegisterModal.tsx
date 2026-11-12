@@ -110,7 +110,6 @@ export function CashRegisterModal({
       .from("caixa_status")
       .select("id, status, opened_at, date, closed_at, valor_abertura, valor_fechamento")
       .in("user_id", [companyId, currentUser.id].filter(Boolean))
-      .eq("date", todayDate)
       .order("opened_at", { ascending: false })
       .limit(1)
       .maybeSingle()
@@ -139,15 +138,10 @@ export function CashRegisterModal({
               const st = String(sessaoData.status || "").toLowerCase().trim();
               const isOpen = st === "aberto" && !sessaoData.data_fechamento;
               if (isOpen) {
-                const openDate = getLocalDateFromISO(sessaoData.data_abertura);
-                if (openDate === todayDate) {
-                  setCaixaDbStatus("ABERTO");
-                } else {
-                  setCaixaDbStatus("FECHADO");
-                }
+                setCaixaDbStatus("ABERTO");
               } else {
                 const cur = cashRegister.currentSession;
-                if (cur && cur.status === "aberto" && getLocalDateFromISO(cur.dataAbertura) === todayDate) {
+                if (cur && cur.status === "aberto") {
                   setCaixaDbStatus("ABERTO");
                 } else {
                   setCaixaDbStatus("FECHADO");
@@ -155,7 +149,7 @@ export function CashRegisterModal({
               }
             } else {
               const cur = cashRegister.currentSession;
-              if (cur && cur.status === "aberto" && getLocalDateFromISO(cur.dataAbertura) === todayDate) {
+              if (cur && cur.status === "aberto") {
                 setCaixaDbStatus("ABERTO");
               } else {
                 setCaixaDbStatus("FECHADO");
@@ -184,14 +178,8 @@ export function CashRegisterModal({
               onRefreshRegister?.();
             }
           } else if (status === "aberto") {
-            const openDate = getLocalDateFromISO(row?.data_abertura);
-            const todayNow = getLocalDateFromISO(new Date().toISOString());
-            if (openDate === todayNow) {
-              setCaixaDbStatus("ABERTO");
-              onRefreshRegister?.();
-            } else {
-              setCaixaDbStatus("FECHADO");
-            }
+            setCaixaDbStatus("ABERTO");
+            onRefreshRegister?.();
           }
         }
       )
@@ -206,9 +194,6 @@ export function CashRegisterModal({
           const row = payload.new || payload.old;
           const rowUserId = row?.user_id;
           if (rowUserId && rowUserId !== companyId && rowUserId !== currentUser.id) return;
-          const todayNow = getLocalDateFromISO(new Date().toISOString());
-          const rowDate = row?.date ? getLocalDateFromISO(row.date) : todayNow;
-          if (rowDate !== todayNow) return;
 
           const st = String(row?.status || "").toUpperCase();
           if (st === "FECHADO") {

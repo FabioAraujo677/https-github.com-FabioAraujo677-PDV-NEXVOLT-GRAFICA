@@ -1,4 +1,4 @@
-import { DollarSign, ShieldAlert, BadgePercent, TrendingUp, HandCoins, Truck, LayoutDashboard, Trophy, Sparkles, PartyPopper } from "lucide-react";
+import { DollarSign, ShieldAlert, BadgePercent, TrendingUp, HandCoins, Truck, LayoutDashboard, Trophy, Sparkles, PartyPopper, Wallet } from "lucide-react";
 import React, { useEffect, useRef } from "react";
 import confetti from "canvas-confetti";
 import { Sale, Expense, getSaleOrderDate, getSaleOperationCost, isQuickSaleClient } from "../types";
@@ -14,7 +14,8 @@ interface MetricsCardsProps {
   dailyGoalValue?: number;
   onPendingClick?: () => void;
   onWeeklyGoalClick?: () => void;
-  onCardClick?: (cardType: "faturamento" | "entradas" | "pendentes" | "custos" | "lucro") => void;
+  onCardClick?: (cardType: "faturamento" | "entradas" | "pendentes" | "custos" | "lucro" | "saldo_caixa") => void;
+  cashRegister?: any;
 }
 
 export function MetricsCards({ 
@@ -28,7 +29,8 @@ export function MetricsCards({
   dailyGoalValue = 0,
   onPendingClick,
   onWeeklyGoalClick,
-  onCardClick
+  onCardClick,
+  cashRegister
 }: MetricsCardsProps) {
   
   // Local timezone safe date utility helper
@@ -158,6 +160,36 @@ export function MetricsCards({
       }
       return sum;
     }, 0);
+
+  // 6. Novo: Saldo Estimado em Dinheiro (Gaveta)
+  const currentSession = cashRegister?.currentSession;
+  const startingCash = currentSession?.valorAbertura || 0;
+
+  let totalCashRevenue = 0;
+  sales.forEach(sale => {
+    if (sale.isBudget) return;
+    if (sale.payments && sale.payments.length > 0) {
+      sale.payments.forEach(p => {
+        if (isDateInPeriod(p.date) && String(p.method || "dinheiro").toLowerCase() === "dinheiro") {
+          totalCashRevenue += p.amount;
+        }
+      });
+    } else if (isDateInPeriod(sale.date) && String(sale.paymentMethod || "dinheiro").toLowerCase() === "dinheiro") {
+      totalCashRevenue += (sale.balanceDue === 0 ? sale.totalValue : (sale.downPayment || 0));
+    }
+  });
+
+  const totalCashExpenses = expenses
+    .filter(e => {
+      if (!isDateInPeriod(e.date)) return false;
+      const desc = (e.description || "").toLowerCase();
+      // Heuristic for cash expenses if paymentMethod isn't explicitly set
+      const isExplicitNonCash = desc.includes("[pix]") || desc.includes("[cartão]") || desc.includes("[cartao]");
+      return !isExplicitNonCash;
+    })
+    .reduce((sum, e) => sum + e.value, 0);
+
+  const estimatedDrawerBalance = startingCash + totalCashRevenue - totalCashExpenses;
 
   const formatBRL = (val: number) => {
     return new Intl.NumberFormat("pt-BR", {
@@ -356,11 +388,6 @@ export function MetricsCards({
             }`}>
               {effectiveIsDailyGoalAchieved ? "🎉 Parabéns! O alvo diário foi superado hoje!" : "Recebimentos reais - Custos operacionais do período"}
             </p>
-            <p className={`text-[9px] xs:text-[10px] italic leading-none truncate ${
-              effectiveIsDailyGoalAchieved ? "text-emerald-300/70" : "text-slate-450"
-            }`}>
-              {effectiveIsDailyGoalAchieved ? "(Clique para celebrar com confetes! 🎊)" : "(Ganhos livres no período considerado)"}
-            </p>
           </div>
           <div className={`rounded-xl text-white shadow-xl transition-all duration-300 shrink-0 ${
             effectiveIsDailyGoalAchieved
@@ -376,7 +403,36 @@ export function MetricsCards({
         </div>
       </button>
 
-      {/* 4. Faturamento Bruto (Total Vendas) */}
+      {/* 4. Saldo Estimado em Dinheiro (Gaveta) - NEW CARD */}
+      <button
+        type="button"
+        id="card-saldo-caixa"
+        onClick={() => onCardClick?.("saldo_caixa")}
+        className="relative text-left group overflow-hidden rounded-2xl bg-slate-900 border border-slate-800 p-3.5 xs:p-4 sm:p-5 hover:border-amber-500/40 hover:bg-slate-900/90 transition-all duration-300 cursor-pointer select-none active:scale-[0.99]"
+      >
+        <div className="absolute top-0 right-0 w-24 h-24 bg-amber-500/5 rounded-full blur-2xl group-hover:bg-amber-500/10 transition-all"></div>
+        <div className="flex items-start justify-between gap-2">
+          <div className="min-w-0 flex-1">
+            <p className="text-[10px] xs:text-xs font-medium text-slate-400 uppercase tracking-wider flex flex-wrap items-center gap-1.5 leading-none">
+              <span>Saldo em Dinheiro</span>
+              <span className="text-[8px] xs:text-[9px] bg-slate-950 px-1.5 py-0.5 rounded border border-slate-800 text-amber-400 font-mono tracking-tight font-bold uppercase whitespace-nowrap">
+                GAVETA
+              </span>
+            </p>
+            <h3 className="mt-1 sm:mt-2 text-lg xs:text-xl sm:text-2xl font-bold font-mono text-amber-400 tracking-tight truncate">
+              {formatBRL(estimatedDrawerBalance)}
+            </h3>
+            <p className="mt-1 sm:mt-1.5 text-[10px] xs:text-xs text-slate-400 truncate">
+              Abertura + Entradas Dinheiro - Gastos Dinheiro
+            </p>
+          </div>
+          <div className="p-2.5 xs:p-3 bg-amber-500/10 rounded-xl border border-amber-500/20 text-amber-500 shadow-inner group-hover:bg-amber-500/20 transition-colors shrink-0">
+            <Wallet className="h-4 w-4 xs:h-5 xs:w-5" />
+          </div>
+        </div>
+      </button>
+
+      {/* 5. Faturamento Bruto (Total Vendas) */}
       <button
         type="button"
         id="card-faturamento"
@@ -411,12 +467,6 @@ export function MetricsCards({
               }`}>
                 {periodLabelStr}
               </span>
-              {effectiveIsDailyGoalAchieved && (
-                <span className="inline-flex items-center gap-1 text-[8px] xs:text-[9px] px-2 py-0.5 rounded-full bg-brand-magenta/20 text-pink-200 font-bold border border-pink-400/40 shadow-sm animate-pulse tracking-tight whitespace-nowrap">
-                  <Sparkles className="h-2.5 w-2.5 text-pink-300" />
-                  EM ALTA ✨
-                </span>
-              )}
             </p>
             <h3 className={`mt-1 sm:mt-2 text-lg xs:text-xl sm:text-2xl font-bold font-mono tracking-tight truncate ${
               effectiveIsDailyGoalAchieved
@@ -425,17 +475,14 @@ export function MetricsCards({
             }`}>
               {formatBRL(totalSalesValue)}
             </h3>
-            <p className="mt-1 sm:mt-1.5 text-[10px] xs:text-xs text-slate-400 flex flex-wrap items-center gap-1 leading-normal">
-              <span className={`truncate ${effectiveIsDailyGoalAchieved ? "text-pink-200/90 font-medium" : "text-slate-400"}`}>
-                {effectiveIsDailyGoalAchieved ? "🔥 Faturamento impulsionado pela meta diária batida!" : "Valor bruto total dos serviços fechados"}
-              </span>
-              <span className="text-brand-magenta font-semibold opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap text-[9px] sm:text-[11px]">→ ver lista</span>
+            <p className="mt-1 sm:mt-1.5 text-[10px] xs:text-xs text-slate-400 truncate">
+              Valor bruto total dos serviços fechados
             </p>
           </div>
           <div className={`rounded-xl shadow-inner transition-all duration-300 shrink-0 ${
             effectiveIsDailyGoalAchieved
               ? "p-2.5 xs:p-3 bg-gradient-to-r from-brand-magenta to-rose-500 border border-pink-400/40 text-white shadow-pink-500/25 group-hover:scale-110 ring-2 ring-pink-400/30"
-              : "p-2.5 xs:p-3 bg-brand-magenta/10 border border-brand-magenta/20 text-brand-magenta group-hover:bg-brand-magenta/20"
+              : "p-2.5 xs:p-2.5 bg-brand-magenta/10 border border-brand-magenta/20 text-brand-magenta group-hover:bg-brand-magenta/20"
           }`}>
             {effectiveIsDailyGoalAchieved ? (
               <PartyPopper className="h-4 w-4 xs:h-5 xs:w-5 text-yellow-300 animate-bounce" />
@@ -446,7 +493,7 @@ export function MetricsCards({
         </div>
       </button>
 
-      {/* 5. Valores Pendentes (Clicável para controle de retiradas) */}
+      {/* 6. Valores Pendentes (Clicável para controle de retiradas) */}
       <button
         type="button"
         id="card-pendentes"
@@ -480,35 +527,6 @@ export function MetricsCards({
           </div>
           <div className="p-2.5 xs:p-3 bg-yellow-500/10 rounded-xl border border-yellow-500/20 text-yellow-500 shadow-inner group-hover:bg-yellow-400 group-hover:text-slate-950 hover:scale-105 transition-all duration-300 shrink-0">
             <ShieldAlert className="h-4 w-4 xs:h-5 xs:w-5" />
-          </div>
-        </div>
-      </button>
-
-      {/* 6. Acompanhamento de Metas Semanais (Clicável para abrir calendário/metas) */}
-      <button
-        type="button"
-        id="card-metas-semanais"
-        onClick={() => onWeeklyGoalClick?.()}
-        className="relative text-left group overflow-hidden rounded-2xl bg-slate-900 border border-slate-800 p-3.5 xs:p-4 sm:p-5 hover:border-emerald-500/40 hover:bg-slate-900/90 transition-all duration-300 cursor-pointer select-none active:scale-[0.99]"
-      >
-        <div className="absolute top-0 right-0 w-24 h-24 bg-emerald-500/5 rounded-full blur-2xl group-hover:bg-emerald-500/10 transition-all"></div>
-        <div className="flex items-start justify-between gap-2">
-          <div className="min-w-0 flex-1">
-            <p className="text-[10px] xs:text-xs font-medium text-slate-400 uppercase tracking-wider flex flex-wrap items-center gap-1.5 leading-none">
-              <span>Metas da Semana</span>
-              <span className="px-1.5 py-0.5 rounded-full bg-emerald-500/20 text-emerald-400 font-bold font-mono text-[8px] xs:text-[9px] uppercase whitespace-nowrap">
-                7 dias
-              </span>
-            </p>
-            <h3 className="mt-1 sm:mt-2 text-lg xs:text-xl sm:text-2xl font-bold font-mono text-emerald-400 tracking-tight truncate">
-              Desempenho 🏆
-            </h3>
-            <p className="mt-1 sm:mt-1.5 text-[10px] xs:text-xs text-slate-400 truncate">
-              👉 Ver quem bateu a meta
-            </p>
-          </div>
-          <div className="p-2.5 xs:p-3 bg-emerald-500/10 rounded-xl border border-emerald-500/20 text-emerald-400 shadow-inner group-hover:bg-emerald-500 group-hover:text-slate-950 hover:scale-105 transition-all duration-300 shrink-0">
-            <Trophy className="h-4 w-4 xs:h-5 xs:w-5" />
           </div>
         </div>
       </button>

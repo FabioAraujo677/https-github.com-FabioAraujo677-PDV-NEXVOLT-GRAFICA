@@ -407,34 +407,29 @@ export function CashRegisterModal({
     let expensesTotal = 0;
     let expensesPaidInCash = 0;
 
-    const parseExpenseDescription = (desc: string) => {
+    const parseExpenseDescription = (desc: string, expObj?: any) => {
+      if (expObj?.paymentMethod) {
+        const pm = String(expObj.paymentMethod).toLowerCase();
+        if (pm.includes("pix")) return { cleanDesc: desc, method: "pix" };
+        if (pm.includes("cart") || pm.includes("card")) return { cleanDesc: desc, method: "cartão" };
+        if (pm.includes("dinh") || pm.includes("cash")) return { cleanDesc: desc, method: "dinheiro" };
+      }
       if (!desc) return { cleanDesc: "", method: "dinheiro" };
       const trimmed = desc.trim();
-      if (trimmed.startsWith("[Dinheiro]")) {
-        return { cleanDesc: trimmed.replace("[Dinheiro]", "").trim(), method: "dinheiro" };
-      }
-      if (trimmed.startsWith("[Pix]")) {
-        return { cleanDesc: trimmed.replace("[Pix]", "").trim(), method: "pix" };
-      }
-      if (trimmed.startsWith("[Cartão]") || trimmed.startsWith("[Cartao]")) {
-        return { cleanDesc: trimmed.replace(/\[Cartã?o\]/, "").trim(), method: "cartão" };
-      }
-      
       const lower = trimmed.toLowerCase();
-      if (lower.startsWith("[dinheiro]")) {
-        return { cleanDesc: trimmed.substring(10).trim(), method: "dinheiro" };
+
+      if (lower.startsWith("[pix]") || lower.includes("meiopag:pix")) {
+        return { cleanDesc: trimmed.replace(/\[pix\]/gi, "").trim(), method: "pix" };
       }
-      if (lower.startsWith("[pix]")) {
-        return { cleanDesc: trimmed.substring(5).trim(), method: "pix" };
+      if (lower.startsWith("[cartão]") || lower.startsWith("[cartao]") || lower.includes("meiopag:cartao")) {
+        return { cleanDesc: trimmed.replace(/\[cartã?o\]/gi, "").trim(), method: "cartão" };
       }
-      if (lower.startsWith("[cartão]") || lower.startsWith("[cartao]")) {
-        return { cleanDesc: trimmed.replace(/\[cartã?o\]/i, "").trim(), method: "cartão" };
+      if (lower.startsWith("[dinheiro]") || lower.includes("meiopag:dinheiro")) {
+        return { cleanDesc: trimmed.replace(/\[dinheiro\]/gi, "").trim(), method: "dinheiro" };
       }
 
-      // Word matches:
-      if (lower.includes("dinheiro")) return { cleanDesc: trimmed, method: "dinheiro" };
-      if (lower.includes("pix")) return { cleanDesc: trimmed, method: "pix" };
-      if (lower.includes("cartão") || lower.includes("cartao")) return { cleanDesc: trimmed, method: "cartão" };
+      if (lower.includes("[pix]")) return { cleanDesc: trimmed, method: "pix" };
+      if (lower.includes("[cartão]") || lower.includes("[cartao]")) return { cleanDesc: trimmed, method: "cartão" };
 
       return { cleanDesc: trimmed, method: "dinheiro" };
     };
@@ -445,7 +440,7 @@ export function CashRegisterModal({
         const val = Number(expense.value) || 0;
         expensesTotal += val;
 
-        const { method } = parseExpenseDescription(expense.description);
+        const { method } = parseExpenseDescription(expense.description, expense);
         if (method === "dinheiro") {
           expensesPaidInCash += val;
         }

@@ -370,7 +370,20 @@ export default function App() {
   };
 
   // Admin Unlock States
-  const [adminUnlocked, setAdminUnlocked] = useState(false);
+  const [adminUnlocked, setAdminUnlocked] = useState<boolean>(() => {
+    try {
+      return sessionStorage.getItem("NUCLEO_ADMIN_UNLOCKED") === "true";
+    } catch {
+      return false;
+    }
+  });
+
+  useEffect(() => {
+    try {
+      sessionStorage.setItem("NUCLEO_ADMIN_UNLOCKED", String(adminUnlocked));
+    } catch (e) {}
+  }, [adminUnlocked]);
+
   const [adminUnlockOpen, setAdminUnlockOpen] = useState(false);
   const [adminUnlockSuccessCallback, setAdminUnlockSuccessCallback] = useState<{ fn: () => void } | null>(null);
   const [adminUnlockMessage, setAdminUnlockMessage] = useState("");
@@ -486,7 +499,7 @@ export default function App() {
 
   const [activeTab, setActiveTab] = useState<"sale" | "dashboard" | "company" | "gastos" | "usuarios" | "relatorios" | "produtos" | "gastosMeta" | "clientes" | "suporte" | "atendentes" | "adminMaster">(() => {
     try {
-      const saved = sessionStorage.getItem("NUCLEO_ACTIVE_TAB");
+      const saved = sessionStorage.getItem("NUCLEO_ACTIVE_TAB") || localStorage.getItem("NUCLEO_ACTIVE_TAB");
       const validTabs = ["sale", "dashboard", "company", "gastos", "usuarios", "relatorios", "produtos", "gastosMeta", "clientes", "suporte", "atendentes", "adminMaster"];
       if (saved && validTabs.includes(saved)) {
         return saved as any;
@@ -499,6 +512,7 @@ export default function App() {
     try {
       if (activeTab) {
         sessionStorage.setItem("NUCLEO_ACTIVE_TAB", activeTab);
+        localStorage.setItem("NUCLEO_ACTIVE_TAB", activeTab);
       }
     } catch (e) {}
   }, [activeTab]);
@@ -551,7 +565,27 @@ export default function App() {
       setActiveTab("sale");
     }
   }, [isAttendant, adminUnlocked, activeTab]);
-  const [isStandbyActive, setIsStandbyActive] = useState<boolean>(true);
+
+  const [isStandbyActive, setIsStandbyActive] = useState<boolean>(() => {
+    try {
+      const savedSession = sessionStorage.getItem("NUCLEO_STANDBY_ACTIVE");
+      if (savedSession !== null) {
+        return savedSession === "true";
+      }
+      const savedLocal = localStorage.getItem("NUCLEO_STANDBY_ACTIVE");
+      if (savedLocal !== null) {
+        return savedLocal === "true";
+      }
+    } catch (e) {}
+    return false;
+  });
+
+  useEffect(() => {
+    try {
+      sessionStorage.setItem("NUCLEO_STANDBY_ACTIVE", String(isStandbyActive));
+      localStorage.setItem("NUCLEO_STANDBY_ACTIVE", String(isStandbyActive));
+    } catch (e) {}
+  }, [isStandbyActive]);
 
   // Auto-Standby after 10 minutes (600,000ms) of user inactivity
   useEffect(() => {
@@ -1267,12 +1301,11 @@ export default function App() {
 
         const todayDate = getLocalDateFromISO(new Date().toISOString());
 
-        // 2.1 Consulta prioritária na tabela caixa_status filtrada pela data de hoje (CURRENT_DATE)
+        // 2.1 Consulta prioritária na tabela caixa_status
         const { data: statusRows } = await supabase
           .from("caixa_status")
           .select("id, user_id, date, status, opened_at, closed_at, valor_abertura, valor_fechamento")
           .in("user_id", candidateEmpresas)
-          .eq("date", todayDate)
           .order("opened_at", { ascending: false })
           .limit(1);
 
@@ -1464,29 +1497,24 @@ export default function App() {
 
           // Se a sessão foi aberta em qualquer terminal da empresa
           if (status === "aberto") {
-            const openDate = getLocalDateFromISO(row?.data_abertura);
-            const todayDate = getLocalDateFromISO(new Date().toISOString());
-
-            if (openDate === todayDate) {
-              setIsGlobalRegisterOpen(true);
-              setCashRegister((prev) => {
-                const updated = {
-                  ...prev,
-                  currentSession: {
-                    id: row.id,
-                    status: "aberto" as const,
-                    valorAbertura: Number(row.valor_abertura ?? row.valor_inicial) || 0,
-                    dataAbertura: row.data_abertura || row.created_at || new Date().toISOString(),
-                    operador: row.operador || currentUser?.name || "Operador"
-                  }
-                };
-                cashRegisterRef.current = updated;
-                try {
-                  localStorage.setItem("NUCLEO_CASH_REGISTER", JSON.stringify(updated));
-                } catch (e) {}
-                return updated;
-              });
-            }
+            setIsGlobalRegisterOpen(true);
+            setCashRegister((prev) => {
+              const updated = {
+                ...prev,
+                currentSession: {
+                  id: row.id,
+                  status: "aberto" as const,
+                  valorAbertura: Number(row.valor_abertura ?? row.valor_inicial) || 0,
+                  dataAbertura: row.data_abertura || row.created_at || new Date().toISOString(),
+                  operador: row.operador || currentUser?.name || "Operador"
+                }
+              };
+              cashRegisterRef.current = updated;
+              try {
+                localStorage.setItem("NUCLEO_CASH_REGISTER", JSON.stringify(updated));
+              } catch (e) {}
+              return updated;
+            });
           }
         }
       )
@@ -1503,9 +1531,6 @@ export default function App() {
           if (rowUserId && rowUserId !== companyId) {
             return;
           }
-          const todayDate = getLocalDateFromISO(new Date().toISOString());
-          const rowDate = payload.new?.date ? getLocalDateFromISO(payload.new.date) : todayDate;
-          if (rowDate !== todayDate) return;
 
           const st = String(payload.new?.status || "").toUpperCase();
           if (st === "FECHADO") {
@@ -1546,12 +1571,8 @@ export default function App() {
         setIsGlobalRegisterOpen(false);
         setCashRegister((prev) => ({ ...prev, currentSession: null }));
       } else if (e.detail?.isOpen && e.detail?.session) {
-        const openDate = getLocalDateFromISO(e.detail.session.dataAbertura);
-        const todayDate = getLocalDateFromISO(new Date().toISOString());
-        if (openDate === todayDate) {
-          setIsGlobalRegisterOpen(true);
-          setCashRegister((prev) => ({ ...prev, currentSession: e.detail.session }));
-        }
+        setIsGlobalRegisterOpen(true);
+        setCashRegister((prev) => ({ ...prev, currentSession: e.detail.session }));
       }
     };
     window.addEventListener("cash_register_remote_sync", handleLocalSync);
@@ -4457,118 +4478,10 @@ export default function App() {
     }
   }, [company]);
 
-  // Middleware/Check for Cash Register Virada de Dia (Run on every single render/update cycle to work exactly as a render/request middleware)
+  // O caixa permanece aberto até que o operador clique no botão de fechar manualmente.
   useEffect(() => {
-    // COMPLETAMENTE DESATIVADO por solicitação do usuário: o caixa deve permanecer aberto e só fechar quando o usuário decidir fechar manualmente.
-    return;
-
-    const today = new Date();
-    const year = today.getFullYear();
-    const month = String(today.getMonth() + 1).padStart(2, '0');
-    const day = String(today.getDate()).padStart(2, '0');
-    const todayDateStr = `${year}-${month}-${day}`;
-
-    if (cashRegister?.currentSession && cashRegister.currentSession.status === "aberto") {
-      const sessionDateStr = getLocalDateFromISO(cashRegister.currentSession.dataAbertura);
-      if (sessionDateStr < todayDateStr) {
-        console.log(`[MIDDLEWARE/CHECK] Virada de dia detectada! Caixa aberto em ${sessionDateStr}, hoje é ${todayDateStr}. Executando fechamento de segurança automático do caixa de ontem...`);
-        
-        // Execute automatic closure
-        const currentSession = cashRegister.currentSession;
-        let cashInflow = 0;
-        let totalPixInflow = 0;
-        let totalCardInflow = 0;
-        const openTime = new Date(currentSession.dataAbertura).getTime();
-
-        sales.forEach((sale) => {
-          if (sale.isBudget) return;
-          const saleTime = new Date(sale.date || new Date().toISOString()).getTime();
-          const isSaleInSession = saleTime >= openTime;
-
-          if (sale.payments && sale.payments.length > 0) {
-            sale.payments.forEach((p) => {
-              const amt = Number(p.amount) || 0;
-              const method = String(p.method || "dinheiro").toLowerCase();
-              const paymentTime = new Date(p.date || sale.date || new Date().toISOString()).getTime();
-              if (paymentTime >= openTime) {
-                if (method === "dinheiro") {
-                  cashInflow += amt;
-                } else if (method === "pix") {
-                  totalPixInflow += amt;
-                } else {
-                  totalCardInflow += amt;
-                }
-              }
-            });
-          } else {
-            if (isSaleInSession) {
-              const meth = String(sale.paymentMethod || "dinheiro").toLowerCase();
-              const amt = sale.balanceDue === 0 ? sale.totalValue : (sale.downPayment || 0);
-              if (meth === "dinheiro") {
-                cashInflow += amt;
-              } else if (meth === "pix") {
-                totalPixInflow += amt;
-              } else {
-                totalCardInflow += amt;
-              }
-            }
-          }
-        });
-
-        // Sum standalone expenses created during session
-        let expensesTotal = 0;
-        expenses.forEach((expense) => {
-          if (!expense.date) return;
-          const expTime = new Date(expense.date).getTime();
-          if (expTime >= openTime) {
-            expensesTotal += Number(expense.value) || 0;
-          }
-        });
-
-        const expectedInDrawer = currentSession.valorAbertura + cashInflow - expensesTotal;
-
-        const observations = `🔒 FECHAMENTO AUTOMÁTICO - VIRADA DE DIA (Esquecimento)\n\n` +
-          `O caixa foi deixado aberto no dia anterior (${sessionDateStr}). O sistema efetuou o encerramento automático do expediente por segurança.\n` +
-          `• Saldo de Abertura: R$ ${currentSession.valorAbertura.toFixed(2)}\n` +
-          `• Entradas em Dinheiro: R$ ${cashInflow.toFixed(2)}\n` +
-          `• Dinheiro Esperado: R$ ${expectedInDrawer.toFixed(2)}\n` +
-          `• PIX: R$ ${totalPixInflow.toFixed(2)}\n` +
-          `• Cartão: R$ ${totalCardInflow.toFixed(2)}`;
-
-        const closedSession: CashRegisterSession = {
-          ...currentSession,
-          status: "fechado",
-          valorFechamentoEsperado: expectedInDrawer,
-          valorFechementReal: expectedInDrawer, // support any potential typo
-          valorFechamentoReal: expectedInDrawer,
-          dataFechamento: new Date().toISOString(),
-          observacoes: observations
-        } as any;
-
-        const existingHist = Array.isArray(cashRegister?.history) ? cashRegister.history : (Array.isArray(cashRegisterRef.current?.history) ? cashRegisterRef.current.history : []);
-        const updatedState: CashRegisterState = {
-          currentSession: null,
-          history: [closedSession, ...existingHist]
-        };
-
-        setCashRegister(updatedState);
-        localStorage.setItem("NUCLEO_CASH_REGISTER", JSON.stringify(updatedState));
-
-        try { playCloseRegisterSound(); } catch (soundErr) { console.warn(soundErr); }
-
-        if (currentUser && isSupabaseConfigured()) {
-          const companyId = currentUser.owner_id || currentUser.id;
-          dbSaveCashRegister(companyId, updatedState).catch((syncErr) => console.error(syncErr));
-        }
-
-        setReadOnlyMode(false);
-        setBypassTodayClosure(false);
-
-        addToast(`🔒 O caixa anterior (${sessionDateStr}) foi fechado automaticamente na virada do dia por estar aberto.`, "success");
-        setShowAutoClosePrompt(false);
-      }
-    }
-  });
+    // Sem fechamento automático por virada de data ou saída de usuário.
+  }, []);
 
   // Active ringing reminders (alarms that are currently triggering and looping sound until accepted)
   const [ringingReminders, setRingingReminders] = useState<CustomReminder[]>(() => {
@@ -5271,34 +5184,29 @@ export default function App() {
     let expensesTotal = 0;
     let expensesPaidInCash = 0;
 
-    const parseExpenseDescription = (desc: string) => {
+    const parseExpenseDescription = (desc: string, expObj?: any) => {
+      if (expObj?.paymentMethod) {
+        const pm = String(expObj.paymentMethod).toLowerCase();
+        if (pm.includes("pix")) return { cleanDesc: desc, method: "pix" };
+        if (pm.includes("cart") || pm.includes("card")) return { cleanDesc: desc, method: "cartão" };
+        if (pm.includes("dinh") || pm.includes("cash")) return { cleanDesc: desc, method: "dinheiro" };
+      }
       if (!desc) return { cleanDesc: "", method: "dinheiro" };
       const trimmed = desc.trim();
-      if (trimmed.startsWith("[Dinheiro]")) {
-        return { cleanDesc: trimmed.replace("[Dinheiro]", "").trim(), method: "dinheiro" };
-      }
-      if (trimmed.startsWith("[Pix]")) {
-        return { cleanDesc: trimmed.replace("[Pix]", "").trim(), method: "pix" };
-      }
-      if (trimmed.startsWith("[Cartão]") || trimmed.startsWith("[Cartao]")) {
-        return { cleanDesc: trimmed.replace(/\[Cartã?o\]/, "").trim(), method: "cartão" };
-      }
-      
       const lower = trimmed.toLowerCase();
-      if (lower.startsWith("[dinheiro]")) {
-        return { cleanDesc: trimmed.substring(10).trim(), method: "dinheiro" };
+
+      if (lower.startsWith("[pix]") || lower.includes("meiopag:pix")) {
+        return { cleanDesc: trimmed.replace(/\[pix\]/gi, "").trim(), method: "pix" };
       }
-      if (lower.startsWith("[pix]")) {
-        return { cleanDesc: trimmed.substring(5).trim(), method: "pix" };
+      if (lower.startsWith("[cartão]") || lower.startsWith("[cartao]") || lower.includes("meiopag:cartao")) {
+        return { cleanDesc: trimmed.replace(/\[cartã?o\]/gi, "").trim(), method: "cartão" };
       }
-      if (lower.startsWith("[cartão]") || lower.startsWith("[cartao]")) {
-        return { cleanDesc: trimmed.replace(/\[cartã?o\]/i, "").trim(), method: "cartão" };
+      if (lower.startsWith("[dinheiro]") || lower.includes("meiopag:dinheiro")) {
+        return { cleanDesc: trimmed.replace(/\[dinheiro\]/gi, "").trim(), method: "dinheiro" };
       }
 
-      // Word matches:
-      if (lower.includes("dinheiro")) return { cleanDesc: trimmed, method: "dinheiro" };
-      if (lower.includes("pix")) return { cleanDesc: trimmed, method: "pix" };
-      if (lower.includes("cartão") || lower.includes("cartao")) return { cleanDesc: trimmed, method: "cartão" };
+      if (lower.includes("[pix]")) return { cleanDesc: trimmed, method: "pix" };
+      if (lower.includes("[cartão]") || lower.includes("[cartao]")) return { cleanDesc: trimmed, method: "cartão" };
 
       return { cleanDesc: trimmed, method: "dinheiro" };
     };
@@ -5309,7 +5217,7 @@ export default function App() {
         const val = Number(expense.value) || 0;
         expensesTotal += val;
 
-        const { method } = parseExpenseDescription(expense.description);
+        const { method } = parseExpenseDescription(expense.description, expense);
         if (method === "dinheiro") {
           expensesPaidInCash += val;
         }

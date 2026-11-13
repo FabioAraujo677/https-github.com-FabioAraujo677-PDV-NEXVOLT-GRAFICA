@@ -3313,6 +3313,46 @@ ${JSON.stringify(sales, null, 2)}
         counts.gastos_mensais = batchGastos.length;
       }
 
+      // 7.5. Vendas Rápidas Itens
+      let rawQuickSales = Array.isArray(backupData.vendas_rapidas_itens) ? backupData.vendas_rapidas_itens :
+                          Array.isArray(backupData.quick_sales) ? backupData.quick_sales : [];
+      if (rawQuickSales.length === 0) {
+        const fromDump = parseDumpKey("NUCLEO_QUICK_SALES") || parseDumpKey(`NUCLEO_QUICK_SALES_${canonicalOwnerId}`);
+        if (Array.isArray(fromDump)) rawQuickSales = fromDump;
+      }
+      if (rawQuickSales.length > 0) {
+        const batchQuick = rawQuickSales.map((it: any) => ({
+          id: it.id || "quick_" + Math.random().toString(36).substring(2, 9),
+          user_id: canonicalOwnerId,
+          description: it.description || it.descricao || it.nome || "",
+          descricao: it.descricao || it.description || it.nome || "",
+          price: Number(it.price ?? it.preco ?? 0),
+          preco: Number(it.preco ?? it.price ?? 0),
+          cost: Number(it.cost ?? it.custo ?? 0),
+          custo: Number(it.custo ?? it.cost ?? 0),
+          gradient: it.gradient || it.cor || "from-purple-600 via-fuchsia-600 to-pink-500",
+          cor: it.gradient || it.cor || "from-purple-600 via-fuchsia-600 to-pink-500",
+          created_at: it.created_at || new Date().toISOString()
+        }));
+
+        try {
+          const quickChunks = [];
+          for (let i = 0; i < batchQuick.length; i += 50) {
+            quickChunks.push(batchQuick.slice(i, i + 50));
+          }
+          await Promise.all(
+            quickChunks.map(async (chunk) => {
+              try {
+                await supabase.from("vendas_rapidas_itens").upsert(chunk);
+              } catch (e) {}
+            })
+          );
+          (counts as any).vendas_rapidas_itens = batchQuick.length;
+        } catch (qErr) {
+          console.warn("[Backup Restore] vendas_rapidas_itens batch error:", qErr);
+        }
+      }
+
       // 8. Cash Register State
       let regState = backupData.cash_register_state || backupData.cash_register || backupData.cashRegister;
       if (!regState) {

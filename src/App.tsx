@@ -38,6 +38,15 @@ const LazyLoader = () => (
 import { Sale, CompanyProfile, Expense, User, CatalogProduct, getSaleOrderDate, getSaleOperationCost, CustomReminder, CashRegisterState, CashRegisterSession, isQuickSaleClient, isPendingRetiradaOrBaixa, DeletionAuditRecord, BusinessHours } from "./types";
 import { getLocalDeletionAuditRecords, saveLocalDeletionAuditRecord, clearLocalDeletionAuditRecords, fetchDeletionAuditFromSupabase } from "./utils/deletionAudit";
 import { writeToSalesWal, updateSalesWalEntryStatus, flushSalesWalQueue, getPendingWalCount } from "./utils/salesWal";
+import { extractSettingsFromBusinessHours } from "./utils/companySettingsSerializer";
+import {
+  DAILY_BACKUP_DISMISSED_DATE_KEY,
+  DAILY_BACKUP_LAST_DATE_KEY,
+  DAILY_BACKUP_SNOOZE_UNTIL_KEY,
+  getEffectiveDailyBackupTime,
+  getTodayLocalDateStr,
+  runDailyAutoBackup,
+} from "./utils/dailyBackup";
 import { AuthScreen } from "./components/AuthScreen";
 import { AdminMensalistas } from "./components/AdminMensalistas";
 import { Sparkles, DollarSign, Building2, ShieldAlert, ShieldCheck, TrendingDown, RefreshCw, X, Trophy, CheckCircle, Info, AlertTriangle, Trash2, Bell, Volume2, VolumeX, Package, MapPin, Calendar, Clock, Check, Gift, Fingerprint, Eye, EyeOff, Phone, Wallet, Search, UserCheck, Sunset, BellRing, Moon, Rocket, MessageCircle, LogOut, Database, Download } from "lucide-react";
@@ -130,6 +139,10 @@ export const cleanDefaultCompanyProfile: CompanyProfile = {
   closingTime: "18:00",
   autoCloseRegisterEnabled: false,
   autoBackupDownloadEnabled: true,
+  dailyAutoBackupEnabled: false,
+  dailyAutoBackupMode: "auto_save_and_download",
+  dailyAutoBackupTime: "18:00",
+  dailyAutoBackupUseClosingTime: true,
   goalsReminderEnabled: false,
   goalsReminderTime: "09:00",
   cashClosingReminderEnabled: false,
@@ -244,6 +257,10 @@ export default function App() {
   const [showAsaasCheckoutModal, setShowAsaasCheckoutModal] = useState(false);
   const [showExitBackupModal, setShowExitBackupModal] = useState(false);
   const [exportingOnExit, setExportingOnExit] = useState(false);
+  const [showDailyBackupPrompt, setShowDailyBackupPrompt] = useState(false);
+  const [dailyBackupPromptMode, setDailyBackupPromptMode] = useState<"notify_only" | "local_saved">("notify_only");
+  const [runningDailyBackupAction, setRunningDailyBackupAction] = useState(false);
+  const dailyBackupRunningRef = useRef(false);
 
   const isSubscriptionLocked = useMemo(() => {
     if (!currentUser) return false;
@@ -842,13 +859,17 @@ export default function App() {
           const newStatus = (u.status || u.status_assinatura || "").toString().trim().toLowerCase();
           if (newStatus) {
             const isNowAtivo = newStatus === "ativo" || newStatus === "active";
+            const targetStatus = isNowAtivo ? "ativo" : newStatus;
             setCurrentUser(prev => {
               if (!prev) return null;
+              if (prev.status === targetStatus && prev.status_assinatura === targetStatus) {
+                return prev;
+              }
               const updated = {
                 ...prev,
-                status: isNowAtivo ? "ativo" : newStatus,
-                status_assinatura: isNowAtivo ? "ativo" : newStatus,
-                status_sistema: isNowAtivo ? "ativo" : newStatus
+                status: targetStatus,
+                status_assinatura: targetStatus,
+                status_sistema: targetStatus
               };
               try {
                 localStorage.setItem("NUCLEO_CURRENT_USER", JSON.stringify(updated));
@@ -1128,7 +1149,7 @@ export default function App() {
 
   const [isSyncing, setIsSyncing] = useState(false);
   const isSyncingRef = useRef<boolean>(false);
-  const companyLoadedForUserId = useRef<string | null>(null);
+  const companyLoadedForUserId = useRef<string | null>(currentUser?.id || null);
 
   // Debounced LocalStorage Persistence to reduce main thread blocking
   useEffect(() => {
@@ -1242,7 +1263,7 @@ export default function App() {
       try {
         const parsed = JSON.parse(saved);
         return {
-          currentSession: parsed?.currentSession && parsed.currentSession.status === "aberto" ? parsed.currentSession : null,
+          currentSession: parsed?.currentSession && isCashSessionActiveOrOpen(parsed.currentSession) ? parsed.currentSession : null,
           history: Array.isArray(parsed?.history) ? parsed.history : []
         };
       } catch (e) {
@@ -1279,8 +1300,19 @@ export default function App() {
     });
   }, [cashRegister?.history]);
 
-  // 1. Estado reativo direto compartilhado globalmente em tempo real
-  const [isGlobalRegisterOpen, setIsGlobalRegisterOpen] = useState<boolean>(false);
+  // 1. Estado reativo direto compartilhado globalmente em tempo real (inicializado do localStorage para nunca fechar no F5)
+  const [isGlobalRegisterOpen, setIsGlobalRegisterOpen] = useState<boolean>(() => {
+    try {
+      const activeFlag = localStorage.getItem("NUCLEO_CASH_REGISTER_ACTIVE") === "true";
+      if (activeFlag) return true;
+      const saved = localStorage.getItem("NUCLEO_CASH_REGISTER");
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        return !!parsed?.currentSession && isCashSessionActiveOrOpen(parsed.currentSession);
+      }
+    } catch (e) {}
+    return false;
+  });
 
   useEffect(() => {
     let isMounted = true;
@@ -1317,7 +1349,6 @@ export default function App() {
           const st = String(statusRow.status).toUpperCase();
           if (st === "ABERTO") {
             setIsGlobalRegisterOpen(true);
-            setIsStandbyActive(false);
             setShowCashRegisterModal(false);
 
             const activeSession: CashRegisterSession = {
@@ -1492,6 +1523,7 @@ export default function App() {
         if (!error && data) {
           const name = data.trading_name || data.nome;
           const logo = data.logo || data.logo_url;
+          const { cleanBusinessHours, extractedSettings } = extractSettingsFromBusinessHours(data.business_hours);
           setCompany((prev) => ({
             ...prev,
             tradingName: name || prev.tradingName,
@@ -1505,7 +1537,8 @@ export default function App() {
             state: data.state || prev.state,
             cnpjCpf: data.cnpj_cpf || prev.cnpjCpf,
             pixKey: data.pix_key || prev.pixKey,
-            businessHours: data.business_hours || prev.businessHours
+            ...extractedSettings,
+            businessHours: cleanBusinessHours || prev.businessHours
           }));
           return;
         }
@@ -1619,7 +1652,6 @@ export default function App() {
             const st = String(statusRow.status).toUpperCase();
             if (st === "ABERTO") {
               setIsGlobalRegisterOpen(true);
-              setIsStandbyActive(false);
               setShowCashRegisterModal(false);
 
               // Ensure cashRegister state has the current session restored!
@@ -1673,17 +1705,23 @@ export default function App() {
 
           if (isRemoteOpen) {
             setIsGlobalRegisterOpen(true);
-            setIsStandbyActive(false);
             setShowCashRegisterModal(false);
-            setCashRegister(remoteState);
-            cashRegisterRef.current = remoteState;
-            try {
-              localStorage.setItem("NUCLEO_CASH_REGISTER", JSON.stringify(remoteState));
-              localStorage.setItem("NUCLEO_CASH_REGISTER_ACTIVE", "true");
-              if (remoteState.currentSession?.dataAbertura) {
-                localStorage.setItem("NUCLEO_LAST_CASH_REGISTER_SYNCED_DATE", remoteState.currentSession.dataAbertura);
-              }
-            } catch (e) {}
+            setCashRegister((prev) => {
+              const isSame =
+                prev?.currentSession?.id === remoteState.currentSession?.id &&
+                prev?.currentSession?.status === remoteState.currentSession?.status &&
+                (prev?.history?.length || 0) === (remoteState.history?.length || 0);
+              if (isSame) return prev;
+              cashRegisterRef.current = remoteState;
+              try {
+                localStorage.setItem("NUCLEO_CASH_REGISTER", JSON.stringify(remoteState));
+                localStorage.setItem("NUCLEO_CASH_REGISTER_ACTIVE", "true");
+                if (remoteState.currentSession?.dataAbertura) {
+                  localStorage.setItem("NUCLEO_LAST_CASH_REGISTER_SYNCED_DATE", remoteState.currentSession.dataAbertura);
+                }
+              } catch (e) {}
+              return remoteState;
+            });
             return true;
           } else {
             const currentLocal = cashRegisterRef.current || cashRegister;
@@ -1697,7 +1735,8 @@ export default function App() {
                 }
               } catch (e) {}
             }
-            const isLocalOpen = !!localSession && localSession.status === "aberto";
+            const activeFlag = localStorage.getItem("NUCLEO_CASH_REGISTER_ACTIVE") === "true";
+            const isLocalOpen = (!!localSession && isCashSessionActiveOrOpen(localSession)) || activeFlag;
 
             // Só fecha no cliente se o terminal local também não estiver aberto
             if (!isLocalOpen) {
@@ -1842,9 +1881,22 @@ export default function App() {
       setShowAutoClosePrompt(true);
       playContinuousCashClosingAlarm();
     };
+    const handleTestDailyBackup = () => {
+      setDailyBackupPromptMode(
+        company?.dailyAutoBackupMode === "local_only" ? "local_saved" : "notify_only"
+      );
+      setShowDailyBackupPrompt(true);
+      if (soundEnabled) {
+        playAlertSound("info");
+      }
+    };
     window.addEventListener("TEST_CASH_CLOSING_REMINDER", handleTestReminder);
-    return () => window.removeEventListener("TEST_CASH_CLOSING_REMINDER", handleTestReminder);
-  }, [soundEnabled]);
+    window.addEventListener("TEST_DAILY_AUTO_BACKUP", handleTestDailyBackup);
+    return () => {
+      window.removeEventListener("TEST_CASH_CLOSING_REMINDER", handleTestReminder);
+      window.removeEventListener("TEST_DAILY_AUTO_BACKUP", handleTestDailyBackup);
+    };
+  }, [soundEnabled, company?.dailyAutoBackupMode]);
 
   const handleToggleSound = (enabled: boolean) => {
     setSoundEnabled(enabled);
@@ -2054,19 +2106,19 @@ export default function App() {
             sessionUser.is_admin = true;
           }
 
-          setCurrentUser(sessionUser);
+          setCurrentUser((prev) => {
+            if (prev && prev.id === sessionUser.id && prev.status === sessionUser.status && prev.role === sessionUser.role) {
+              return prev;
+            }
+            return sessionUser;
+          });
           localStorage.setItem("NUCLEO_CURRENT_USER", JSON.stringify(sessionUser));
-          setFilterPeriod("today");
-          setSalesDateFilter("today");
           setIsInitialLoading(false); // Stop initial loading immediately once user is active
           
-          // Trigger remote sync and check register status asynchronously in the background with a small delay to prevent blocking main thread on mount
+          // Trigger remote sync and check register status asynchronously in the background
           setTimeout(() => {
-            triggerRemoteSync(sessionUser).catch((syncErr) => {
+            triggerRemoteSync(sessionUser, true).catch((syncErr) => {
               console.error("Background initial triggerRemoteSync failed:", syncErr);
-            });
-            checkGlobalRegisterStatus(sessionUser.owner_id || sessionUser.id).catch((registerErr) => {
-              console.error("Background initial checkGlobalRegisterStatus failed:", registerErr);
             });
           }, 1000);
         } else {
@@ -2091,18 +2143,18 @@ export default function App() {
                   activeUser.is_admin = true;
                 }
 
-                setCurrentUser(activeUser);
+                setCurrentUser((prev) => {
+                  if (prev && prev.id === activeUser.id && prev.status === activeUser.status && prev.role === activeUser.role) {
+                    return prev;
+                  }
+                  return activeUser;
+                });
                 localStorage.setItem("NUCLEO_CURRENT_USER", JSON.stringify(activeUser));
-                setFilterPeriod("today");
-                setSalesDateFilter("today");
                 setIsInitialLoading(false);
 
                 setTimeout(() => {
-                  triggerRemoteSync(activeUser).catch((syncErr) => {
+                  triggerRemoteSync(activeUser, true).catch((syncErr) => {
                     console.error("Background initial triggerRemoteSync failed for user:", syncErr);
-                  });
-                  checkGlobalRegisterStatus(activeUser.owner_id || activeUser.id).catch((registerErr) => {
-                    console.error("Background initial checkGlobalRegisterStatus failed for user:", registerErr);
                   });
                 }, 1000);
                 return;
@@ -2287,27 +2339,27 @@ export default function App() {
       }
 
       const activeUserId = activeUser.id;
-      const isNewUserContext = !isBackground && companyLoadedForUserId.current !== activeUserId;
+      const isNewUserContext = !isBackground && companyLoadedForUserId.current !== null && companyLoadedForUserId.current !== activeUserId;
+      if (!companyLoadedForUserId.current) {
+        companyLoadedForUserId.current = activeUserId;
+      }
       
       if (isNewUserContext) {
         console.log(`[Data Isolation] Context shift detected (${companyLoadedForUserId.current} -> ${activeUserId}). Wiping local state for total isolation.`);
         
-        // 1. Force wipe React states immediately to prevent old data flicker
+        // 1. Force wipe React states immediately to prevent old data flicker (preserve open cash register)
         setSales([]);
         setBudgets([]);
         setExpenses([]);
         setCatalogProducts([]);
         setBills([]);
         setCompany(cleanDefaultCompanyProfile);
-        setCashRegister({ currentSession: null, history: [] });
-        setIsGlobalRegisterOpen(false);
         
-        // 2. Clear critical localStorage keys to prevent "Protected Sync" from merging old data
+        // 2. Clear critical localStorage keys to prevent "Protected Sync" from merging old data (preserve cash register keys)
         const localKeysToWipe = [
           "NUCLEO_SALES", "NUCLEO_BUDGETS", "NUCLEO_EXPENSES", "NUCLEO_PRODUCTS", 
-          "NUCLEO_MONTHLY_BILLS", "NUCLEO_CLIENTS", "NUCLEO_CASH_REGISTER", 
-          "NUCLEO_COMPANY_PROFILE", "NUCLEO_GOAL_VALUE", "NUCLEO_GOAL_TYPE",
-          "NUCLEO_LAST_CASH_REGISTER_SYNCED_DATE"
+          "NUCLEO_MONTHLY_BILLS", "NUCLEO_CLIENTS", 
+          "NUCLEO_COMPANY_PROFILE", "NUCLEO_GOAL_VALUE", "NUCLEO_GOAL_TYPE"
         ];
         localKeysToWipe.forEach(key => localStorage.removeItem(key));
         
@@ -2315,7 +2367,6 @@ export default function App() {
         companyLoadedForUserId.current = activeUserId;
         salesRef.current = [];
         budgetsRef.current = [];
-        cashRegisterRef.current = { currentSession: null, history: [] };
       }
 
       console.log(`Starting ${isBackground ? "background" : "foreground"} remote sync with Supabase (forceAll: ${forceAll || isNewUserContext})...`);
@@ -2672,8 +2723,9 @@ export default function App() {
             }
 
             // The register stays open until manually closed, even across days.
-            const isRemoteActive = !!remote.currentSession && remote.currentSession.status === "aberto";
-            const isLocalActive = !!localSession && localSession.status === "aberto";
+            const activeFlag = localStorage.getItem("NUCLEO_CASH_REGISTER_ACTIVE") === "true";
+            const isRemoteActive = !!remote.currentSession && isCashSessionActiveOrOpen(remote.currentSession);
+            const isLocalActive = (!!localSession && isCashSessionActiveOrOpen(localSession)) || activeFlag;
 
             if (isRemoteActive) {
               // Priority 1: Remote active session (authoritative)
@@ -2729,12 +2781,14 @@ export default function App() {
     }
   };
 
-  // Auto-sync remote data from Supabase once on database session start / user change
+  // Auto-sync remote data from Supabase once on database session start / user ID change
+  const initialSyncDoneForUserRef = useRef<string | null>(null);
   useEffect(() => {
-    if (currentUser) {
-      triggerRemoteSync(currentUser);
+    if (currentUser?.id && initialSyncDoneForUserRef.current !== currentUser.id) {
+      initialSyncDoneForUserRef.current = currentUser.id;
+      triggerRemoteSync(currentUser, true);
     }
-  }, [currentUser]);
+  }, [currentUser?.id]);
 
   // Write-Ahead Logging (WAL) Flush Worker: Guarantees zero data loss even after power outage or network drop
   useEffect(() => {
@@ -3187,8 +3241,11 @@ export default function App() {
                 operador: row.operador || row.usuario || "Operador"
               };
 
+              const wasOpen = !!cashRegisterRef.current?.currentSession && isCashSessionActiveOrOpen(cashRegisterRef.current.currentSession);
               setIsGlobalRegisterOpen(true);
-              setIsStandbyActive(false);
+              if (!wasOpen) {
+                setIsStandbyActive(false);
+              }
               setShowCashRegisterModal(false);
               setCashRegister((prev) => {
                 const updated: CashRegisterState = {
@@ -3257,15 +3314,24 @@ export default function App() {
 
           const st = String(targetRow?.status || "").toUpperCase();
           if (st === "ABERTO") {
+            const wasOpen = !!cashRegisterRef.current?.currentSession && isCashSessionActiveOrOpen(cashRegisterRef.current.currentSession);
             setIsGlobalRegisterOpen(true);
-            setIsStandbyActive(false);
+            if (!wasOpen) {
+              setIsStandbyActive(false);
+            }
             setShowCashRegisterModal(false);
             localStorage.setItem("NUCLEO_CASH_REGISTER_ACTIVE", "true");
             if (companyOwnerId) checkGlobalRegisterStatus(companyOwnerId);
           } else if (st === "FECHADO") {
-            setIsGlobalRegisterOpen(false);
-            localStorage.removeItem("NUCLEO_CASH_REGISTER_ACTIVE");
-            if (companyOwnerId) checkGlobalRegisterStatus(companyOwnerId);
+            const localSess = cashRegisterRef.current?.currentSession;
+            const localOpenedAt = localSess?.dataAbertura ? new Date(localSess.dataAbertura).getTime() : 0;
+            const remoteClosedAt = targetRow?.closed_at ? new Date(targetRow.closed_at).getTime() : 0;
+            // Only close if the remote closure actually happened after the local session opened, or if no local open session exists
+            if (!localSess || (remoteClosedAt > 0 && remoteClosedAt >= localOpenedAt)) {
+              setIsGlobalRegisterOpen(false);
+              localStorage.removeItem("NUCLEO_CASH_REGISTER_ACTIVE");
+              if (companyOwnerId) checkGlobalRegisterStatus(companyOwnerId);
+            }
           }
         }
       )
@@ -3550,11 +3616,11 @@ export default function App() {
             cashRegisterRef.current = remoteState;
             setIsGlobalRegisterOpen(isOpen);
             if (isOpen) {
-              setIsStandbyActive(false);
-              setShowCashRegisterModal(false);
               if (!currentIsOpen) {
+                setIsStandbyActive(false);
                 addToast("🔓 Caixa aberto! Sistema liberado para todos os computadores em tempo real.", "success");
               }
+              setShowCashRegisterModal(false);
             } else {
               if (currentIsOpen) {
                 addToast("🔒 Caixa encerrado em outro terminal.", "info");
@@ -3566,9 +3632,9 @@ export default function App() {
           } else if (data.session) {
             const s = data.session;
             setIsGlobalRegisterOpen(true);
-            setIsStandbyActive(false);
             setShowCashRegisterModal(false);
             if (!currentIsOpen) {
+              setIsStandbyActive(false);
               addToast(`🔓 Caixa aberto por ${s.operador || "Operador"}! Sincronizado em tempo real.`, "success");
             }
             setCashRegister((prev) => {
@@ -3660,6 +3726,9 @@ export default function App() {
         } else if (evType === "company_profile_updated") {
           const profile = data?.profile || data;
           if (profile && (profile.tradingName || profile.trading_name)) {
+            const { cleanBusinessHours, extractedSettings } = extractSettingsFromBusinessHours(
+              profile.businessHours || profile.business_hours
+            );
             const mappedProfile: CompanyProfile = {
               tradingName: profile.tradingName || profile.trading_name || "",
               phone: profile.phone || profile.telefone || "",
@@ -3672,7 +3741,20 @@ export default function App() {
               cnpjCpf: profile.cnpjCpf || profile.cnpj_cpf || "",
               logo: profile.logo || profile.logo_url || null,
               pixKey: profile.pixKey || profile.pix_key || "",
-              businessHours: profile.businessHours || profile.business_hours || undefined
+              ...extractedSettings,
+              ...(profile.openingTime !== undefined ? { openingTime: profile.openingTime } : {}),
+              ...(profile.closingTime !== undefined ? { closingTime: profile.closingTime } : {}),
+              ...(profile.goalsReminderEnabled !== undefined ? { goalsReminderEnabled: profile.goalsReminderEnabled } : {}),
+              ...(profile.goalsReminderTime !== undefined ? { goalsReminderTime: profile.goalsReminderTime } : {}),
+              ...(profile.autoBackupDownloadEnabled !== undefined ? { autoBackupDownloadEnabled: profile.autoBackupDownloadEnabled } : {}),
+              ...(profile.dailyAutoBackupEnabled !== undefined ? { dailyAutoBackupEnabled: profile.dailyAutoBackupEnabled } : {}),
+              ...(profile.dailyAutoBackupMode !== undefined ? { dailyAutoBackupMode: profile.dailyAutoBackupMode } : {}),
+              ...(profile.dailyAutoBackupTime !== undefined ? { dailyAutoBackupTime: profile.dailyAutoBackupTime } : {}),
+              ...(profile.dailyAutoBackupUseClosingTime !== undefined ? { dailyAutoBackupUseClosingTime: profile.dailyAutoBackupUseClosingTime } : {}),
+              ...(profile.cashClosingReminderEnabled !== undefined ? { cashClosingReminderEnabled: profile.cashClosingReminderEnabled } : {}),
+              ...(profile.cashClosingReminderTime !== undefined ? { cashClosingReminderTime: profile.cashClosingReminderTime } : {}),
+              ...(profile.cashClosingReminderMessage !== undefined ? { cashClosingReminderMessage: profile.cashClosingReminderMessage } : {}),
+              businessHours: cleanBusinessHours
             };
             setCompany(mappedProfile);
             try { localStorage.setItem("NUCLEO_COMPANY_PROFILE", JSON.stringify(mappedProfile)); } catch (e) {}
@@ -4695,6 +4777,65 @@ export default function App() {
             setShowAutoClosePrompt(true);
           }
         }
+
+        // 4. CHECK DAILY AUTO BACKUP AT END OF DAY
+        if (company?.dailyAutoBackupEnabled === true && !dailyBackupRunningRef.current) {
+          const lastBackupDate = localStorage.getItem(DAILY_BACKUP_LAST_DATE_KEY);
+          const dismissedBackupDate = localStorage.getItem(DAILY_BACKUP_DISMISSED_DATE_KEY);
+          const snoozeBackupUntil = localStorage.getItem(DAILY_BACKUP_SNOOZE_UNTIL_KEY);
+          const isBackupSnoozed = snoozeBackupUntil ? Date.now() < Number(snoozeBackupUntil) : false;
+
+          if (lastBackupDate !== todayDateStr && dismissedBackupDate !== todayDateStr && !isBackupSnoozed) {
+            const effectiveBackupTime = getEffectiveDailyBackupTime(company);
+            if (currentHHMM >= effectiveBackupTime) {
+              const mode = company.dailyAutoBackupMode || "auto_save_and_download";
+              const ownerId = currentUser.owner_id || currentUser.id;
+
+              if (mode === "notify_only") {
+                if (!showDailyBackupPrompt) {
+                  setDailyBackupPromptMode("notify_only");
+                  setShowDailyBackupPrompt(true);
+                  if (soundEnabled) {
+                    playAlertSound("info");
+                  }
+                }
+              } else {
+                dailyBackupRunningRef.current = true;
+                const shouldDownload = mode === "auto_save_and_download";
+                runDailyAutoBackup({
+                  ownerId,
+                  companyName: company.tradingName || "empresa",
+                  mode,
+                  triggerDownload: shouldDownload,
+                  syncToCloud: true,
+                })
+                  .then((snap) => {
+                    if (snap) {
+                      if (shouldDownload) {
+                        addToast(
+                          `💾 Backup Automático Diário salvo e baixado (${snap.fileName})! Histórico protegido.`,
+                          "success"
+                        );
+                      } else {
+                        addToast(
+                          `💾 Backup Diário gravado localmente no navegador! Exporte o arquivo .json quando quiser.`,
+                          "info"
+                        );
+                        setDailyBackupPromptMode("local_saved");
+                        setShowDailyBackupPrompt(true);
+                      }
+                      if (soundEnabled) {
+                        playAlertSound("success");
+                      }
+                    }
+                  })
+                  .finally(() => {
+                    dailyBackupRunningRef.current = false;
+                  });
+              }
+            }
+          }
+        }
       } catch (err) {
         console.error("Error running background reminder tick:", err);
       }
@@ -4703,7 +4844,7 @@ export default function App() {
     checkRemindersAndGoals();
     const interval = setInterval(checkRemindersAndGoals, 20000);
     return () => clearInterval(interval);
-  }, [company, dailyMetaGoal, todayNetProfitLive, progressPercent, targetMissingValue, soundEnabled, cashRegister?.currentSession?.status, showAutoClosePrompt]);
+  }, [currentUser?.id, company, dailyMetaGoal, todayNetProfitLive, progressPercent, targetMissingValue, soundEnabled, cashRegister?.currentSession?.status, showAutoClosePrompt, showDailyBackupPrompt]);
 
   // Centralized cash register validation helper
   const requireOpenCashRegister = (actionDescription: string): boolean => {
@@ -4969,6 +5110,7 @@ export default function App() {
     setCashRegister(updatedState);
     cashRegisterRef.current = updatedState;
     localStorage.setItem("NUCLEO_CASH_REGISTER", JSON.stringify(updatedState));
+    localStorage.setItem("NUCLEO_CASH_REGISTER_ACTIVE", "true");
     localStorage.setItem("NUCLEO_LAST_CASH_REGISTER_SYNCED_DATE", newSession.dataAbertura);
     // Limpar adiamentos e dispensas anteriores para que o alarme toque no horário correto hoje
     localStorage.removeItem("NUCLEO_SNOOZE_CASH_CLOSING_UNTIL");
@@ -5042,6 +5184,7 @@ export default function App() {
         await supabaseClient.from("sessoes_caixa").upsert({
           id: sessionUUID,
           empresa_id: companyId,
+          operador: operador,
           status: "aberto",
           valor_abertura: Number(valorAbertura) || 0,
           data_abertura: newSession.dataAbertura
@@ -5332,6 +5475,99 @@ export default function App() {
 
     addToast("🔒 Caixa fechado com sucesso e históricos de turnos registrados!", "success");
     setShowCashRegisterModal(false);
+
+    // If Daily Auto Backup is enabled and hasn't been executed today yet, run/notify on register close
+    if (currentUser && company?.dailyAutoBackupEnabled === true) {
+      const todayCloseStr = getTodayLocalDateStr();
+      const lastBackupDate = localStorage.getItem(DAILY_BACKUP_LAST_DATE_KEY);
+      if (lastBackupDate !== todayCloseStr && !dailyBackupRunningRef.current) {
+        const mode = company.dailyAutoBackupMode || "auto_save_and_download";
+        if (mode === "notify_only") {
+          setDailyBackupPromptMode("notify_only");
+          setShowDailyBackupPrompt(true);
+        } else {
+          dailyBackupRunningRef.current = true;
+          const shouldDownload = mode === "auto_save_and_download";
+          runDailyAutoBackup({
+            ownerId: companyId,
+            companyName: company.tradingName || "empresa",
+            mode,
+            triggerDownload: shouldDownload,
+            syncToCloud: true,
+          })
+            .then((snap) => {
+              if (snap) {
+                addToast(
+                  shouldDownload
+                    ? `💾 Backup Automático Diário baixado no fechamento (${snap.fileName})!`
+                    : `💾 Backup Automático Diário salvo localmente no fechamento!`,
+                  "success"
+                );
+              }
+            })
+            .finally(() => {
+              dailyBackupRunningRef.current = false;
+            });
+        }
+      }
+    }
+  };
+
+  const handleDailyBackupDownloadAndConfirm = async () => {
+    if (!currentUser) return;
+    setRunningDailyBackupAction(true);
+    try {
+      const ownerId = currentUser.owner_id || currentUser.id;
+      const snap = await runDailyAutoBackup({
+        ownerId,
+        companyName: company?.tradingName || "empresa",
+        mode: company?.dailyAutoBackupMode || "auto_save_and_download",
+        triggerDownload: true,
+        syncToCloud: true,
+      });
+      if (snap) {
+        addToast(`💾 Backup Diário "${snap.fileName}" exportado e salvo com sucesso!`, "success");
+        setShowDailyBackupPrompt(false);
+      } else {
+        addToast("Falha ao gerar arquivo de backup. Tente novamente.", "error");
+      }
+    } finally {
+      setRunningDailyBackupAction(false);
+    }
+  };
+
+  const handleDailyBackupSaveLocalOnly = async () => {
+    if (!currentUser) return;
+    setRunningDailyBackupAction(true);
+    try {
+      const ownerId = currentUser.owner_id || currentUser.id;
+      const snap = await runDailyAutoBackup({
+        ownerId,
+        companyName: company?.tradingName || "empresa",
+        mode: "local_only",
+        triggerDownload: false,
+        syncToCloud: true,
+      });
+      if (snap) {
+        addToast("💾 Cópia diária salva localmente no navegador (IndexedDB)!", "success");
+        setShowDailyBackupPrompt(false);
+      }
+    } finally {
+      setRunningDailyBackupAction(false);
+    }
+  };
+
+  const handleDailyBackupSnooze = () => {
+    const snoozeTime = Date.now() + 15 * 60 * 1000;
+    localStorage.setItem(DAILY_BACKUP_SNOOZE_UNTIL_KEY, String(snoozeTime));
+    setShowDailyBackupPrompt(false);
+    addToast("⏰ Lembrete de backup diário adiado por 15 minutos.", "info");
+  };
+
+  const handleDailyBackupDismissToday = () => {
+    localStorage.setItem(DAILY_BACKUP_DISMISSED_DATE_KEY, getTodayLocalDateStr());
+    setShowDailyBackupPrompt(false);
+    addToast("Notificação de backup diário dispensada por hoje.", "info");
   };
 
   const handleAutoCloseSnooze = () => {
@@ -5818,32 +6054,8 @@ export default function App() {
     };
   }, [isAttendant, adminUnlocked, currentUser]);
 
-  // Desloga o usuário de forma agressiva ao sair do app, minimizar ou fechar aba/navegador
-  useEffect(() => {
-    if (!currentUser) return;
-    const supabase = getSupabase();
-    if (!supabase) return;
-
-    const handleVisibilityChange = () => {
-      if (document.visibilityState === "hidden" && currentUser) {
-        supabase.auth.signOut();
-      }
-    };
-
-    const handleBeforeUnload = () => {
-      if (currentUser) {
-        supabase.auth.signOut();
-      }
-    };
-
-    document.addEventListener("visibilitychange", handleVisibilityChange);
-    window.addEventListener("beforeunload", handleBeforeUnload);
-
-    return () => {
-      document.removeEventListener("visibilitychange", handleVisibilityChange);
-      window.removeEventListener("beforeunload", handleBeforeUnload);
-    };
-  }, [currentUser]);
+  // Sessão de autenticação e caixa permanecem ativos ao atualizar (F5) ou minimizar o navegador;
+  // o caixa só fecha quando o usuário clica explicitamente em "Fechar Caixa".
 
   if (!currentUser) {
     return (
@@ -8144,6 +8356,112 @@ export default function App() {
         customWeekdayGoals={customWeekdayGoals}
         setCustomWeekdayGoals={setCustomWeekdayGoals}
       />
+
+      {/* 💾 NOTIFICAÇÃO DE BACKUP AUTOMÁTICO DIÁRIO (FIM DE DIA) */}
+      <AnimatePresence>
+        {currentUser && showDailyBackupPrompt && (
+          <div className="fixed inset-0 z-[10001] flex items-center justify-center p-4 bg-slate-950/85 backdrop-blur-md animate-fade-in">
+            <motion.div
+              initial={{ scale: 0.92, opacity: 0, y: 15 }}
+              animate={{ scale: 1, opacity: 1, y: 0 }}
+              exit={{ scale: 0.92, opacity: 0, y: 15 }}
+              transition={{ type: "spring", damping: 25, stiffness: 300 }}
+              className="relative w-full max-w-md bg-gradient-to-b from-slate-900 via-slate-900 to-slate-950 border border-emerald-500/40 rounded-3xl p-6 sm:p-7 shadow-2xl shadow-emerald-950/30 overflow-hidden font-sans"
+            >
+              <div className="absolute top-0 left-0 right-0 h-1.5 bg-gradient-to-r from-emerald-400 via-brand-cyan to-emerald-500" />
+              <button
+                type="button"
+                onClick={handleDailyBackupDismissToday}
+                className="absolute top-4 right-4 p-2 text-slate-400 hover:text-white rounded-full bg-slate-800/40 hover:bg-slate-800 transition-colors cursor-pointer"
+                title="Fechar notificação"
+              >
+                <X className="h-4 w-4" />
+              </button>
+
+              <div className="flex flex-col items-center text-center space-y-4">
+                <div className="p-4 bg-emerald-500/15 border border-emerald-500/30 rounded-2xl text-emerald-400 shadow-lg">
+                  <Database className="h-9 w-9" />
+                </div>
+
+                <div className="space-y-1.5">
+                  <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-500/15 border border-emerald-500/30 text-emerald-300 text-[11px] font-bold uppercase tracking-wider">
+                    <Clock className="h-3 w-3" />
+                    Backup Automático Diário • Fim do Dia
+                  </div>
+                  <h3 className="text-lg font-extrabold text-white tracking-tight">
+                    {dailyBackupPromptMode === "local_saved"
+                      ? "Cópia Diária Salva Localmente!"
+                      : "Proteja o Histórico de Hoje"}
+                  </h3>
+                  <p className="text-xs text-slate-300 leading-relaxed">
+                    {dailyBackupPromptMode === "local_saved"
+                      ? "O sistema gerou e armazenou automaticamente o backup completo de hoje no armazenamento local do navegador. Recomendamos baixar uma cópia física (.json) para sua segurança."
+                      : "O expediente de hoje está chegando ao fim. Exporte e baixe o arquivo consolidado (.json) para garantir que vendas, clientes, despesas e caixa fiquem salvos com segurança."}
+                  </p>
+                </div>
+
+                <div className="w-full bg-slate-950/80 p-3.5 rounded-2xl border border-slate-800 text-left space-y-1.5 text-xs">
+                  <div className="flex justify-between text-slate-400">
+                    <span>Vendas registradas no sistema:</span>
+                    <strong className="text-white font-mono">{sales.length}</strong>
+                  </div>
+                  <div className="flex justify-between text-slate-400">
+                    <span>Despesas registradas:</span>
+                    <strong className="text-white font-mono">{expenses.length}</strong>
+                  </div>
+                  <div className="flex justify-between text-slate-400">
+                    <span>Data da cópia:</span>
+                    <strong className="text-emerald-400 font-mono">{new Date().toLocaleDateString("pt-BR")}</strong>
+                  </div>
+                </div>
+
+                <div className="flex flex-col gap-2 w-full pt-1">
+                  <button
+                    type="button"
+                    disabled={runningDailyBackupAction}
+                    onClick={handleDailyBackupDownloadAndConfirm}
+                    className="w-full py-3 bg-gradient-to-r from-emerald-500 via-teal-500 to-brand-cyan hover:brightness-110 text-slate-950 rounded-xl text-xs font-black transition-all cursor-pointer shadow-lg shadow-emerald-500/20 flex items-center justify-center gap-2 uppercase tracking-wide disabled:opacity-50"
+                  >
+                    {runningDailyBackupAction ? <RefreshCw className="h-4 w-4 animate-spin" /> : <Download className="h-4 w-4 stroke-[2.5]" />}
+                    <span>Exportar e Baixar Backup (.json) Agora</span>
+                  </button>
+
+                  {dailyBackupPromptMode === "notify_only" && (
+                    <button
+                      type="button"
+                      disabled={runningDailyBackupAction}
+                      onClick={handleDailyBackupSaveLocalOnly}
+                      className="w-full py-2.5 bg-slate-800/80 hover:bg-slate-800 text-cyan-300 rounded-xl text-xs font-bold transition-all cursor-pointer border border-cyan-500/30 flex items-center justify-center gap-2 disabled:opacity-50"
+                    >
+                      <Database className="h-3.5 w-3.5" />
+                      <span>Salvar Apenas no Navegador (Local)</span>
+                    </button>
+                  )}
+
+                  <div className="grid grid-cols-2 gap-2 pt-1">
+                    <button
+                      type="button"
+                      onClick={handleDailyBackupSnooze}
+                      className="py-2.5 px-3 bg-slate-900 hover:bg-slate-850 text-slate-300 rounded-xl text-[11px] font-semibold transition-all cursor-pointer border border-slate-800 flex items-center justify-center gap-1.5"
+                    >
+                      <Clock className="h-3.5 w-3.5 text-amber-400" />
+                      Lembrar em 15 min
+                    </button>
+                    <button
+                      type="button"
+                      onClick={handleDailyBackupDismissToday}
+                      className="py-2.5 px-3 bg-slate-900 hover:bg-slate-850 text-slate-400 hover:text-slate-200 rounded-xl text-[11px] font-semibold transition-all cursor-pointer border border-slate-800 flex items-center justify-center gap-1.5"
+                    >
+                      <X className="h-3.5 w-3.5 text-slate-500" />
+                      Dispensar Hoje
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
 
       {/* Exit Backup Prompt Modal */}
       {renderExitBackupModal()}

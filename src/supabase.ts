@@ -1,6 +1,7 @@
 import { createClient, SupabaseClient } from "@supabase/supabase-js";
 import { User, CompanyProfile, Sale, Expense, CashRegisterState, CashRegisterSession, SupportFeedback, SupportConfig, CatalogProduct } from "./types";
 import { broadcastRealtime } from "./realtime";
+import { extractSettingsFromBusinessHours, packBusinessHoursWithSettings } from "./utils/companySettingsSerializer";
 
 // Prioritize VITE_ prefix (standard for Vite) as well as NEXT_PUBLIC_ (common in Vercel migrations)
 // and window.__ENV__ or process.env if injected by build systems.
@@ -991,6 +992,8 @@ export async function dbGetCompanyProfile(userId: string): Promise<CompanyProfil
         .maybeSingle();
 
       if (!error && data) {
+        const rawBH = data.business_hours || data.businessHours;
+        const { cleanBusinessHours, extractedSettings } = extractSettingsFromBusinessHours(rawBH);
         return {
           tradingName: data.trading_name || "",
           phone: data.phone || "",
@@ -1003,10 +1006,11 @@ export async function dbGetCompanyProfile(userId: string): Promise<CompanyProfil
           cnpjCpf: data.cnpj_cpf || "",
           logo: data.logo || data.logo_url || null,
           pixKey: data.pix_key || data.pixKey || "",
-          businessHours: data.business_hours || data.businessHours || undefined,
-          cashClosingReminderEnabled: data.cash_closing_reminder_enabled ?? data.cashClosingReminderEnabled ?? (data.business_hours as any)?.cashClosingReminderEnabled,
-          cashClosingReminderTime: data.cash_closing_reminder_time || data.cashClosingReminderTime || (data.business_hours as any)?.cashClosingReminderTime || undefined,
-          cashClosingReminderMessage: data.cash_closing_reminder_message || data.cashClosingReminderMessage || (data.business_hours as any)?.cashClosingReminderMessage || undefined,
+          ...extractedSettings,
+          businessHours: cleanBusinessHours,
+          cashClosingReminderEnabled: data.cash_closing_reminder_enabled ?? data.cashClosingReminderEnabled ?? extractedSettings.cashClosingReminderEnabled,
+          cashClosingReminderTime: data.cash_closing_reminder_time || data.cashClosingReminderTime || extractedSettings.cashClosingReminderTime || undefined,
+          cashClosingReminderMessage: data.cash_closing_reminder_message || data.cashClosingReminderMessage || extractedSettings.cashClosingReminderMessage || undefined,
         };
       }
     } catch (err) {
@@ -1105,7 +1109,7 @@ export async function dbSaveCompanyProfile(userId: string, profile: CompanyProfi
           pix_key: profile.pixKey || (profile as any).pix_key || null,
           logo: profile.logo || null,
           logo_url: profile.logo || null,
-          business_hours: profile.businessHours || null
+          business_hours: packBusinessHoursWithSettings(profile)
         };
 
         // NUNCA passe o objeto de estado inteiro diretamente: apenas colunas válidas
@@ -1157,10 +1161,6 @@ export async function dbSaveCompanyProfile(userId: string, profile: CompanyProfi
               } catch (e) {}
 
               notifyRealtimeSync(userId, "company_profile_updated", { profile });
-              
-              setTimeout(() => {
-                window.location.reload();
-              }, 600);
               return true;
             }
           }
@@ -1187,9 +1187,7 @@ export async function dbSaveCompanyProfile(userId: string, profile: CompanyProfi
           err?.message?.includes("schema cache") || 
           err?.message?.includes("Could not find the");
         if (isPgrst204) {
-          setTimeout(() => {
-            window.location.reload();
-          }, 600);
+          notifyRealtimeSync(userId, "company_profile_updated", { profile });
           return true;
         }
       }

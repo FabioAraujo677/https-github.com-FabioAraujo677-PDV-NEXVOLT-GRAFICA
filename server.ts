@@ -2121,6 +2121,18 @@ ${JSON.stringify(sales, null, 2)}
       }
 
       if (!error && data && (data.trading_name || data.nome)) {
+        const rawBH = data.business_hours || data.businessHours;
+        const sys = (rawBH && typeof rawBH === "object" ? rawBH._systemSettings : null) || {};
+        let cleanBusinessHours: any = undefined;
+        if (rawBH && typeof rawBH === "object") {
+          const dayKeys = ["monday", "tuesday", "wednesday", "thursday", "friday", "saturday", "sunday"];
+          if (dayKeys.some((k) => rawBH[k] !== undefined)) {
+            cleanBusinessHours = {};
+            for (const k of dayKeys) {
+              if (rawBH[k]) cleanBusinessHours[k] = rawBH[k];
+            }
+          }
+        }
         return res.json({
           success: true,
           data: {
@@ -2135,10 +2147,19 @@ ${JSON.stringify(sales, null, 2)}
             cnpjCpf: data.cnpj_cpf || "",
             logo: data.logo || null,
             pixKey: data.pix_key || data.pixKey || "",
-            businessHours: data.business_hours || data.businessHours || undefined,
-            cashClosingReminderEnabled: data.cash_closing_reminder_enabled ?? data.cashClosingReminderEnabled ?? (data.business_hours as any)?.cashClosingReminderEnabled,
-            cashClosingReminderTime: data.cash_closing_reminder_time || data.cashClosingReminderTime || (data.business_hours as any)?.cashClosingReminderTime || undefined,
-            cashClosingReminderMessage: data.cash_closing_reminder_message || data.cashClosingReminderMessage || (data.business_hours as any)?.cashClosingReminderMessage || undefined,
+            openingTime: sys.openingTime || undefined,
+            closingTime: sys.closingTime || undefined,
+            goalsReminderEnabled: sys.goalsReminderEnabled,
+            goalsReminderTime: sys.goalsReminderTime || undefined,
+            autoBackupDownloadEnabled: sys.autoBackupDownloadEnabled,
+            dailyAutoBackupEnabled: sys.dailyAutoBackupEnabled,
+            dailyAutoBackupMode: sys.dailyAutoBackupMode || undefined,
+            dailyAutoBackupTime: sys.dailyAutoBackupTime || undefined,
+            dailyAutoBackupUseClosingTime: sys.dailyAutoBackupUseClosingTime,
+            businessHours: cleanBusinessHours,
+            cashClosingReminderEnabled: data.cash_closing_reminder_enabled ?? data.cashClosingReminderEnabled ?? sys.cashClosingReminderEnabled ?? (data.business_hours as any)?.cashClosingReminderEnabled,
+            cashClosingReminderTime: data.cash_closing_reminder_time || data.cashClosingReminderTime || sys.cashClosingReminderTime || (data.business_hours as any)?.cashClosingReminderTime || undefined,
+            cashClosingReminderMessage: data.cash_closing_reminder_message || data.cashClosingReminderMessage || sys.cashClosingReminderMessage || (data.business_hours as any)?.cashClosingReminderMessage || undefined,
           }
         });
       }
@@ -2226,7 +2247,36 @@ ${JSON.stringify(sales, null, 2)}
         pix_key: profile.pixKey || (profile as any).pix_key || null,
         logo: profile.logo || null,
         logo_url: profile.logo || null,
-        business_hours: profile.businessHours || null
+        business_hours: (() => {
+          const bh = profile.businessHours && typeof profile.businessHours === "object"
+            ? {
+                monday: profile.businessHours.monday,
+                tuesday: profile.businessHours.tuesday,
+                wednesday: profile.businessHours.wednesday,
+                thursday: profile.businessHours.thursday,
+                friday: profile.businessHours.friday,
+                saturday: profile.businessHours.saturday,
+                sunday: profile.businessHours.sunday,
+              }
+            : {};
+          return {
+            ...bh,
+            _systemSettings: {
+              dailyAutoBackupEnabled: Boolean(profile.dailyAutoBackupEnabled),
+              dailyAutoBackupMode: profile.dailyAutoBackupMode || "auto_save_and_download",
+              dailyAutoBackupTime: profile.dailyAutoBackupTime || "18:00",
+              dailyAutoBackupUseClosingTime: profile.dailyAutoBackupUseClosingTime ?? true,
+              autoBackupDownloadEnabled: profile.autoBackupDownloadEnabled ?? true,
+              cashClosingReminderEnabled: Boolean(profile.cashClosingReminderEnabled),
+              cashClosingReminderTime: profile.cashClosingReminderTime || "",
+              cashClosingReminderMessage: profile.cashClosingReminderMessage || "",
+              goalsReminderEnabled: Boolean(profile.goalsReminderEnabled),
+              goalsReminderTime: profile.goalsReminderTime || "09:00",
+              openingTime: profile.openingTime || "08:00",
+              closingTime: profile.closingTime || "18:00",
+            }
+          };
+        })()
       };
 
       const payload: Record<string, any> = {};
@@ -3654,8 +3704,8 @@ ${JSON.stringify(sales, null, 2)}
 
       return res.json({ success: true, date: nowISO });
     } catch (err: any) {
-      console.error("[Server POST /api/cash-register Exception]:", err);
-      return res.status(500).json({ error: err.message });
+      console.warn("[Server POST /api/cash-register Handled Exception]:", err?.message);
+      return res.json({ success: false, error: err?.message });
     }
   });
 
@@ -3685,14 +3735,18 @@ ${JSON.stringify(sales, null, 2)}
         const targetEmpresas = Array.from(new Set([canonicalOwnerId, userId, UNIFIED_EMPRESA_ID].filter(Boolean)));
         const isUUID = typeof safeSession.id === "string" && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(safeSession.id);
         if (isUUID) {
-          for (const empId of targetEmpresas) {
+          try {
             await supabase.from("sessoes_caixa").upsert({
               id: safeSession.id,
-              empresa_id: empId,
+              empresa_id: canonicalOwnerId || userId || UNIFIED_EMPRESA_ID,
+              user_id: canonicalOwnerId || userId || UNIFIED_EMPRESA_ID,
+              operador: safeSession.operador || "Operador",
               status: "aberto",
               valor_abertura: Number(safeSession.valorAbertura) || 0,
               data_abertura: safeSession.dataAbertura || nowISO
             });
+          } catch (sessErr) {
+            console.warn("Aviso ao salvar sessoes_caixa em /api/cash-register/open:", sessErr);
           }
         }
 
@@ -3745,9 +3799,10 @@ ${JSON.stringify(sales, null, 2)}
           }
         }
 
-        const createPayload = (name: string, targetId: string) => ({
+        const createPayload = (rowId: string, targetId: string) => ({
+          id: rowId,
           user_id: targetId,
-          client_name: name,
+          client_name: "CASH_REGISTER_SYNCED_STATE",
           client_phone: "CASH_REGISTER",
           items: openState as any,
           total_value: 0,
@@ -3777,8 +3832,8 @@ ${JSON.stringify(sales, null, 2)}
 
       return res.json({ success: true, date: nowISO, state: openState });
     } catch (err: any) {
-      console.error("[Server POST /api/cash-register/open Exception]:", err);
-      return res.status(500).json({ error: err.message });
+      console.warn("[Server POST /api/cash-register/open Handled Exception]:", err?.message);
+      return res.json({ success: false, error: err?.message });
     }
   });
 
@@ -3932,8 +3987,8 @@ ${JSON.stringify(sales, null, 2)}
 
       return res.json({ success: true, date: nowISO });
     } catch (err: any) {
-      console.error("[Server POST /api/cash-register/close Exception]:", err);
-      return res.status(500).json({ error: err.message });
+      console.warn("[Server POST /api/cash-register/close Handled Exception]:", err?.message);
+      return res.json({ success: false, error: err?.message });
     }
   });
 

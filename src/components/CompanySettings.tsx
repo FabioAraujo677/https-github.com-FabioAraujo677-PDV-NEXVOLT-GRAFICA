@@ -41,9 +41,18 @@ import {
   Receipt,
   Package
 } from "lucide-react";
-import { CompanyProfile, User, CustomReminder, CashRegisterState, CashRegisterSession, BusinessHours } from "../types";
+import { CompanyProfile, User, CustomReminder, CashRegisterState, CashRegisterSession, BusinessHours, DailyAutoBackupMode, DailyAutoBackupMeta, DailyLocalBackupSnapshot } from "../types";
 import { dbExportAllData, dbImportAllData, dbGetCompanyProfile, dbSaveCompanyProfile, isSupabaseConfigured, getAdminDomain, normalizeUserString, notifyRealtimeSync, getSupabase, supabase } from "../supabase";
 import { setIndexedDbItem } from "../utils/indexedDb";
+import { extractSettingsFromBusinessHours } from "../utils/companySettingsSerializer";
+import {
+  getDailyAutoBackupMeta,
+  getDailyBackupHistory,
+  getEffectiveDailyBackupTime,
+  getTodayLocalDateStr,
+  runDailyAutoBackup,
+  downloadLocalDailyBackupSnapshot,
+} from "../utils/dailyBackup";
 
 const WEEKDAYS = [
   { key: "monday", label: "Segunda-feira" },
@@ -110,6 +119,20 @@ export function CompanySettings({
   const [closingTime, setClosingTime] = useState(company.closingTime || "18:00");
   const [autoCloseRegisterEnabled, setAutoCloseRegisterEnabled] = useState(company.autoCloseRegisterEnabled ?? false);
   const [autoBackupDownloadEnabled, setAutoBackupDownloadEnabled] = useState(company.autoBackupDownloadEnabled ?? true);
+  const [dailyAutoBackupEnabled, setDailyAutoBackupEnabled] = useState<boolean>(company.dailyAutoBackupEnabled ?? false);
+  const [dailyAutoBackupMode, setDailyAutoBackupMode] = useState<DailyAutoBackupMode>(
+    company.dailyAutoBackupMode || "auto_save_and_download"
+  );
+  const [dailyAutoBackupTime, setDailyAutoBackupTime] = useState<string>(
+    company.dailyAutoBackupTime || company.closingTime || "18:00"
+  );
+  const [dailyAutoBackupUseClosingTime, setDailyAutoBackupUseClosingTime] = useState<boolean>(
+    company.dailyAutoBackupUseClosingTime ?? true
+  );
+  const [dailyBackupMeta, setDailyBackupMeta] = useState<DailyAutoBackupMeta | null>(() => getDailyAutoBackupMeta());
+  const [dailyBackupHistory, setDailyBackupHistory] = useState<DailyLocalBackupSnapshot[]>([]);
+  const [runningDailyBackupNow, setRunningDailyBackupNow] = useState(false);
+  const [savingDailyBackupConfig, setSavingDailyBackupConfig] = useState(false);
   const [cashClosingReminderEnabled, setCashClosingReminderEnabled] = useState<boolean>(company.cashClosingReminderEnabled ?? false);
   const [cashClosingReminderTime, setCashClosingReminderTime] = useState<string>(company.cashClosingReminderTime || "");
   const [cashClosingReminderMessage, setCashClosingReminderMessage] = useState<string>(
@@ -418,17 +441,27 @@ export function CompanySettings({
     }
   };
 
+  const loadLocalDailyBackups = async () => {
+    setDailyBackupMeta(getDailyAutoBackupMeta());
+    const hist = await getDailyBackupHistory();
+    setDailyBackupHistory(hist);
+  };
+
   useEffect(() => {
     fetchCloudBackups();
+    loadLocalDailyBackups();
     const handleBackupEvent = () => fetchCloudBackups();
+    const handleDailyBackupEvent = () => loadLocalDailyBackups();
     window.addEventListener("cloud_backups_updated" as any, handleBackupEvent);
     window.addEventListener("backup_sync" as any, handleBackupEvent);
     window.addEventListener("backup_restored_sync" as any, handleBackupEvent);
+    window.addEventListener("daily_backup_updated" as any, handleDailyBackupEvent);
 
     return () => {
       window.removeEventListener("cloud_backups_updated" as any, handleBackupEvent);
       window.removeEventListener("backup_sync" as any, handleBackupEvent);
       window.removeEventListener("backup_restored_sync" as any, handleBackupEvent);
+      window.removeEventListener("daily_backup_updated" as any, handleDailyBackupEvent);
     };
   }, []);
 
@@ -1044,6 +1077,7 @@ CREATE TABLE IF NOT EXISTS meus_dados (
         }
 
         if (data) {
+          const { cleanBusinessHours, extractedSettings } = extractSettingsFromBusinessHours(data.business_hours);
           setTradingName(data.trading_name || "");
           setPhone(data.phone || "");
           setCep(data.cep || "");
@@ -1055,9 +1089,31 @@ CREATE TABLE IF NOT EXISTS meus_dados (
           setCnpjCpf(data.cnpj_cpf || "");
           setLogo(data.logo || data.logo_url || null);
           setPixKey(data.pix_key || "");
-          if (data.business_hours) setBusinessHours(data.business_hours);
+          if (cleanBusinessHours) setBusinessHours(cleanBusinessHours);
+          if (extractedSettings.dailyAutoBackupEnabled !== undefined) {
+            setDailyAutoBackupEnabled(extractedSettings.dailyAutoBackupEnabled);
+          }
+          if (extractedSettings.dailyAutoBackupMode) {
+            setDailyAutoBackupMode(extractedSettings.dailyAutoBackupMode);
+          }
+          if (extractedSettings.dailyAutoBackupTime) {
+            setDailyAutoBackupTime(extractedSettings.dailyAutoBackupTime);
+          }
+          if (extractedSettings.dailyAutoBackupUseClosingTime !== undefined) {
+            setDailyAutoBackupUseClosingTime(extractedSettings.dailyAutoBackupUseClosingTime);
+          }
+          if (extractedSettings.cashClosingReminderEnabled !== undefined) {
+            setCashClosingReminderEnabled(extractedSettings.cashClosingReminderEnabled);
+          }
+          if (extractedSettings.cashClosingReminderTime !== undefined) {
+            setCashClosingReminderTime(extractedSettings.cashClosingReminderTime);
+          }
+          if (extractedSettings.cashClosingReminderMessage !== undefined) {
+            setCashClosingReminderMessage(extractedSettings.cashClosingReminderMessage);
+          }
 
           onSaveCompany({
+            ...company,
             tradingName: data.trading_name || "",
             phone: data.phone || "",
             cep: data.cep || "",
@@ -1069,7 +1125,8 @@ CREATE TABLE IF NOT EXISTS meus_dados (
             cnpjCpf: data.cnpj_cpf || "",
             logo: data.logo || data.logo_url || null,
             pixKey: data.pix_key || "",
-            businessHours: data.business_hours || defaultBusinessHours
+            ...extractedSettings,
+            businessHours: cleanBusinessHours || defaultBusinessHours
           });
         }
       } catch (err: any) {
@@ -1116,6 +1173,10 @@ CREATE TABLE IF NOT EXISTS meus_dados (
         setClosingTime(initialProfile.closingTime || "18:00");
         setAutoCloseRegisterEnabled(initialProfile.autoCloseRegisterEnabled ?? false);
         setAutoBackupDownloadEnabled(initialProfile.autoBackupDownloadEnabled ?? true);
+        setDailyAutoBackupEnabled(initialProfile.dailyAutoBackupEnabled ?? false);
+        setDailyAutoBackupMode(initialProfile.dailyAutoBackupMode || "auto_save_and_download");
+        setDailyAutoBackupTime(initialProfile.dailyAutoBackupTime || initialProfile.closingTime || "18:00");
+        setDailyAutoBackupUseClosingTime(initialProfile.dailyAutoBackupUseClosingTime ?? true);
         setCashClosingReminderEnabled(initialProfile.cashClosingReminderEnabled ?? false);
         setCashClosingReminderTime(initialProfile.cashClosingReminderTime || "");
         setCashClosingReminderMessage(initialProfile.cashClosingReminderMessage || "Excelente dia de trabalho! O horário de encerramento do expediente foi atingido. Deseja realizar o fechamento do caixa e salvar seus relatórios antes de fechar o programa?");
@@ -1309,6 +1370,10 @@ CREATE TABLE IF NOT EXISTS meus_dados (
       closingTime: closingTime,
       autoCloseRegisterEnabled: autoCloseRegisterEnabled,
       autoBackupDownloadEnabled: autoBackupDownloadEnabled,
+      dailyAutoBackupEnabled: dailyAutoBackupEnabled,
+      dailyAutoBackupMode: dailyAutoBackupMode,
+      dailyAutoBackupTime: dailyAutoBackupTime,
+      dailyAutoBackupUseClosingTime: dailyAutoBackupUseClosingTime,
       businessHours: businessHours,
       cashClosingReminderEnabled: cashClosingReminderEnabled,
       cashClosingReminderTime: cashClosingReminderTime,
@@ -1368,6 +1433,100 @@ CREATE TABLE IF NOT EXISTS meus_dados (
     window.dispatchEvent(new CustomEvent("TEST_CASH_CLOSING_REMINDER"));
     setStatusMessage("Notificação agradável de teste disparada na tela! ✨");
     setTimeout(() => setStatusMessage(null), 4000);
+  };
+
+  const handleSaveDailyBackupConfig = async (overrides?: Partial<CompanyProfile>) => {
+    setSavingDailyBackupConfig(true);
+    setBackupError(null);
+    try {
+      const updatedProfile: CompanyProfile = {
+        ...company,
+        tradingName: tradingName.trim() || company.tradingName,
+        phone: phone.trim(),
+        cep: cep.trim(),
+        address: address.trim(),
+        number: number.trim(),
+        neighborhood: neighborhood.trim(),
+        city: city.trim(),
+        state: state.trim(),
+        cnpjCpf: cnpjCpf.trim(),
+        logo: logo,
+        pixKey: pixKey.trim(),
+        goalsReminderEnabled,
+        goalsReminderTime,
+        openingTime,
+        closingTime,
+        autoCloseRegisterEnabled,
+        autoBackupDownloadEnabled,
+        dailyAutoBackupEnabled,
+        dailyAutoBackupMode,
+        dailyAutoBackupTime,
+        dailyAutoBackupUseClosingTime,
+        businessHours,
+        cashClosingReminderEnabled,
+        cashClosingReminderTime,
+        cashClosingReminderMessage,
+        ...overrides,
+      };
+      onSaveCompany(updatedProfile);
+      setBackupSuccessMsg("✅ Configuração de Backup Automático Diário salva e sincronizada!");
+      setTimeout(() => setBackupSuccessMsg(null), 4500);
+    } catch (err: any) {
+      setBackupError("Erro ao salvar configuração de backup: " + (err?.message || err));
+    } finally {
+      setSavingDailyBackupConfig(false);
+    }
+  };
+
+  const handleRunDailyBackupNow = async () => {
+    if (!currentUser) {
+      alert("Você precisa estar logado para gerar o backup.");
+      return;
+    }
+    setRunningDailyBackupNow(true);
+    setBackupError(null);
+    setBackupSuccessMsg(null);
+    try {
+      const ownerId = currentUser.owner_id || currentUser.id;
+      const shouldDownload = dailyAutoBackupMode !== "local_only";
+      const snap = await runDailyAutoBackup({
+        ownerId,
+        companyName: tradingName || company.tradingName || "empresa",
+        mode: dailyAutoBackupMode,
+        triggerDownload: shouldDownload,
+        syncToCloud: true,
+      });
+      if (!snap) {
+        setBackupError("Não foi possível gerar o snapshot diário.");
+        return;
+      }
+      await loadLocalDailyBackups();
+      fetchCloudBackups();
+      setBackupSuccessMsg(
+        shouldDownload
+          ? `Backup diário "${snap.fileName}" salvo localmente e baixado com sucesso!`
+          : `Backup diário "${snap.fileName}" salvo localmente no navegador (IndexedDB)!`
+      );
+      if (addToast) {
+        addToast(
+          shouldDownload
+            ? `💾 Backup Diário gerado e baixado: ${snap.fileName}`
+            : `💾 Backup Diário salvo localmente no navegador!`,
+          "success"
+        );
+      }
+      setTimeout(() => setBackupSuccessMsg(null), 6000);
+    } catch (err: any) {
+      setBackupError("Falha ao executar backup diário: " + (err?.message || err));
+    } finally {
+      setRunningDailyBackupNow(false);
+    }
+  };
+
+  const handleTestDailyBackupNotification = () => {
+    window.dispatchEvent(new CustomEvent("TEST_DAILY_AUTO_BACKUP"));
+    setBackupSuccessMsg("Notificação de Backup Automático Diário disparada para visualização!");
+    setTimeout(() => setBackupSuccessMsg(null), 4000);
   };
 
   return (
@@ -2117,6 +2276,257 @@ CREATE TABLE IF NOT EXISTS meus_dados (
             <span>{backupError}</span>
           </div>
         )}
+
+        {/* 🕒 0. BACKUP AUTOMÁTICO DIÁRIO (FIM DE EXPEDIENTE) */}
+        {(() => {
+          const todayStr = getTodayLocalDateStr();
+          const doneToday = dailyBackupMeta?.date === todayStr;
+          const effectiveScheduleTime = getEffectiveDailyBackupTime({
+            closingTime,
+            businessHours,
+            dailyAutoBackupTime,
+            dailyAutoBackupUseClosingTime,
+          });
+
+          return (
+            <div className="rounded-3xl bg-gradient-to-br from-slate-950 via-slate-900 to-emerald-950/20 border-2 border-emerald-500/30 p-5 sm:p-7 space-y-5 shadow-2xl">
+              <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 border-b border-slate-800/80 pb-4">
+                <div className="flex items-start gap-3">
+                  <div className="p-2.5 rounded-xl bg-emerald-500/15 border border-emerald-500/30 text-emerald-400 shrink-0">
+                    <Clock className="h-5 w-5" />
+                  </div>
+                  <div className="space-y-1">
+                    <div className="flex flex-wrap items-center gap-2">
+                      <h4 className="text-base font-black text-white uppercase tracking-wider">
+                        Backup Automático Diário
+                      </h4>
+                      <span
+                        className={`text-[10px] font-extrabold uppercase px-2.5 py-0.5 rounded-full border ${
+                          dailyAutoBackupEnabled
+                            ? "bg-emerald-500/15 text-emerald-300 border-emerald-500/30"
+                            : "bg-slate-800 text-slate-400 border-slate-700"
+                        }`}
+                      >
+                        {dailyAutoBackupEnabled ? `Ativo • ${effectiveScheduleTime}` : "Desativado"}
+                      </span>
+                      {doneToday && (
+                        <span className="text-[10px] font-extrabold uppercase px-2.5 py-0.5 rounded-full bg-brand-cyan/15 text-brand-cyan border border-brand-cyan/30 flex items-center gap-1">
+                          <CheckCircle className="h-3 w-3" />
+                          Realizado Hoje ({new Date(dailyBackupMeta!.timestamp).toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" })})
+                        </span>
+                      )}
+                    </div>
+                    <p className="text-xs text-slate-300 leading-relaxed">
+                      Ao final do dia, o sistema gera e salva o arquivo de backup localmente no navegador ou dispara uma notificação destacada para garantir a exportação do histórico.
+                    </p>
+                  </div>
+                </div>
+
+                <label className="relative inline-flex items-center gap-3 cursor-pointer select-none shrink-0 bg-slate-950/90 px-4 py-2.5 rounded-xl border border-slate-800">
+                  <span className="text-xs font-bold text-slate-200">
+                    {dailyAutoBackupEnabled ? "Ativado" : "Ativar Backup Diário"}
+                  </span>
+                  <input
+                    type="checkbox"
+                    checked={dailyAutoBackupEnabled}
+                    onChange={(e) => {
+                      const next = e.target.checked;
+                      setDailyAutoBackupEnabled(next);
+                      handleSaveDailyBackupConfig({ dailyAutoBackupEnabled: next });
+                    }}
+                    className="sr-only peer"
+                  />
+                  <div className="w-11 h-6 bg-slate-800 border border-slate-700 rounded-full relative peer-checked:bg-gradient-to-r peer-checked:from-emerald-500 peer-checked:to-teal-500 after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:after:translate-x-5"></div>
+                </label>
+              </div>
+
+              {/* Comportamento ao Final do Dia */}
+              <div className="space-y-2.5">
+                <span className="text-xs font-bold text-slate-300 uppercase tracking-wider block">
+                  Ação ao Final do Dia
+                </span>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                  <button
+                    type="button"
+                    onClick={() => setDailyAutoBackupMode("auto_save_and_download")}
+                    className={`p-4 rounded-2xl border text-left transition-all cursor-pointer space-y-1.5 ${
+                      dailyAutoBackupMode === "auto_save_and_download"
+                        ? "bg-emerald-500/15 border-emerald-400/60 shadow-lg shadow-emerald-950/40"
+                        : "bg-slate-950/70 border-slate-800 hover:border-slate-700"
+                    }`}
+                  >
+                    <div className="flex items-center justify-between">
+                      <span className="text-xs font-extrabold text-white flex items-center gap-1.5">
+                        <Download className="h-3.5 w-3.5 text-emerald-400" />
+                        Salvar Local + Baixar .json
+                      </span>
+                      {dailyAutoBackupMode === "auto_save_and_download" && (
+                        <CheckCircle className="h-4 w-4 text-emerald-400 shrink-0" />
+                      )}
+                    </div>
+                    <p className="text-[11px] text-slate-400 leading-snug">
+                      Gera o arquivo completo, grava cópia local no navegador e inicia o download automático do .json.
+                    </p>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => setDailyAutoBackupMode("local_only")}
+                    className={`p-4 rounded-2xl border text-left transition-all cursor-pointer space-y-1.5 ${
+                      dailyAutoBackupMode === "local_only"
+                        ? "bg-cyan-500/15 border-cyan-400/60 shadow-lg shadow-cyan-950/40"
+                        : "bg-slate-950/70 border-slate-800 hover:border-slate-700"
+                    }`}
+                  >
+                    <div className="flex items-center justify-between">
+                      <span className="text-xs font-extrabold text-white flex items-center gap-1.5">
+                        <Database className="h-3.5 w-3.5 text-brand-cyan" />
+                        Salvar Local + Notificar
+                      </span>
+                      {dailyAutoBackupMode === "local_only" && (
+                        <CheckCircle className="h-4 w-4 text-brand-cyan shrink-0" />
+                      )}
+                    </div>
+                    <p className="text-[11px] text-slate-400 leading-snug">
+                      Salva a cópia diária localmente no navegador e notifica com botão rápido para baixar quando quiser.
+                    </p>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => setDailyAutoBackupMode("notify_only")}
+                    className={`p-4 rounded-2xl border text-left transition-all cursor-pointer space-y-1.5 ${
+                      dailyAutoBackupMode === "notify_only"
+                        ? "bg-amber-500/15 border-amber-400/60 shadow-lg shadow-amber-950/40"
+                        : "bg-slate-950/70 border-slate-800 hover:border-slate-700"
+                    }`}
+                  >
+                    <div className="flex items-center justify-between">
+                      <span className="text-xs font-extrabold text-white flex items-center gap-1.5">
+                        <BellRing className="h-3.5 w-3.5 text-amber-400" />
+                        Notificação de Exportação
+                      </span>
+                      {dailyAutoBackupMode === "notify_only" && (
+                        <CheckCircle className="h-4 w-4 text-amber-400 shrink-0" />
+                      )}
+                    </div>
+                    <p className="text-[11px] text-slate-400 leading-snug">
+                      Dispara um alerta interativo no fim do expediente para o usuário exportar e baixar o arquivo .json.
+                    </p>
+                  </button>
+                </div>
+              </div>
+
+              {/* Horário e Controles */}
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 items-center bg-slate-950/80 border border-slate-850 rounded-2xl p-4">
+                <div className="space-y-3">
+                  <label className="flex items-center gap-2.5 cursor-pointer select-none">
+                    <input
+                      type="checkbox"
+                      checked={dailyAutoBackupUseClosingTime}
+                      onChange={(e) => setDailyAutoBackupUseClosingTime(e.target.checked)}
+                      className="h-4 w-4 rounded border-slate-700 bg-slate-900 text-emerald-500 cursor-pointer"
+                    />
+                    <span className="text-xs font-semibold text-slate-200">
+                      Usar horário de fechamento do expediente ({getEffectiveDailyBackupTime({ closingTime, businessHours, dailyAutoBackupUseClosingTime: true })})
+                    </span>
+                  </label>
+
+                  <div className="flex items-center gap-3">
+                    <span className="text-xs text-slate-400">Horário programado:</span>
+                    <input
+                      type="time"
+                      value={dailyAutoBackupUseClosingTime ? effectiveScheduleTime : dailyAutoBackupTime}
+                      disabled={dailyAutoBackupUseClosingTime}
+                      onChange={(e) => setDailyAutoBackupTime(e.target.value)}
+                      className="bg-slate-900 border border-slate-800 disabled:opacity-50 rounded-lg py-1.5 px-3 text-xs text-emerald-300 font-mono font-bold focus:outline-none focus:border-emerald-500"
+                    />
+                  </div>
+                </div>
+
+                <div className="flex flex-wrap items-center lg:justify-end gap-2">
+                  <button
+                    type="button"
+                    onClick={handleTestDailyBackupNotification}
+                    className="py-2 px-3.5 rounded-xl bg-amber-500/10 hover:bg-amber-500/20 border border-amber-500/30 text-amber-300 text-xs font-bold flex items-center gap-1.5 cursor-pointer transition-all"
+                  >
+                    <BellRing className="h-3.5 w-3.5" />
+                    <span>Testar Notificação</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={handleRunDailyBackupNow}
+                    disabled={runningDailyBackupNow}
+                    className="py-2 px-3.5 rounded-xl bg-cyan-500/15 hover:bg-cyan-500/25 border border-cyan-500/40 text-brand-cyan text-xs font-bold flex items-center gap-1.5 cursor-pointer transition-all disabled:opacity-50"
+                  >
+                    {runningDailyBackupNow ? <RefreshCw className="h-3.5 w-3.5 animate-spin" /> : <Download className="h-3.5 w-3.5" />}
+                    <span>Executar Agora</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => handleSaveDailyBackupConfig()}
+                    disabled={savingDailyBackupConfig}
+                    className="py-2 px-4 rounded-xl bg-gradient-to-r from-emerald-500 to-teal-500 hover:brightness-110 text-slate-950 text-xs font-black uppercase tracking-wider flex items-center gap-1.5 cursor-pointer transition-all disabled:opacity-50"
+                  >
+                    {savingDailyBackupConfig ? <RefreshCw className="h-3.5 w-3.5 animate-spin" /> : <Check className="h-3.5 w-3.5 stroke-[2.5]" />}
+                    <span>Salvar Preferência</span>
+                  </button>
+                </div>
+              </div>
+
+              {/* Histórico Local (IndexedDB) */}
+              <div className="space-y-2">
+                <div className="flex items-center justify-between">
+                  <span className="text-xs font-bold text-slate-300 uppercase tracking-wider flex items-center gap-2">
+                    <Database className="h-3.5 w-3.5 text-emerald-400" />
+                    Cópias Automáticas Salvas Localmente ({dailyBackupHistory.length})
+                  </span>
+                  <span className="text-[11px] text-slate-400">
+                    Retenção local dos últimos 7 dias no navegador
+                  </span>
+                </div>
+
+                {dailyBackupHistory.length === 0 ? (
+                  <div className="p-4 text-center text-xs text-slate-500 font-mono bg-slate-950/60 border border-dashed border-slate-850 rounded-xl">
+                    Nenhuma cópia diária salva localmente ainda. Ative acima ou clique em "Executar Agora".
+                  </div>
+                ) : (
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 max-h-[180px] overflow-y-auto pr-1">
+                    {dailyBackupHistory.map((snap) => (
+                      <div
+                        key={snap.id}
+                        className="p-3 bg-slate-950 border border-slate-800 rounded-xl flex items-center justify-between gap-2"
+                      >
+                        <div className="min-w-0">
+                          <p className="text-xs font-bold text-slate-200 truncate font-mono">
+                            {snap.fileName}
+                          </p>
+                          <p className="text-[10px] text-slate-400 font-mono mt-0.5">
+                            {new Date(snap.timestamp).toLocaleString("pt-BR")} • {(snap.sizeBytes / 1024).toFixed(1)} KB • {snap.salesCount} vendas
+                          </p>
+                        </div>
+                        <button
+                          type="button"
+                          onClick={async () => {
+                            const ok = await downloadLocalDailyBackupSnapshot(snap.id);
+                            if (ok && addToast) {
+                              addToast(`Arquivo "${snap.fileName}" baixado com sucesso!`, "success");
+                            }
+                          }}
+                          className="py-1.5 px-2.5 rounded-lg bg-emerald-500/15 hover:bg-emerald-500/25 border border-emerald-500/30 text-emerald-300 text-[11px] font-bold flex items-center gap-1 shrink-0 cursor-pointer"
+                          title="Baixar arquivo JSON salvo localmente"
+                        >
+                          <Download className="h-3 w-3" />
+                          <span>Baixar</span>
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            </div>
+          );
+        })()}
 
         {/* 1. SEÇÃO PRINCIPAL: ARQUIVO ÚNICO CONSOLIDADO (.JSON) */}
         <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950 border-2 border-slate-800 hover:border-brand-magenta/40 transition-all p-6 sm:p-8 shadow-2xl space-y-6">

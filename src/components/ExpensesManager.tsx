@@ -530,6 +530,7 @@ export function ExpensesManager({ expenses, onAddExpense, onDeleteExpense, sales
       value: numValue,
       date,
       category,
+      paymentMethod,
       comprovanteUrl: receiptPreview || undefined,
       receiptImage: receiptPreview || undefined,
     };

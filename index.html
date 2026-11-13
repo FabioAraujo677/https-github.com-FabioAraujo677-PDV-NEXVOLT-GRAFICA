@@ -26,63 +26,29 @@
         var msg = event.message || '';
         var url = event.filename || '';
         
-        // Ignora erros originados de extensões de navegador (chrome-extension://)
-        if (url && url.indexOf('chrome-extension://') > -1) {
-          event.preventDefault();
+        // Ignora erros originados de extensões de navegador
+        if (url && (url.indexOf('chrome-extension://') > -1 || url.indexOf('moz-extension://') > -1)) {
           return;
         }
 
-        var line = event.lineno || '';
-        var col = event.colno || '';
         var err = event.error;
-
-        // Note: For resource loading failures (captured in capture phase), event.target may exist and not have message
         var isResourceError = event.target && (event.target.tagName === 'SCRIPT' || event.target.tagName === 'LINK');
-        if (isResourceError) {
-          msg = 'Load failed: ' + (event.target.src || event.target.href || 'resource');
-        }
-
-        console.warn('[Diagnóstico Global] Erro interceptado:', {
-          message: msg,
-          url: url,
-          line: line,
-          col: col,
-          isResourceError: isResourceError,
-          errorObject: err ? { name: err.name, message: err.message, stack: err.stack } : null
-        });
-
-        // Detecta falhas críticas de carregamento de scripts (causadas por cache antigo, mudança de hash ou falhas de rede)
+        
+        // Detecta falhas críticas de carregamento de scripts que causem tela branca
         var isSyntaxError = msg.indexOf('SyntaxError') > -1 || (err && err.name === 'SyntaxError');
-        var isUnexpectedToken = msg.indexOf("Unexpected token '<'") > -1 || (err && err.message && err.message.indexOf("Unexpected token '<'") > -1);
         var isChunkLoadFailed = msg.toLowerCase().indexOf('failed to fetch dynamically imported module') > -1 || msg.toLowerCase().indexOf('error loading dynamically imported module') > -1;
         
-        // Verifica se é uma falha de carregamento de um recurso crítico do nosso próprio app (mesma origem)
-        var isCriticalResourceError = false;
-        if (isResourceError && event.target) {
-          var src = event.target.src || event.target.href || '';
-          // Apenas ativa se for da mesma origem e for um script, stylesheet ou módulo do nosso app
-          if (src && src.indexOf(window.location.origin) > -1) {
-            if (src.indexOf('/src/') > -1 || src.indexOf('/assets/') > -1 || src.indexOf('main.tsx') > -1 || src.indexOf('.css') > -1) {
-              isCriticalResourceError = true;
-            }
-          }
-        }
+        // Só ativa auto-recuperação para falhas de carregamento de recursos próprios e erros de sintaxe (cache quebrado)
+        if (isChunkLoadFailed || isSyntaxError) {
+          console.log('[Self-Healing] Erro crítico detectado. Verificando necessidade de recarregamento...');
 
-        var isLoadFailed = isCriticalResourceError;
-        var isGenericScriptError = false; // Nunca disparar reload para erro de script genérico sem contexto (geralmente extensões)
-
-        // Se for um erro crítico que cause tela branca, aplica o procedimento de auto-recuperação
-        if (isUnexpectedToken || isChunkLoadFailed || isSyntaxError || isLoadFailed) {
-          console.log('[Self-Healing] Erro crítico de carregamento ou sintaxe detectado em recurso próprio. Iniciando procedimento de auto-recuperação...');
-
-          // Evita loops infinitos de recarregamento usando sessionStorage
           var now = Date.now();
           var lastReload = Number(sessionStorage.getItem('NUCLEO_LAST_AUTO_RELOAD') || 0);
           var reloadCount = Number(sessionStorage.getItem('NUCLEO_AUTO_RELOAD_COUNT') || 0);
 
-          if (now - lastReload < 15000) {
-            if (reloadCount >= 3) {
-              console.warn('[Self-Healing] Loop de recarregamento evitado. O sistema já tentou se recuperar 3 vezes nos últimos 15 segundos.');
+          if (now - lastReload < 20000) {
+            if (reloadCount >= 2) {
+              console.warn('[Self-Healing] Limite de recarregamento atingido.');
               return;
             }
             sessionStorage.setItem('NUCLEO_AUTO_RELOAD_COUNT', reloadCount + 1);
@@ -91,50 +57,19 @@
           }
           sessionStorage.setItem('NUCLEO_LAST_AUTO_RELOAD', now);
 
-          console.log('[Self-Healing] Limpando caches e service workers para obter os arquivos mais recentes do servidor...');
-
-          // Limpa Service Workers registrados
-          if ('serviceWorker' in navigator) {
-            navigator.serviceWorker.getRegistrations().then(function(registrations) {
-              for (var i = 0; i < registrations.length; i++) {
-                registrations[i].unregister();
-              }
-            });
-          }
-
-          // Limpa caches locais
-          if ('caches' in window) {
-            caches.keys().then(function(keys) {
-              keys.forEach(function(key) {
-                caches.delete(key);
-              });
-            });
-          }
-
-          // Limpa dados temporários que possam estar corrompidos se necessário (preserva dados de vendas)
-          if (isUnexpectedToken || isSyntaxError) {
-            localStorage.removeItem('NUCLEO_CURRENT_USER');
-          }
-
           setTimeout(function() {
-            console.log('[Self-Healing] Forçando recarregamento total da página...');
-            window.location.reload(true);
-          }, 800);
+            window.location.reload();
+          }, 2000);
         }
-
-        if (msg.toLowerCase().indexOf('script error') > -1 && !isGenericScriptError) {
-          console.info('[CORS/Script Error Blocked] Nota: Erros genéricos de script costumam decorrer de restrições de CORS sobre scripts externos ou extensões de navegador.');
-        }
-      }, true); // Habilitado capture-phase para interceptar falhas de rede/carregamento de tags script e link
+      }, true);
 
       window.addEventListener('unhandledrejection', function(event) {
         var reason = event.reason;
         var reasonStr = String(reason && reason.message ? reason.message : reason);
         if (reasonStr.includes('WebSocket') || reasonStr.includes('chrome-extension')) {
-          event.preventDefault();
-          return; // Ignore benign WebSocket HMR or browser extension rejections
+          return;
         }
-        console.warn('[Diagnóstico Global] Rejeição de promessa interceptada:', reason);
+        console.warn('[Diagnóstico Global] Rejeição interceptada:', reason);
       });
     </script>
 

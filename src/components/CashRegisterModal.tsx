@@ -120,6 +120,11 @@ export function CashRegisterModal({
             setCaixaDbStatus("ABERTO");
             return;
           } else if (st === "FECHADO") {
+            const cur = cashRegister.currentSession;
+            if (cur && cur.status === "aberto") {
+              setCaixaDbStatus("ABERTO");
+              return;
+            }
             setCaixaDbStatus("FECHADO");
             return;
           }
@@ -425,7 +430,8 @@ export function CashRegisterModal({
         const val = Number(expense.value) || 0;
         expensesTotal += val;
 
-        const { method } = parseExpenseDescription(expense.description, expense);
+        // Use explicit paymentMethod if available, otherwise fallback to description parsing
+        const method = expense.paymentMethod || parseExpenseDescription(expense.description, expense).method;
         if (method === "dinheiro") {
           expensesPaidInCash += val;
         }
@@ -538,76 +544,7 @@ export function CashRegisterModal({
     const val = Math.max(0, Number(openCashInput) || 0);
     const op = operatorInput.trim() || activeOperatorName || "Operador Principal";
 
-    const userId = currentUser?.owner_id || currentUser?.id;
-    if (!userId) return;
-    fetch("/api/cash-register/open", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        userId,
-        session: {
-          valorAbertura: val,
-          operador: op,
-          dataAbertura: new Date().toISOString(),
-          status: "aberto"
-        }
-      })
-    }).catch(() => {});
-
-    const supabase = getSupabase();
-    if (supabase) {
-      (async () => {
-        try {
-          const todayDate = getLocalDateFromISO(new Date().toISOString());
-          const { data: existingRows } = await supabase
-            .from("caixa_status")
-            .select("id")
-            .eq("user_id", userId)
-            .eq("date", todayDate)
-            .order("opened_at", { ascending: false })
-            .limit(1);
-
-          const existingRow = existingRows && existingRows.length > 0 ? existingRows[0] : null;
-          const validUUID = (typeof crypto !== "undefined" && typeof crypto.randomUUID === "function")
-            ? crypto.randomUUID()
-            : "xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx".replace(/[xy]/g, (c) => {
-                const r = (Math.random() * 16) | 0;
-                const v = c === "x" ? r : (r & 0x3) | 0x8;
-                return v.toString(16);
-              });
-
-          if (existingRow?.id) {
-            await supabase
-              .from("caixa_status")
-              .update({
-                status: "ABERTO",
-                opened_at: new Date().toISOString(),
-                closed_at: null,
-                valor_abertura: val,
-                valor_fechamento: null
-              })
-              .eq("id", existingRow.id);
-          } else {
-            await supabase
-              .from("caixa_status")
-              .upsert({
-                id: validUUID,
-                user_id: userId,
-                date: todayDate,
-                status: "ABERTO",
-                opened_at: new Date().toISOString(),
-                closed_at: null,
-                valor_abertura: val,
-                valor_fechamento: null
-              });
-          }
-        } catch (err) {
-          console.warn("Erro ao atualizar caixa_status:", err);
-        }
-      })();
-    }
     setCaixaDbStatus("ABERTO");
-
     onOpenRegister(val, op);
   };
 
@@ -1318,9 +1255,9 @@ export function CashRegisterModal({
                 </span>
                 
                 <div className="grid grid-cols-2 gap-2">
-                  {/* CARD 1: ENTRADAS */}
+                  {/* CARD 1: RECEBIMENTOS */}
                   <div className="p-2 bg-slate-950 border border-slate-850 rounded-xl">
-                    <span className="text-[9px] text-slate-450 uppercase tracking-widest font-black block">Entradas / Sinais</span>
+                    <span className="text-[9px] text-slate-450 uppercase tracking-widest font-black block">Entradas / Recebimentos</span>
                     <strong className="text-emerald-400 font-mono text-xs sm:text-sm block">
                       R$ {sessionStats.totalEntradas.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}
                     </strong>
@@ -1340,55 +1277,44 @@ export function CashRegisterModal({
                     </div>
                   </div>
 
-                  {/* CARD 2: CUSTOS */}
+                  {/* CARD 2: GASTOS EM DINHEIRO (ABATIMENTO) */}
                   <div className="p-2 bg-slate-950 border border-slate-850 rounded-xl">
-                    <span className="text-[9px] text-slate-455 uppercase tracking-widest font-black block">Custos / Despesas</span>
+                    <span className="text-[9px] text-rose-450 uppercase tracking-widest font-black block">Gastos / Saídas (Dinheiro)</span>
                     <strong className="text-rose-450 font-mono text-xs sm:text-sm block">
-                      R$ {sessionStats.totalCustos.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}
+                      - R$ {sessionStats.expensesPaidInCash.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}
                     </strong>
                     <div className="text-[8px] sm:text-[9px] text-slate-500 font-mono space-y-0.5 mt-1 border-t border-slate-900 pt-1">
-                      <div className="flex justify-between">
-                        <span>Custo Oper.:</span> 
-                        <span className="text-slate-300">R$ {sessionStats.operationCosts.toFixed(2)}</span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span>Despesas:</span> 
-                        <span className="text-slate-300">R$ {sessionStats.expensesTotal.toFixed(2)}</span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span>Motoboy:</span> 
-                        <span className="text-slate-300">R$ {sessionStats.totalMotoboy.toFixed(2)}</span>
-                      </div>
-                      <div className="flex justify-between border-t border-slate-900 pt-0.5 mt-0.5">
-                        <span className="text-rose-450 font-bold">Meta Diária:</span> 
-                        <strong className="text-rose-400">R$ {dailyMetaGoal.toLocaleString("pt-BR", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</strong>
-                      </div>
+                      <p className="text-[7.5px] leading-tight italic">
+                        Valores retirados da gaveta para pagamentos em espécie (sangrias).
+                      </p>
                     </div>
                   </div>
 
-                  {/* CARD 3: LUCRO LIQUIDO */}
+                  {/* CARD 3: SALDO ATUAL EM GAVETA */}
+                  <div className="p-2 bg-brand-cyan/5 border border-brand-cyan/20 rounded-xl ring-1 ring-brand-cyan/10 shadow-lg shadow-brand-cyan/5 scale-[1.02]">
+                    <span className="text-[9px] text-brand-cyan uppercase tracking-widest font-black block">Saldo Líquido em Gaveta</span>
+                    <strong className="text-white font-mono text-sm sm:text-base block">
+                      R$ {sessionStats.expectedInDrawer.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}
+                    </strong>
+                    <div className="text-[7.5px] sm:text-[8px] text-slate-400 font-mono space-y-0.5 mt-1 border-t border-brand-cyan/10 pt-1">
+                      <p className="leading-tight">
+                        (Abertura + Entradas em Dinheiro - Despesas em Dinheiro)
+                      </p>
+                    </div>
+                  </div>
+
+                  {/* CARD 4: LUCRO LÍQUIDO GERAL */}
                   <div className={`p-2 border rounded-xl ${
                     sessionStats.lucroLiquido >= 0 
                       ? "bg-emerald-950/10 border-emerald-900/20" 
                       : "bg-rose-955/10 border-rose-910/20"
                   }`}>
-                    <span className="text-[9px] text-slate-450 uppercase tracking-widest font-black block">Lucro Real</span>
+                    <span className="text-[9px] text-slate-450 uppercase tracking-widest font-black block">Lucro Real (Geral)</span>
                     <strong className={`font-mono text-xs sm:text-sm block ${sessionStats.lucroLiquido >= 0 ? "text-emerald-400" : "text-rose-500"}`}>
                       R$ {sessionStats.lucroLiquido.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}
                     </strong>
-                    <span className="text-[8px] text-slate-500 leading-tight block pt-0.5 truncate">
-                      Recebimentos - custos totais
-                    </span>
-                  </div>
-
-                  {/* CARD 4: ENTRADA DE SERVICO */}
-                  <div className="p-2 bg-slate-950 border border-slate-850 rounded-xl">
-                    <span className="text-[9px] text-slate-450 uppercase tracking-widest font-black block">Entrada de Serviços</span>
-                    <strong className="text-brand-cyan font-mono text-xs sm:text-sm block">
-                      R$ {sessionStats.totalSales.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}
-                    </strong>
-                    <span className="text-[8px] text-slate-500 leading-tight block pt-0.5 truncate">
-                      Valor bruto total dos serviços
+                    <span className="text-[8px] text-slate-500 leading-tight block pt-0.5">
+                      Entradas totais - todos os custos/despesas.
                     </span>
                   </div>
                 </div>

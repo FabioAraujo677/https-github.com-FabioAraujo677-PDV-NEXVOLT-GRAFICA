@@ -14,6 +14,26 @@ export interface BusinessHours {
   sunday: DailyBusinessHours;
 }
 
+export type DailyAutoBackupMode = "auto_save_and_download" | "local_only" | "notify_only";
+
+export interface DailyAutoBackupMeta {
+  date: string; // YYYY-MM-DD
+  timestamp: string; // ISO string
+  fileName: string;
+  sizeBytes: number;
+  mode: DailyAutoBackupMode | "manual";
+  salesCount: number;
+  clientsCount: number;
+  productsCount: number;
+  expensesCount: number;
+  downloaded: boolean;
+}
+
+export interface DailyLocalBackupSnapshot extends DailyAutoBackupMeta {
+  id: string;
+  jsonContent: string;
+}
+
 export interface CompanyProfile {
   tradingName: string;
   phone: string;
@@ -32,6 +52,10 @@ export interface CompanyProfile {
   closingTime?: string; // HH:MM format
   autoCloseRegisterEnabled?: boolean;
   autoBackupDownloadEnabled?: boolean;
+  dailyAutoBackupEnabled?: boolean;
+  dailyAutoBackupMode?: DailyAutoBackupMode;
+  dailyAutoBackupTime?: string; // HH:MM format
+  dailyAutoBackupUseClosingTime?: boolean;
   businessHours?: BusinessHours;
   cashClosingReminderEnabled?: boolean;
   cashClosingReminderTime?: string; // HH:MM format
@@ -140,6 +164,7 @@ export interface Expense {
   value: number;
   date: string; // ISO string or YYYY-MM-DD
   category: string;
+  paymentMethod?: 'dinheiro' | 'cartão' | 'pix';
   comprovanteUrl?: string;
   receiptImage?: string;
 }

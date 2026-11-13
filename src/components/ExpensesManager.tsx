@@ -25,6 +25,7 @@ import {
   CheckCircle2
 } from "lucide-react";
 import { Expense, Sale, getSaleOperationCost, CashRegisterState, User } from "../types";
+import { dbSaveExpense, isSupabaseConfigured } from "../supabase";
 import { MonthlyBill } from "./MonthlyExpensesMeta";
 import {
   BarChart,
@@ -537,6 +538,23 @@ export function ExpensesManager({ expenses, onAddExpense, onDeleteExpense, sales
 
     onAddExpense(newExpense);
     
+    const companyOwnerId = currentUser?.owner_id || currentUser?.id;
+    if (companyOwnerId && isSupabaseConfigured()) {
+      dbSaveExpense(companyOwnerId, newExpense).then((res) => {
+        if (!res.success) {
+          setScanError(`⚠️ Sincronização offline: Salvo localmente, mas falhou ao sincronizar com a nuvem: ${res.error || "Erro desconhecido"}`);
+        } else {
+          setSuccessMsg("Despesa cadastrada e sincronizada com sucesso!");
+          setTimeout(() => setSuccessMsg(null), 3000);
+        }
+      }).catch((err: any) => {
+        setScanError(`⚠️ Sincronização offline: Salvo localmente, mas falhou ao sincronizar com a nuvem: ${err.message || "Erro de conexão"}`);
+      });
+    } else {
+      setSuccessMsg("Despesa cadastrada com sucesso!");
+      setTimeout(() => setSuccessMsg(null), 3000);
+    }
+
     // Reset form
     setDescription("");
     setValue("");
@@ -544,7 +562,6 @@ export function ExpensesManager({ expenses, onAddExpense, onDeleteExpense, sales
     setIsPreRegistered(false);
     setScannedFileName("");
     setReceiptPreview(null);
-    setScanError(null);
     setSuccessMsg("Despesa cadastrada com sucesso!");
     setTimeout(() => setSuccessMsg(null), 3000);
   };

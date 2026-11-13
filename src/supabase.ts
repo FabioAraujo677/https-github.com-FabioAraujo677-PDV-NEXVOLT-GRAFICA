@@ -1682,50 +1682,83 @@ export async function dbDeleteSale(saleId: string): Promise<boolean> {
 
 export async function dbGetExpenses(userId: string): Promise<Expense[] | null> {
   if (!userId || !userId.trim()) return [];
-  // 1. Primary: fetch via server API with service_role and company scoping
+  let remoteList: Expense[] = [];
   try {
     const res = await fetch(`/api/expenses?userId=${encodeURIComponent(userId)}`);
     if (res.ok) {
       const json = await res.json();
       if (json.success && Array.isArray(json.data)) {
-        return json.data;
+        remoteList = json.data.map((d: any) => ({
+          id: d.id,
+          description: d.description || d.descricao || "",
+          value: Number(d.value ?? d.amount ?? d.valor ?? 0),
+          date: d.date || "",
+          category: d.category || d.categoria || "Outros",
+          paymentMethod: d.payment_method || d.paymentMethod || "dinheiro",
+          createdAt: d.created_at || d.createdAt
+        }));
       }
     }
   } catch (apiErr) {
     console.warn("Direct /api/expenses GET error, falling back to direct client:", apiErr);
   }
 
-  // 2. Fallback: direct Supabase client
-  const supabase = getSupabase();
-  if (!supabase) return null;
+  if (remoteList.length === 0) {
+    const supabase = getSupabase();
+    if (supabase) {
+      try {
+        const { data, error } = await supabase
+          .from("expenses")
+          .select("*")
+          .eq("user_id", userId);
 
-  try {
-    const { data, error } = await supabase
-      .from("expenses")
-      .select("*")
-      .eq("user_id", userId);
-
-    if (error) {
-      console.error("Error fetching expenses from Supabase:", error);
-      return null;
+        if (!error && data) {
+          remoteList = data.map((d: any) => ({
+            id: d.id,
+            description: d.description || d.descricao || "",
+            value: Number(d.value ?? d.amount ?? d.valor ?? 0),
+            date: d.date || "",
+            category: d.category || d.categoria || "Outros",
+            paymentMethod: d.payment_method || d.paymentMethod || "dinheiro",
+            createdAt: d.created_at || d.createdAt
+          }));
+        }
+      } catch (err) {
+        console.error("Supabase query expenses exception:", err);
+      }
     }
-
-    if (!data) return [];
-
-    return data.map((d) => ({
-      id: d.id,
-      description: d.description,
-      value: Number(d.value),
-      date: d.date,
-      category: d.category
-    }));
-  } catch (err) {
-    console.error("Supabase query expenses exception:", err);
-    return null;
   }
+
+  // Protection against deletion in sync:
+  // Never delete local expenses that are still pending synchronization or created in the last 60 minutes
+  let localExpenses: Expense[] = [];
+  try {
+    const localRaw = localStorage.getItem("NUCLEO_EXPENSES");
+    if (localRaw) {
+      const parsed = JSON.parse(localRaw);
+      if (Array.isArray(parsed)) localExpenses = parsed;
+    }
+  } catch (e) {}
+
+  const now = Date.now();
+  const remoteIds = new Set(remoteList.map(e => e.id));
+  const merged = [...remoteList];
+
+  for (const localExp of localExpenses) {
+    if (!remoteIds.has(localExp.id)) {
+      const expAny = localExp as any;
+      const createdAtTime = expAny.createdAt || expAny.created_at ? new Date(expAny.createdAt || expAny.created_at).getTime() : 0;
+      const ageMinutes = createdAtTime ? (now - createdAtTime) / (1000 * 60) : 0;
+      if (!createdAtTime || ageMinutes <= 60) {
+        merged.push(localExp);
+      }
+    }
+  }
+
+  return merged;
 }
 
-export async function dbSaveExpense(userId: string, expense: Expense): Promise<boolean> {
+export async function dbSaveExpense(userId: string, expense: Expense): Promise<{ success: boolean; error?: string }> {
   let cleanId = expense.id;
   const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
   if (!uuidRegex.test(cleanId)) {
@@ -1743,49 +1776,61 @@ export async function dbSaveExpense(userId: string, expense: Expense): Promise<b
     expense.id = cleanId;
   }
 
-  // 1. Primary: save via server API with service_role and company scoping
+  const expAny = expense as any;
+  // Exact mapping of columns for expenses table in Supabase:
+  // id, user_id, description, value, category, payment_method, date, created_at
+  const expensePayload = {
+    id: cleanId,
+    user_id: userId,
+    description: expense.description || "Despesa",
+    value: Number(expense.value) || 0,
+    category: expense.category || "Outros",
+    payment_method: expense.paymentMethod || expAny.payment_method || "dinheiro",
+    date: expense.date || new Date().toISOString(),
+    created_at: expAny.createdAt || expAny.created_at || new Date().toISOString()
+  };
+
+  // 1. Primary: save via server API
   try {
     const res = await fetch("/api/expenses", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ userId, expense: { ...expense, id: cleanId } })
+      body: JSON.stringify({ userId, expense: expensePayload })
     });
     if (res.ok) {
       const json = await res.json();
       if (json.success) {
-        notifyRealtimeSync(userId, "expenses_updated", { expense: { ...expense, id: cleanId } });
-        return true;
+        notifyRealtimeSync(userId, "expenses_updated", { expense: expensePayload });
+        return { success: true };
+      } else {
+        return { success: false, error: json.error || "Erro ao salvar despesa no servidor" };
       }
+    } else {
+      const errJson = await res.json().catch(() => ({}));
+      return { success: false, error: errJson.error || `Erro HTTP ${res.status}` };
     }
-  } catch (apiErr) {
+  } catch (apiErr: any) {
     console.warn("Direct /api/expenses POST error, falling back to direct client:", apiErr);
   }
 
   // 2. Fallback: direct Supabase client
   const supabase = getSupabase();
-  if (!supabase) return false;
+  if (!supabase) return { success: false, error: "Cliente Supabase não inicializado" };
 
   try {
     const { error } = await supabase
       .from("expenses")
-      .upsert({
-        id: cleanId,
-        user_id: userId,
-        description: expense.description,
-        value: expense.value,
-        date: expense.date,
-        category: expense.category
-      });
+      .upsert(expensePayload);
 
     if (error) {
       console.error("Error saving expense to Supabase:", error);
-      return false;
+      return { success: false, error: error.message };
     }
-    notifyRealtimeSync(userId, "expenses_updated", { expense: { ...expense, id: cleanId } });
-    return true;
-  } catch (err) {
+    notifyRealtimeSync(userId, "expenses_updated", { expense: expensePayload });
+    return { success: true };
+  } catch (err: any) {
     console.error("Supabase upsert expense exception:", err);
-    return false;
+    return { success: false, error: err.message || "Exceção ao salvar despesa" };
   }
 }
 

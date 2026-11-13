@@ -42,7 +42,7 @@ import {
   Package
 } from "lucide-react";
 import { CompanyProfile, User, CustomReminder, CashRegisterState, CashRegisterSession, BusinessHours, DailyAutoBackupMode, DailyAutoBackupMeta, DailyLocalBackupSnapshot } from "../types";
-import { dbExportAllData, dbImportAllData, dbGetCompanyProfile, dbSaveCompanyProfile, isSupabaseConfigured, getAdminDomain, normalizeUserString, notifyRealtimeSync, getSupabase, supabase } from "../supabase";
+import { dbExportAllData, dbImportAllData, dbGetCompanyProfile, dbSaveCompanyProfile, isSupabaseConfigured, getAdminDomain, normalizeUserString, notifyRealtimeSync, getSupabase, supabase, dbResetSystemData } from "../supabase";
 import { setIndexedDbItem } from "../utils/indexedDb";
 import { extractSettingsFromBusinessHours } from "../utils/companySettingsSerializer";
 import {
@@ -834,6 +834,83 @@ export function CompanySettings({
       setBackupError("Falha ao restaurar backup: " + (err.message || err));
     } finally {
       setIsConfirmingRestore(false);
+    }
+  };
+
+  // Danger Zone Reset System Data State
+  const [showResetModal, setShowResetModal] = useState(false);
+  const [resetConfirmText, setResetConfirmText] = useState("");
+  const [isResetting, setIsResetting] = useState(false);
+
+  const handleConfirmReset = async () => {
+    if (resetConfirmText.trim().toUpperCase() !== "ZERAR") {
+      alert("Você precisa digitar exatamente a palavra ZERAR para confirmar.");
+      return;
+    }
+    const userId = currentUser?.owner_id || currentUser?.id;
+    if (!userId) {
+      alert("Usuário não identificado.");
+      return;
+    }
+
+    setIsResetting(true);
+    setBackupError(null);
+    setBackupSuccessMsg(null);
+
+    try {
+      // 1. Delete in Supabase tables for current user
+      if (isSupabaseConfigured()) {
+        const res = await dbResetSystemData(userId);
+        if (!res.success) {
+          console.warn("Aviso ao resetar no Supabase:", res.error);
+        }
+      }
+
+      // 2. Clear local storage data keys (keeping login session intact)
+      const keysToClear = [
+        "NUCLEO_SALES",
+        "NUCLEO_EXPENSES",
+        "NUCLEO_PRODUCTS",
+        "NUCLEO_CLIENTS",
+        "NUCLEO_MONTHLY_BILLS",
+        "NUCLEO_RECURRING_EXPENSES",
+        "NUCLEO_QUICK_SALES",
+        "NUCLEO_GOALS",
+        "NUCLEO_CASH_REGISTER",
+        "NUCLEO_CUSTOM_REMINDERS",
+        "NUCLEO_BUDGETS",
+        "NUCLEO_ORCAMENTOS",
+        "NUCLEO_FLUXO_CAIXA",
+        "NUCLEO_USERS",
+        "NUCLEO_BACKUPS"
+      ];
+      keysToClear.forEach(k => localStorage.removeItem(k));
+
+      // 3. Refresh app data states immediately
+      if (onRefreshData) {
+        await onRefreshData(currentUser || undefined, false, true);
+      }
+
+      // 4. Dispatch events so all views and tabs update instantly
+      window.dispatchEvent(new CustomEvent("sales_updated"));
+      window.dispatchEvent(new CustomEvent("expenses_updated"));
+      window.dispatchEvent(new CustomEvent("products_updated"));
+      window.dispatchEvent(new CustomEvent("clients_updated"));
+      window.dispatchEvent(new CustomEvent("cloud_backups_updated"));
+      window.dispatchEvent(new Event("storage"));
+
+      if (addToast) addToast("Sistema zerado com sucesso! 🗑️", "success");
+      setBackupSuccessMsg("Sistema zerado com sucesso!");
+      setTimeout(() => setBackupSuccessMsg(null), 5000);
+
+      setShowResetModal(false);
+      setResetConfirmText("");
+      fetchCloudBackups();
+    } catch (err: any) {
+      console.error("Erro ao zerar sistema:", err);
+      alert("Erro ao zerar sistema: " + (err.message || err));
+    } finally {
+      setIsResetting(false);
     }
   };
 
@@ -2728,6 +2805,44 @@ CREATE TABLE IF NOT EXISTS meus_dados (
         </div>
       </div>
 
+      {/* ⚠️ ZONA DE PERIGO - RESETAR DADOS DO SISTEMA */}
+      <div className="mt-8 p-5 bg-red-950/25 border-2 border-red-900/50 rounded-2xl space-y-4 shadow-xl">
+        <div className="flex items-center gap-3 border-b border-red-900/40 pb-3">
+          <div className="p-2.5 rounded-xl bg-red-500/20 border border-red-500/40 text-red-500 animate-pulse">
+            <ShieldAlert className="h-6 w-6" />
+          </div>
+          <div>
+            <h3 className="text-base font-extrabold text-white flex items-center gap-2">
+              Zona de Perigo - Resetar Dados do Sistema
+            </h3>
+            <p className="text-xs text-red-300/80">
+              Ações críticas e irreversíveis para limpeza completa de registros e histórico.
+            </p>
+          </div>
+        </div>
+
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+          <div className="space-y-1">
+            <h4 className="text-sm font-bold text-white">Zerar / Resetar Todos os Dados</h4>
+            <p className="text-xs text-slate-400 max-w-xl leading-relaxed">
+              Esta ação apaga permanentemente vendas, orçamentos, despesas, fluxo de caixa, metas, produtos, clientes e histórico de sessões. O perfil da empresa e o login serão mantidos.
+            </p>
+          </div>
+
+          <button
+            type="button"
+            onClick={() => {
+              setResetConfirmText("");
+              setShowResetModal(true);
+            }}
+            className="px-5 py-3 bg-red-600 hover:bg-red-500 text-white rounded-xl text-xs font-black uppercase tracking-wider transition-all duration-200 cursor-pointer shadow-lg shadow-red-950/60 shrink-0 flex items-center gap-2"
+          >
+            <ServerCrash className="h-4 w-4" />
+            <span>Zerar / Resetar Todos os Dados</span>
+          </button>
+        </div>
+      </div>
+
       {/* 💾 FOOTER SAVE BUTTON */}
       <div className="pt-6 border-t border-slate-800 flex justify-end">
         <button
@@ -3051,6 +3166,112 @@ CREATE TABLE IF NOT EXISTS meus_dados (
                 className="py-2.5 px-6 rounded-xl bg-slate-800 hover:bg-slate-700 text-white font-bold text-xs uppercase cursor-pointer transition-all"
               >
                 Fechar
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* 🛑 MODAL DE CONFIRMAÇÃO SEGURA DE RESET (ZERAR DADOS) */}
+      {showResetModal && (
+        <div className="fixed inset-0 z-[110] flex items-center justify-center p-4 bg-black/85 backdrop-blur-md animate-fadeIn">
+          <div className="bg-slate-900 border border-red-900/60 rounded-2xl max-w-lg w-full p-6 shadow-2xl space-y-5">
+            <div className="flex items-center justify-between border-b border-slate-800 pb-3">
+              <div className="flex items-center gap-3">
+                <div className="p-2.5 rounded-xl bg-red-500/20 border border-red-500/40 text-red-400">
+                  <AlertTriangle className="h-6 w-6 animate-bounce" />
+                </div>
+                <div>
+                  <h3 className="text-base font-bold text-white">
+                    Zerar Todos os Dados do Sistema
+                  </h3>
+                  <p className="text-xs text-red-400 font-medium">
+                    Atenção: Esta operação é irreversível!
+                  </p>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => {
+                  if (!isResetting) {
+                    setShowResetModal(false);
+                    setResetConfirmText("");
+                  }
+                }}
+                disabled={isResetting}
+                className="p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800 transition-colors cursor-pointer"
+              >
+                <X className="h-5 w-5" />
+              </button>
+            </div>
+
+            <div className="space-y-3 text-xs text-slate-300 leading-relaxed">
+              <p>
+                Você está prestes a apagar todas as <strong>vendas, orçamentos, despesas, fluxo de caixa, metas, produtos, clientes e histórico de sessões</strong> do banco de dados e do armazenamento local.
+              </p>
+              <div className="p-3 bg-amber-500/10 border border-amber-500/30 rounded-xl text-amber-300 flex items-center gap-2">
+                <AlertTriangle className="h-4 w-4 shrink-0 text-amber-400" />
+                <span>Recomendamos baixar uma cópia de segurança antes de prosseguir.</span>
+              </div>
+            </div>
+
+            {/* Optional backup download button inside modal */}
+            <div>
+              <button
+                type="button"
+                onClick={handleExportBackup}
+                disabled={exporting || isResetting}
+                className="w-full py-2.5 px-4 bg-slate-800 hover:bg-slate-755 border border-slate-700 text-slate-200 rounded-xl text-xs font-bold uppercase transition-all flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50"
+              >
+                {exporting ? <RefreshCw className="h-4 w-4 animate-spin" /> : <Download className="h-4 w-4 text-brand-cyan" />}
+                <span>Baixar Backup antes de Apagar (.json)</span>
+              </button>
+            </div>
+
+            <div className="space-y-2 pt-2 border-t border-slate-800">
+              <label className="text-[11px] font-bold text-slate-300 uppercase tracking-wider block">
+                Digite exatamente a palavra <strong className="text-red-400 font-mono">ZERAR</strong> para confirmar:
+              </label>
+              <input
+                type="text"
+                value={resetConfirmText}
+                onChange={(e) => setResetConfirmText(e.target.value)}
+                disabled={isResetting}
+                placeholder="Digite ZERAR aqui..."
+                className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-xs font-mono font-bold text-white focus:outline-none focus:border-red-500 transition-all placeholder:text-slate-600 uppercase"
+              />
+            </div>
+
+            <div className="flex items-center justify-end gap-3 pt-3 border-t border-slate-800">
+              <button
+                type="button"
+                onClick={() => {
+                  setShowResetModal(false);
+                  setResetConfirmText("");
+                }}
+                disabled={isResetting}
+                className="py-2.5 px-4 rounded-xl border border-slate-700 hover:bg-slate-800 text-slate-300 font-bold text-xs uppercase cursor-pointer transition-all disabled:opacity-50"
+              >
+                Cancelar
+              </button>
+
+              <button
+                type="button"
+                onClick={handleConfirmReset}
+                disabled={resetConfirmText.trim().toUpperCase() !== "ZERAR" || isResetting}
+                className="py-2.5 px-5 rounded-xl bg-red-600 hover:bg-red-500 disabled:bg-slate-800 disabled:text-slate-500 disabled:cursor-not-allowed text-white font-black text-xs uppercase tracking-wider shadow-lg shadow-red-950/50 flex items-center gap-2 cursor-pointer transition-all"
+              >
+                {isResetting ? (
+                  <>
+                    <RefreshCw className="h-4 w-4 animate-spin text-white" />
+                    <span>Zerando Sistema...</span>
+                  </>
+                ) : (
+                  <>
+                    <ServerCrash className="h-4 w-4" />
+                    <span>Zerar Todos os Dados</span>
+                  </>
+                )}
               </button>
             </div>
           </div>

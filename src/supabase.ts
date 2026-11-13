@@ -5031,3 +5031,51 @@ export async function dbUploadSupportImage(imageBlob: Blob): Promise<string | nu
 
 
 
+
+export async function dbResetSystemData(userId: string): Promise<{ success: boolean; error?: string }> {
+  if (!userId || !userId.trim()) return { success: false, error: "ID do usuário não fornecido" };
+
+  const tablesToClean = [
+    "sales",
+    "expenses",
+    "fluxo_caixa",
+    "fluxo_de_caixa",
+    "historico_caixas",
+    "sessoes_caixa",
+    "caixa_status",
+    "produtos",
+    "goals",
+    "configuracoes_sistema"
+  ];
+
+  const supabase = getSupabase();
+  if (!supabase) {
+    return { success: false, error: "Cliente Supabase não inicializado" };
+  }
+
+  try {
+    for (const tbl of tablesToClean) {
+      const { error } = await supabase
+        .from(tbl)
+        .delete()
+        .eq("user_id", userId);
+      if (error) {
+        console.warn(`[dbResetSystemData] Warning cleaning table ${tbl}:`, error.message);
+      }
+    }
+
+    try {
+      await fetch("/api/reset-data", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ userId })
+      });
+    } catch (e) {}
+
+    notifyRealtimeSync(userId, "system_reset", { userId });
+    return { success: true };
+  } catch (err: any) {
+    console.error("dbResetSystemData exception:", err);
+    return { success: false, error: err.message || "Erro ao zerar dados no servidor" };
+  }
+}

@@ -765,7 +765,7 @@ export function CompanySettings({
       const ownerId = currentUser ? (currentUser.owner_id || currentUser.id) : "";
       if (ownerId && isSupabaseConfigured()) {
         try {
-          await dbImportAllData(ownerId, {
+          const importResult = await dbImportAllData(ownerId, {
             ...parsed,
             sales,
             vendas: sales,
@@ -783,8 +783,18 @@ export function CompanySettings({
             cash_register: cash_register_state,
             localStorageDump: dumpCandidate
           });
-        } catch (e) {
-          console.warn("dbImportAllData error notice:", e);
+
+          if (importResult && importResult.success === false && importResult.error) {
+            alert("⚠️ Erro ao gravar vendas no Supabase:\n" + importResult.error);
+            if (addToast) addToast("⚠️ Erro ao salvar vendas no Supabase: " + importResult.error, "error");
+          } else {
+            const count = importResult?.counts?.sales || sales.length;
+            alert(`✅ Backup importado com sucesso!\n\n• ${count} vendas gravadas com sucesso no Supabase e atualizadas na tela.`);
+            if (addToast) addToast(`✅ ${count} vendas gravadas com sucesso no Supabase!`, "success");
+          }
+        } catch (e: any) {
+          alert("⚠️ Erro na importação para o Supabase: " + (e?.message || e));
+          console.warn("dbImportAllData exception:", e);
         }
       }
 

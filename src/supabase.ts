@@ -2872,7 +2872,7 @@ export async function dbImportAllData(
           client_image: clientImage,
           date,
           is_budget: isBudget,
-          payment_method: paymentMethod
+          created_at: s.created_at || s.createdAt || date || new Date().toISOString()
         });
       });
 
@@ -2889,23 +2889,29 @@ export async function dbImportAllData(
           for (let i = 0; i < normalizedSalesForDb.length; i += 50) {
             salesChunks.push(normalizedSalesForDb.slice(i, i + 50));
           }
+          let salesErrorMsg: string | null = null;
           await Promise.all(
             salesChunks.map(async (chunk) => {
-              const { error: sErr } = await supabase.from("sales").upsert(chunk);
+              const { error: sErr } = await supabase.from("sales").upsert(chunk, { onConflict: "id" });
               if (sErr) {
-                const stripped = chunk.map((it: any) => {
-                  const copy = { ...it };
-                  delete copy.payment_method;
-                  return copy;
-                });
-                try {
-                  await supabase.from("sales").upsert(stripped);
-                } catch (e) {}
+                salesErrorMsg = sErr.message;
+                console.error("Supabase sales upsert batch error:", sErr.message);
               }
             })
           );
-        } catch (e) {
-          console.warn("Supabase sales import note:", e);
+          if (salesErrorMsg) {
+            return {
+              success: false,
+              error: salesErrorMsg,
+              counts
+            };
+          }
+        } catch (e: any) {
+          return {
+            success: false,
+            error: e?.message || "Erro de conexão ao salvar vendas no Supabase",
+            counts
+          };
         }
       }
 

@@ -1314,67 +1314,33 @@ export async function dbUpsertCaixaStatus(
   if (!supabase || !userId) return false;
 
   const cleanStatus = status.toUpperCase() as "ABERTO" | "FECHADO";
+  const isOpen = cleanStatus === "ABERTO";
   const nowISO = new Date().toISOString();
   const todayStr = options?.date ? getTodayDateStr(options.date) : getTodayDateStr();
 
   try {
-    const { data: existingRows } = await supabase
+    const payload: Record<string, any> = {
+      user_id: userId,
+      date: todayStr,
+      status: cleanStatus,
+      aberto: isOpen,
+      opened_at: options?.opened_at || nowISO,
+      closed_at: isOpen ? null : (options?.closed_at || nowISO),
+      valor_abertura: options?.valor_abertura !== undefined ? Number(options.valor_abertura) : 0,
+      valor_fechamento: isOpen ? null : (options?.valor_fechamento !== undefined ? Number(options.valor_fechamento) : null),
+      updated_at: nowISO
+    };
+
+    const { error } = await supabase
       .from("caixa_status")
-      .select("id, status, opened_at, valor_abertura")
-      .eq("user_id", userId)
-      .eq("date", todayStr)
-      .order("opened_at", { ascending: false })
-      .limit(1);
+      .upsert(payload, { onConflict: "user_id" });
 
-    const existingRow = existingRows && existingRows.length > 0 ? existingRows[0] : null;
-
-    if (cleanStatus === "ABERTO") {
-      const payload: Record<string, any> = {
-        id: existingRow?.id || ensureCaixaUUID(options?.id),
-        user_id: userId,
-        date: todayStr,
-        status: "ABERTO",
-        opened_at: options?.opened_at || existingRow?.opened_at || nowISO,
-        closed_at: null,
-        valor_abertura: options?.valor_abertura !== undefined ? Number(options.valor_abertura) : (Number(existingRow?.valor_abertura) || 0),
-        valor_fechamento: null
-      };
-
-      if (existingRow?.id) {
-        await supabase.from("caixa_status").update(payload).eq("id", existingRow.id);
-      } else {
-        await supabase.from("caixa_status").upsert(payload);
-      }
-    } else {
-      // FECHADO
-      const closedAt = options?.closed_at || nowISO;
-      const valorFechamento = options?.valor_fechamento !== undefined ? Number(options.valor_fechamento) : null;
-
-      if (existingRow?.id) {
-        await supabase
-          .from("caixa_status")
-          .update({
-            status: "FECHADO",
-            closed_at: closedAt,
-            valor_fechamento: valorFechamento
-          })
-          .eq("id", existingRow.id);
-      } else {
-        const payload: Record<string, any> = {
-          id: ensureCaixaUUID(options?.id),
-          user_id: userId,
-          date: todayStr,
-          status: "FECHADO",
-          opened_at: options?.opened_at || nowISO,
-          closed_at: closedAt,
-          valor_abertura: options?.valor_abertura !== undefined ? Number(options.valor_abertura) : 0,
-          valor_fechamento: valorFechamento
-        };
-        await supabase.from("caixa_status").upsert(payload);
-      }
+    if (error) {
+      console.warn("Error upserting caixa_status with onConflict user_id, retrying plain upsert:", error);
+      await supabase.from("caixa_status").upsert(payload);
     }
 
-    notifyRealtimeSync(userId, "caixa_status_updated", { status: cleanStatus, date: todayStr });
+    notifyRealtimeSync(userId, "caixa_status_updated", { status: cleanStatus, aberto: isOpen, date: todayStr });
     return true;
   } catch (err) {
     console.warn("Exceção ao atualizar caixa_status:", err);
@@ -3230,7 +3196,35 @@ export async function dbGetQuickSales(userId: string): Promise<DbQuickSale[] | n
   const supabase = getSupabase();
   if (!supabase && !isSupabaseConfigured()) return null;
 
-  // 1. Primary: Direct query on quick_sales table
+  // 1. Primary: configuracoes_sistema table (user_id, chave: 'vendas_rapidas', valor)
+  if (supabase && userId) {
+    try {
+      const { data, error } = await supabase
+        .from("configuracoes_sistema")
+        .select("valor")
+        .eq("user_id", userId)
+        .eq("chave", "vendas_rapidas")
+        .maybeSingle();
+
+      if (!error && data && data.valor && Array.isArray(data.valor)) {
+        const formatted: DbQuickSale[] = data.valor.map((item: any) => ({
+          id: item.id,
+          description: item.description || item.descricao || item.nome || "",
+          price: Number(item.price ?? item.preco ?? 0),
+          cost: Number(item.cost ?? item.custo ?? 0),
+          gradient: item.gradient || item.cor || "from-purple-600 via-fuchsia-600 to-pink-500",
+        }));
+        try {
+          localStorage.setItem(`NUCLEO_QUICK_SALES_${userId}`, JSON.stringify(formatted));
+        } catch {}
+        return formatted;
+      }
+    } catch (err) {
+      console.warn("Supabase configuracoes_sistema quick sales query notice:", err);
+    }
+  }
+
+  // 2. Secondary: Direct query on quick_sales / vendas_rapidas_itens table
   if (supabase) {
     try {
       const { data, error } = await supabase
@@ -3239,7 +3233,7 @@ export async function dbGetQuickSales(userId: string): Promise<DbQuickSale[] | n
         .eq("user_id", userId)
         .order("created_at", { ascending: true });
 
-      if (!error && data !== null) {
+      if (!error && data !== null && data.length > 0) {
         const formatted: DbQuickSale[] = data.map((item: any) => ({
           id: item.id,
           description: item.description || item.descricao || item.nome || "",
@@ -3256,7 +3250,6 @@ export async function dbGetQuickSales(userId: string): Promise<DbQuickSale[] | n
       console.warn("Supabase quick_sales query notice:", err);
     }
 
-    // 2. Secondary: vendas_rapidas_itens table
     try {
       const { data, error } = await supabase
         .from("vendas_rapidas_itens")
@@ -3264,7 +3257,7 @@ export async function dbGetQuickSales(userId: string): Promise<DbQuickSale[] | n
         .eq("user_id", userId)
         .order("created_at", { ascending: true });
 
-      if (!error && data !== null) {
+      if (!error && data !== null && data.length > 0) {
         const formatted: DbQuickSale[] = data.map((item: any) => ({
           id: item.id,
           description: item.description || item.descricao || item.nome || "",
@@ -3282,21 +3275,7 @@ export async function dbGetQuickSales(userId: string): Promise<DbQuickSale[] | n
     }
   }
 
-  // 3. Try fetching via server API
-  try {
-    const res = await fetch(`/api/quick-sales?userId=${encodeURIComponent(userId)}`);
-    if (res.ok) {
-      const json = await res.json();
-      if (json.success && Array.isArray(json.data)) {
-        try {
-          localStorage.setItem(`NUCLEO_QUICK_SALES_${userId}`, JSON.stringify(json.data));
-        } catch {}
-        return json.data;
-      }
-    }
-  } catch {}
-
-  // 4. Local storage fallback (strictly filtered - never resurrects the 6 old static default buttons)
+  // 3. Local storage fallback
   try {
     const saved = localStorage.getItem(`NUCLEO_QUICK_SALES_${userId}`) || localStorage.getItem("NUCLEO_QUICK_SALES");
     if (saved) {
@@ -3318,7 +3297,8 @@ export async function dbGetQuickSales(userId: string): Promise<DbQuickSale[] | n
 }
 
 export async function dbSaveQuickSale(userId: string, item: DbQuickSale): Promise<boolean> {
-  // Update local storage immediately for responsive UI
+  // 1. Update local storage immediately
+  let updatedList: DbQuickSale[] = [];
   try {
     const key = `NUCLEO_QUICK_SALES_${userId}`;
     const raw = localStorage.getItem(key);
@@ -3329,12 +3309,27 @@ export async function dbSaveQuickSale(userId: string, item: DbQuickSale): Promis
     } else {
       list.push(item);
     }
+    updatedList = list;
     localStorage.setItem(key, JSON.stringify(list));
   } catch {}
 
   const supabase = getSupabase();
 
-  // 1. Primary: Direct insert/upsert on vendas_rapidas_itens
+  // 2. Save in configuracoes_sistema table with onConflict 'user_id,chave'
+  if (supabase && userId) {
+    try {
+      await supabase.from("configuracoes_sistema").upsert({
+        user_id: userId,
+        chave: "vendas_rapidas",
+        valor: updatedList,
+        updated_at: new Date().toISOString()
+      }, { onConflict: "user_id,chave" });
+    } catch (e) {
+      console.warn("Error saving quick sales to configuracoes_sistema:", e);
+    }
+  }
+
+  // 3. Direct insert/upsert on vendas_rapidas_itens
   if (supabase) {
     try {
       const payload = {
@@ -3350,131 +3345,59 @@ export async function dbSaveQuickSale(userId: string, item: DbQuickSale): Promis
         cor: item.gradient || "from-purple-600 via-fuchsia-600 to-pink-500",
         created_at: new Date().toISOString()
       };
-      const { error } = await supabase.from("vendas_rapidas_itens").upsert(payload);
-      if (!error) {
-        notifyRealtimeSync(userId, "quick_sales_updated", { item });
-        return true;
-      }
-      console.warn("Aviso ao salvar em vendas_rapidas_itens:", error.message);
+      await supabase.from("vendas_rapidas_itens").upsert(payload);
+      notifyRealtimeSync(userId, "quick_sales_updated", { item });
     } catch (err) {
       console.warn("Exceção ao salvar em vendas_rapidas_itens:", err);
     }
   }
 
-  // 2. Save via server API (uses service_role to avoid client RLS policy restrictions)
-  try {
-    const res = await fetch("/api/quick-sales", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ userId, item })
-    });
-    if (res.ok) {
-      const json = await res.json();
-      if (json.success) return true;
-    }
-  } catch {
-    // Continue to direct Supabase write if server call failed
-  }
-
-  if (!supabase) return true; // Saved locally
-
-  // 3. Fallback to direct client upsert on quick_sales
-  try {
-    const { error } = await supabase
-      .from("quick_sales")
-      .upsert({
-        id: item.id,
-        user_id: userId,
-        description: item.description,
-        price: item.price,
-        cost: item.cost || 0,
-        gradient: item.gradient
-      });
-
-    if (error) {
-      console.warn("Notice upserting quick_sales fallback:", error.message);
-      // Sync to sales table config row
-      try {
-        const raw = localStorage.getItem(`NUCLEO_QUICK_SALES_${userId}`);
-        const items = raw ? JSON.parse(raw) : [item];
-        await supabase.from("sales").upsert({
-          id: `quick_sales_config_${userId}`,
-          user_id: userId,
-          client_name: "QUICK_SALES_CONFIG",
-          client_phone: "CONFIG",
-          items,
-          date: new Date().toISOString()
-        });
-      } catch {}
-      return true;
-    }
-
-    return true;
-  } catch (err) {
-    console.warn("Supabase quick_sales save notice:", err);
-    return true;
-  }
+  return true;
 }
 
 export async function dbDeleteQuickSale(userId: string, id: string): Promise<boolean> {
-  // Update local storage
+  let updatedList: DbQuickSale[] = [];
   try {
     const key = `NUCLEO_QUICK_SALES_${userId}`;
     const raw = localStorage.getItem(key);
     if (raw) {
       const list: DbQuickSale[] = JSON.parse(raw);
-      const filtered = list.filter(q => q.id !== id);
-      localStorage.setItem(key, JSON.stringify(filtered));
+      updatedList = list.filter(q => q.id !== id);
+      localStorage.setItem(key, JSON.stringify(updatedList));
     }
   } catch {}
 
   const supabase = getSupabase();
 
-  // 1. Primary: Direct delete on vendas_rapidas_itens
+  // 1. Update configuracoes_sistema table with onConflict 'user_id,chave'
+  if (supabase && userId) {
+    try {
+      await supabase.from("configuracoes_sistema").upsert({
+        user_id: userId,
+        chave: "vendas_rapidas",
+        valor: updatedList,
+        updated_at: new Date().toISOString()
+      }, { onConflict: "user_id,chave" });
+    } catch (e) {
+      console.warn("Error deleting quick sale in configuracoes_sistema:", e);
+    }
+  }
+
+  // 2. Direct delete on vendas_rapidas_itens
   if (supabase) {
     try {
-      const { error } = await supabase
+      await supabase
         .from("vendas_rapidas_itens")
         .delete()
         .eq("id", id)
         .eq("user_id", userId);
-      if (!error) {
-        notifyRealtimeSync(userId, "quick_sales_updated", { deletedId: id });
-      }
+      notifyRealtimeSync(userId, "quick_sales_updated", { deletedId: id });
     } catch (e) {
       console.warn("Aviso ao deletar de vendas_rapidas_itens:", e);
     }
   }
 
-  // 2. Delete via server API
-  try {
-    const res = await fetch(`/api/quick-sales/${encodeURIComponent(id)}?userId=${encodeURIComponent(userId)}`, {
-      method: "DELETE"
-    });
-    if (res.ok) {
-      const json = await res.json();
-      if (json.success) return true;
-    }
-  } catch {}
-
-  if (!supabase) return true;
-
-  // 3. Fallback direct client delete on quick_sales
-  try {
-    const { error } = await supabase
-      .from("quick_sales")
-      .delete()
-      .eq("id", id)
-      .eq("user_id", userId);
-
-    if (error) {
-      console.warn("Notice deleting quick_sales item fallback:", error.message);
-    }
-    return true;
-  } catch (err) {
-    console.warn("Supabase quick_sales delete notice:", err);
-    return true;
-  }
+  return true;
 }
 
 export function isSystemAdminUser(): boolean {
@@ -3976,6 +3899,27 @@ export async function dbGetCashRegister(userId: string): Promise<CashRegisterSta
           });
         }
       } catch (hErr) {}
+
+      // 0. Check caixa_status for explicit closure
+      try {
+        const { data: statusRows } = await supabase
+          .from("caixa_status")
+          .select("status, aberto")
+          .in("user_id", candidateEmpresas)
+          .order("opened_at", { ascending: false })
+          .limit(1);
+
+        if (statusRows && statusRows.length > 0) {
+          const r = statusRows[0];
+          const isClosed = String(r.status || "").toUpperCase() === "FECHADO" || r.aberto === false;
+          if (isClosed) {
+            return {
+              currentSession: null,
+              history: historyItems
+            };
+          }
+        }
+      } catch (e) {}
 
       // Query active open session from sessoes_caixa for this company
       const { data: openSessions, error: sessErr } = await supabase

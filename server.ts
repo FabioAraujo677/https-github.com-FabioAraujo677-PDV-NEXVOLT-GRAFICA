@@ -4096,6 +4096,50 @@ ${JSON.stringify(sales, null, 2)}
 
       const latestCandidate = parsedCandidates[0];
 
+      // 0. CHECK CAIXA_STATUS FOR EXPLICIT CLOSURE
+      try {
+        const UNIFIED_EMPRESA_ID = "62f892b2-3855-4ae9-8b2d-42d4b6223815";
+        const candidateEmpresas = Array.from(new Set([canonicalOwnerId, userId, UNIFIED_EMPRESA_ID, ...(companyUserIds || [])].filter(Boolean)));
+        const { data: statusRows } = await supabase
+          .from("caixa_status")
+          .select("status, aberto")
+          .in("user_id", candidateEmpresas)
+          .order("opened_at", { ascending: false })
+          .limit(1);
+
+        if (statusRows && statusRows.length > 0) {
+          const r = statusRows[0];
+          const isClosed = String(r.status || "").toUpperCase() === "FECHADO" || r.aberto === false;
+          if (isClosed) {
+            let safeHist: any[] = [];
+            try {
+              const { data: hRows } = await supabase
+                .from("historico_caixas")
+                .select("*")
+                .order("data_fechamento", { ascending: false })
+                .limit(50);
+              if (hRows && hRows.length > 0) {
+                safeHist = hRows.map((h: any) => h.dados_completos_json || {
+                  id: h.id,
+                  status: "fechado",
+                  dataFechamento: h.data_fechamento,
+                  valorFechamentoReal: Number(h.saldo_final) || 0
+                });
+              }
+            } catch (e) {}
+
+            return res.json({
+              success: true,
+              data: {
+                currentSession: null,
+                history: safeHist
+              },
+              date: new Date().toISOString()
+            });
+          }
+        }
+      } catch (e) {}
+
       // 0. TOP PRIORITY: Real table sessoes_caixa check
       try {
         const UNIFIED_EMPRESA_ID = "62f892b2-3855-4ae9-8b2d-42d4b6223815";

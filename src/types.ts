@@ -146,6 +146,75 @@ export interface Sale {
   deliveredAt?: string; // Data/hora da entrega
   deliveredRole?: 'atendente' | 'administrador'; // Papel de quem entregou
   auditLog?: SaleAuditEntry[]; // Histórico detalhado de ações e alterações
+  orderNumber?: number; // Número sequencial universal formatado (ex: 1, 2, ..., 668)
+}
+
+/**
+ * Retorna o número sequencial numérico de uma venda ou orçamento.
+ * Se a venda já tiver orderNumber definido, utiliza-o.
+ * Caso contrário, calcula pela ordem cronológica de criação.
+ */
+export function getSaleSequenceNumber(sale: Sale, allSales?: Sale[]): number {
+  if (sale.orderNumber && typeof sale.orderNumber === "number" && sale.orderNumber > 0) {
+    return sale.orderNumber;
+  }
+  const anySale = sale as any;
+  if (anySale.order_number) {
+    const parsed = parseInt(String(anySale.order_number), 10);
+    if (!isNaN(parsed) && parsed > 0) return parsed;
+  }
+
+  // Tenta extrair número num ID curto caso seja numérico
+  const rawId = String(sale.id || "");
+  const numMatches = rawId.match(/^V?-?(\d{1,6})$/i);
+  if (numMatches && numMatches[1]) {
+    const extracted = parseInt(numMatches[1], 10);
+    if (!isNaN(extracted) && extracted > 0) return extracted;
+  }
+
+  if (!allSales || allSales.length === 0) {
+    return 1;
+  }
+
+  // Ordena cronologicamente por data de criação / data da venda
+  const sorted = [...allSales].sort((a, b) => {
+    const timeA = new Date(a.date || a.orderDate || (a as any).created_at || 0).getTime() || 0;
+    const timeB = new Date(b.date || b.orderDate || (b as any).created_at || 0).getTime() || 0;
+    if (timeA !== timeB) return timeA - timeB;
+    return String(a.id).localeCompare(String(b.id));
+  });
+
+  const idx = sorted.findIndex(s => s.id === sale.id);
+  return idx >= 0 ? idx + 1 : 1;
+}
+
+/**
+ * Retorna o número da nota formatado com 5 dígitos (ex: #00001, #00034, #00668)
+ */
+export function formatSaleReceiptNumber(sale: Sale, allSales?: Sale[]): string {
+  const num = getSaleSequenceNumber(sale, allSales);
+  return `#${String(num).padStart(5, "0")}`;
+}
+
+/**
+ * Verifica se um termo de busca bate com o número sequencial da venda (ex: "34", "00034", "#00034")
+ */
+export function matchSaleReceiptNumber(sale: Sale, searchTerm: string, allSales?: Sale[]): boolean {
+  if (!searchTerm || !searchTerm.trim()) return false;
+  const cleanTerm = searchTerm.trim().replace(/^#/, "");
+  if (!cleanTerm) return false;
+
+  const seqNum = getSaleSequenceNumber(sale, allSales);
+  const formatted5 = String(seqNum).padStart(5, "0"); // "00034"
+  const formattedWithHash = `#${formatted5}`; // "#00034"
+  const rawStr = String(seqNum); // "34"
+
+  if (formattedWithHash.toLowerCase() === searchTerm.trim().toLowerCase()) return true;
+  if (formatted5 === cleanTerm) return true;
+  if (rawStr === cleanTerm) return true;
+  if (formatted5.includes(cleanTerm)) return true;
+
+  return false;
 }
 
 export interface DashboardStats {

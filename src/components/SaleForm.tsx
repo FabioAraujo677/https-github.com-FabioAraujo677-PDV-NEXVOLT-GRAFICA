@@ -37,9 +37,9 @@ import {
   Share2
 } from "lucide-react";
 import React, { useState, useEffect, useRef } from "react";
-import { ProductSaleItem, Sale, CompanyProfile, CostItem, CatalogProduct, User, CashRegisterState, SaleAuditEntry } from "../types";
+import { ProductSaleItem, Sale, CompanyProfile, CostItem, CatalogProduct, User, CashRegisterState, SaleAuditEntry, formatSaleReceiptNumber, getSaleSequenceNumber } from "../types";
 import { jsPDF } from "jspdf";
-import { dbUploadImages, parseClientImages, isSupabaseConfigured, getSupabase, dbGetQuickSales, dbSaveQuickSale, dbDeleteQuickSale } from "../supabase";
+import { dbUploadImages, parseClientImages, isSupabaseConfigured, getSupabase, dbGetQuickSales, dbSaveAllQuickSales, dbSaveQuickSale, dbDeleteQuickSale } from "../supabase";
 
 const formatCurrency = (val: number) => {
   return `R$ ${val.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}`;
@@ -401,53 +401,8 @@ export function SaleForm({
       }
     } catch {}
 
-    const supabase = getSupabase();
-    if (supabase) {
-      try {
-        // 1. Tabela quick_sales (primária)
-        const { data: qsData, error: qsError } = await supabase
-          .from("quick_sales")
-          .select("*")
-          .eq("user_id", ownerId)
-          .order("created_at", { ascending: true });
-
-        if (!qsError && qsData !== null) {
-          const formatted = qsData.map((item: any) => ({
-            id: item.id,
-            description: item.description || item.descricao || item.nome || "",
-            price: Number(item.price ?? item.preco ?? 0),
-            cost: Number(item.cost ?? item.custo ?? 0),
-            gradient: item.gradient || item.cor || "from-purple-600 via-fuchsia-600 to-pink-500",
-          }));
-          setQuickSales(formatted);
-          return;
-        }
-
-        // 2. Tabela vendas_rapidas_itens (secundária)
-        const { data: vriData, error: vriError } = await supabase
-          .from("vendas_rapidas_itens")
-          .select("*")
-          .eq("user_id", ownerId)
-          .order("created_at", { ascending: true });
-
-        if (!vriError && vriData !== null) {
-          const formatted = vriData.map((item: any) => ({
-            id: item.id,
-            description: item.description || item.descricao || item.nome || "",
-            price: Number(item.price ?? item.preco ?? 0),
-            cost: Number(item.cost ?? item.custo ?? 0),
-            gradient: item.gradient || item.cor || "from-purple-600 via-fuchsia-600 to-pink-500",
-          }));
-          setQuickSales(formatted);
-          return;
-        }
-      } catch (err) {
-        console.warn("Direct select quick_sales / vendas_rapidas_itens:", err);
-      }
-    }
-
     const dbSales = await dbGetQuickSales(ownerId);
-    if (dbSales !== null) {
+    if (dbSales && Array.isArray(dbSales) && dbSales.length > 0) {
       setQuickSales(dbSales);
     }
   };
@@ -455,16 +410,45 @@ export function SaleForm({
   useEffect(() => {
     if (!currentUser || !currentUser.id) return;
     const supabase = getSupabase();
-    if (!supabase) return;
-
     const scopeId = currentUser.owner_id || currentUser.id;
 
-    // 1. Initial direct fetch from quick_sales / vendas_rapidas_itens
+    // 1. Initial direct fetch from configuracoes_sistema / cloud
     fetchQuickSalesFromDb();
 
-    // 2. Active Realtime listener (postgres_changes) on both quick_sales and vendas_rapidas_itens
+    // 2. Window events for cross-tab or backup restore sync
+    const handleSync = (e: any) => {
+      if (e?.detail?.eventType === "quick_sales_updated" || e?.detail?.eventType === "backup_restored") {
+        fetchQuickSalesFromDb();
+      }
+    };
+    const handleQuickSalesUpdated = () => {
+      fetchQuickSalesFromDb();
+    };
+    window.addEventListener("app_remote_sync", handleSync);
+    window.addEventListener("quick_sales_updated", handleQuickSalesUpdated);
+
+    if (!supabase) {
+      return () => {
+        window.removeEventListener("app_remote_sync", handleSync);
+        window.removeEventListener("quick_sales_updated", handleQuickSalesUpdated);
+      };
+    }
+
+    // 3. Active Realtime listener (postgres_changes) on configuracoes_sistema, quick_sales, and vendas_rapidas_itens
     const channel = supabase
       .channel(`realtime_quick_sales_${scopeId}_${Date.now()}`)
+      .on(
+        "postgres_changes",
+        {
+          event: "*",
+          schema: "public",
+          table: "configuracoes_sistema",
+          filter: `user_id=eq.${scopeId}`
+        },
+        () => {
+          fetchQuickSalesFromDb();
+        }
+      )
       .on(
         "postgres_changes",
         {
@@ -495,6 +479,8 @@ export function SaleForm({
     channelRef.current = channel;
 
     return () => {
+      window.removeEventListener("app_remote_sync", handleSync);
+      window.removeEventListener("quick_sales_updated", handleQuickSalesUpdated);
       supabase.removeChannel(channel).catch(() => {});
     };
   }, [currentUser]);
@@ -691,40 +677,12 @@ export function SaleForm({
         gradient: newQSGradient
       };
       
-      setQuickSales(prev => prev.map(q => q.id === editingQSId ? updatedItem : q));
+      const updatedList = quickSales.map(q => q.id === editingQSId ? updatedItem : q);
+      setQuickSales(updatedList);
       
-      if (isSupabaseConfigured() && currentUser) {
+      if (currentUser) {
         const ownerId = currentUser.owner_id || currentUser.id;
-        const supabase = getSupabase();
-        if (supabase) {
-          try {
-            await supabase.from("quick_sales").upsert({
-              id: updatedItem.id,
-              user_id: ownerId,
-              description: updatedItem.description,
-              price: updatedItem.price,
-              cost: updatedItem.cost || 0,
-              gradient: updatedItem.gradient,
-              created_at: new Date().toISOString()
-            });
-            await supabase.from("vendas_rapidas_itens").upsert({
-              id: updatedItem.id,
-              user_id: ownerId,
-              description: updatedItem.description,
-              descricao: updatedItem.description,
-              price: updatedItem.price,
-              preco: updatedItem.price,
-              cost: updatedItem.cost || 0,
-              custo: updatedItem.cost || 0,
-              gradient: updatedItem.gradient,
-              cor: updatedItem.gradient,
-              created_at: new Date().toISOString()
-            });
-          } catch (e) {
-            console.warn("Direct upsert quick_sales error:", e);
-          }
-        }
-        await dbSaveQuickSale(ownerId, updatedItem);
+        await dbSaveAllQuickSales(ownerId, updatedList);
         if (channelRef.current) {
           channelRef.current.send({
             type: "broadcast",
@@ -749,40 +707,12 @@ export function SaleForm({
         gradient: newQSGradient
       };
       
-      setQuickSales([...quickSales, newQS]);
+      const updatedList = [...quickSales, newQS];
+      setQuickSales(updatedList);
       
-      if (isSupabaseConfigured() && currentUser) {
+      if (currentUser) {
         const ownerId = currentUser.owner_id || currentUser.id;
-        const supabase = getSupabase();
-        if (supabase) {
-          try {
-            await supabase.from("quick_sales").upsert({
-              id: newQS.id,
-              user_id: ownerId,
-              description: newQS.description,
-              price: newQS.price,
-              cost: newQS.cost || 0,
-              gradient: newQS.gradient,
-              created_at: new Date().toISOString()
-            });
-            await supabase.from("vendas_rapidas_itens").upsert({
-              id: newQS.id,
-              user_id: ownerId,
-              description: newQS.description,
-              descricao: newQS.description,
-              price: newQS.price,
-              preco: newQS.price,
-              cost: newQS.cost || 0,
-              custo: newQS.cost || 0,
-              gradient: newQS.gradient,
-              cor: newQS.gradient,
-              created_at: new Date().toISOString()
-            });
-          } catch (e) {
-            console.warn("Direct insert quick_sales error:", e);
-          }
-        }
-        await dbSaveQuickSale(ownerId, newQS);
+        await dbSaveAllQuickSales(ownerId, updatedList);
         if (channelRef.current) {
           channelRef.current.send({
             type: "broadcast",
@@ -809,34 +739,20 @@ export function SaleForm({
       return;
     }
     if (confirm("Deseja realmente excluir esta venda rápida?")) {
-      setQuickSales(prev => prev.filter(q => q.id !== id));
+      const updatedList = quickSales.filter(q => q.id !== id);
+      setQuickSales(updatedList);
       
-      if (isSupabaseConfigured() && currentUser) {
+      if (currentUser) {
         const ownerId = currentUser.owner_id || currentUser.id;
-        const supabase = getSupabase();
-        if (supabase) {
-          try {
-            await supabase
-              .from("quick_sales")
-              .delete()
-              .eq("id", id)
-              .eq("user_id", ownerId);
-            await supabase
-              .from("vendas_rapidas_itens")
-              .delete()
-              .eq("id", id)
-              .eq("user_id", ownerId);
-          } catch (e) {
-            console.warn("Direct delete quick_sales error:", e);
-          }
-        }
-        await dbDeleteQuickSale(ownerId, id);
+        await dbSaveAllQuickSales(ownerId, updatedList);
         if (channelRef.current) {
           channelRef.current.send({
             type: "broadcast",
             event: "quick_sales_config_update",
             payload: { senderId: sessionClientId }
           }).catch((err: any) => console.warn(err));
+        }
+      }
         }
       }
       

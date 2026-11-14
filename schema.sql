@@ -550,7 +550,10 @@ CREATE TABLE IF NOT EXISTS public.meus_dados (
 CREATE INDEX IF NOT EXISTS idx_meus_dados_user_id ON public.meus_dados(user_id);
 
 CREATE TABLE IF NOT EXISTS public.configuracoes_sistema (
-  id TEXT PRIMARY KEY DEFAULT 'global_structure',
+  id TEXT PRIMARY KEY DEFAULT gen_random_uuid()::text,
+  user_id TEXT,
+  chave TEXT,
+  valor JSONB,
   versao TEXT DEFAULT 'ativa',
   status TEXT DEFAULT 'ativa',
   versao_timestamp BIGINT,
@@ -559,6 +562,8 @@ CREATE TABLE IF NOT EXISTS public.configuracoes_sistema (
   updated_at TIMESTAMPTZ DEFAULT NOW(),
   dados_estrutura JSONB
 );
+
+CREATE UNIQUE INDEX IF NOT EXISTS idx_config_sistema_user_chave ON public.configuracoes_sistema(user_id, chave) WHERE user_id IS NOT NULL AND chave IS NOT NULL;
 
 CREATE TABLE IF NOT EXISTS public.configuracoes_suporte (
   id TEXT PRIMARY KEY DEFAULT 'default',

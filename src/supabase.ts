@@ -987,20 +987,7 @@ export async function dbDeleteUser(userId: string): Promise<boolean> {
 export async function dbGetCompanyProfile(userId: string): Promise<CompanyProfile | null> {
   if (!userId || !userId.trim() || !getAuthenticatedUserIdFromStorage()) return null;
 
-  // 1. Try server-side API with service_role to ensure bypass of RLS and canonical owner resolution
-  try {
-    const res = await fetch(`/api/company-profile?userId=${encodeURIComponent(userId)}`);
-    if (res.ok) {
-      const json = await res.json();
-      if (json.success && json.data && json.data.tradingName) {
-        return json.data;
-      }
-    }
-  } catch (apiErr) {
-    console.warn("API /api/company-profile fallback:", apiErr);
-  }
-
-  // 2. Client-side Supabase query
+  // 1. Direct Supabase query on company_profile (no /api/company-profile call)
   const supabase = getSupabase();
   if (supabase) {
     try {
@@ -1014,16 +1001,16 @@ export async function dbGetCompanyProfile(userId: string): Promise<CompanyProfil
       if (!error && data) {
         const rawBH = data.business_hours || data.businessHours;
         const { cleanBusinessHours, extractedSettings } = extractSettingsFromBusinessHours(rawBH);
-        return {
-          tradingName: data.trading_name || "",
-          phone: data.phone || "",
+        const mapped: CompanyProfile = {
+          tradingName: data.trading_name || data.nome_fantasia || data.name || data.nome || "",
+          phone: data.phone || data.telefone || "",
           cep: data.cep || "",
-          address: data.address || "",
-          number: data.number || "",
-          neighborhood: data.neighborhood || "",
-          city: data.city || "",
-          state: data.state || "",
-          cnpjCpf: data.cnpj_cpf || "",
+          address: data.address || data.logradouro || "",
+          number: data.number || data.numero || "",
+          neighborhood: data.neighborhood || data.bairro || "",
+          city: data.city || data.cidade || "",
+          state: data.state || data.uf || "",
+          cnpjCpf: data.cnpj_cpf || data.cnpj || "",
           logo: data.logo || data.logo_url || null,
           pixKey: data.pix_key || data.pixKey || "",
           ...extractedSettings,
@@ -1032,13 +1019,43 @@ export async function dbGetCompanyProfile(userId: string): Promise<CompanyProfil
           cashClosingReminderTime: data.cash_closing_reminder_time || data.cashClosingReminderTime || extractedSettings.cashClosingReminderTime || undefined,
           cashClosingReminderMessage: data.cash_closing_reminder_message || data.cashClosingReminderMessage || extractedSettings.cashClosingReminderMessage || undefined,
         };
+        try {
+          if (mapped.tradingName) {
+            localStorage.setItem("NUCLEO_COMPANY_PROFILE", JSON.stringify(mapped));
+          }
+        } catch (e) {}
+        return mapped;
+      }
+
+      // Secondary fallback to empresa_config
+      const { data: empData, error: empErr } = await supabase
+        .from("empresa_config")
+        .select("*")
+        .eq("user_id", userId)
+        .limit(1)
+        .maybeSingle();
+
+      if (!empErr && empData) {
+        return {
+          tradingName: empData.trading_name || empData.nome || "",
+          phone: "",
+          cep: "",
+          address: "",
+          number: "",
+          neighborhood: "",
+          city: "",
+          state: "",
+          cnpjCpf: "",
+          logo: empData.logo || null,
+          pixKey: ""
+        };
       }
     } catch (err) {
       console.warn("Supabase company query exception:", err);
     }
   }
 
-  // 3. Fallback to localStorage if available
+  // 2. Fallback to localStorage if available
   try {
     const local = localStorage.getItem("NUCLEO_COMPANY_PROFILE");
     if (local) {
@@ -1074,23 +1091,11 @@ export async function dbSaveCompanyProfile(userId: string, profile: CompanyProfi
     console.warn("IndexedDB save note:", e);
   }
 
-  // 2. Primary: Save via Server API with Service Role
-  try {
-    await fetch("/api/company-profile", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ userId, profile })
-    });
-  } catch (apiErr) {
-    console.warn("POST /api/company-profile error:", apiErr);
-  }
-
-  // 3. Secondary: Direct client Supabase upsert com sanitização estrita de payload
+  // 2. Direct Supabase upsert on company_profile (no /api/company-profile call)
   if (isSupabaseConfigured()) {
     const supabaseClient = getSupabase();
     if (supabaseClient) {
       try {
-        // FILTRAGEM ESTRITA: Crie um objeto sanitizado contendo APENAS as colunas válidas da tabela company_profile
         const validFields = [
           "id",
           "user_id",
@@ -1098,13 +1103,19 @@ export async function dbSaveCompanyProfile(userId: string, profile: CompanyProfi
           "nome_fantasia",
           "trading_name",
           "cnpj",
+          "cnpj_cpf",
           "telefone",
+          "phone",
           "cep",
           "logradouro",
           "numero",
+          "number",
           "bairro",
+          "neighborhood",
           "cidade",
+          "city",
           "uf",
+          "state",
           "address",
           "pix_key",
           "logo",
@@ -1119,13 +1130,19 @@ export async function dbSaveCompanyProfile(userId: string, profile: CompanyProfi
           nome_fantasia: profile.tradingName || "",
           trading_name: profile.tradingName || "",
           cnpj: (profile.cnpjCpf || (profile as any).cnpj || "").trim(),
+          cnpj_cpf: (profile.cnpjCpf || (profile as any).cnpj || "").trim(),
           telefone: (profile.phone || (profile as any).telefone || "").trim(),
+          phone: (profile.phone || (profile as any).telefone || "").trim(),
           cep: (profile.cep || "").trim(),
           logradouro: (profile.address || (profile as any).logradouro || "").trim(),
           numero: (profile.number || (profile as any).numero || "").trim(),
+          number: (profile.number || (profile as any).numero || "").trim(),
           bairro: (profile.neighborhood || (profile as any).bairro || "").trim(),
+          neighborhood: (profile.neighborhood || (profile as any).bairro || "").trim(),
           cidade: (profile.city || (profile as any).cidade || "").trim(),
+          city: (profile.city || (profile as any).cidade || "").trim(),
           uf: (profile.state || (profile as any).uf || "").trim(),
+          state: (profile.state || (profile as any).uf || "").trim(),
           address: (profile.address || "").trim(),
           pix_key: profile.pixKey || (profile as any).pix_key || null,
           logo: profile.logo || null,
@@ -1133,7 +1150,6 @@ export async function dbSaveCompanyProfile(userId: string, profile: CompanyProfi
           business_hours: packBusinessHoursWithSettings(profile)
         };
 
-        // NUNCA passe o objeto de estado inteiro diretamente: apenas colunas válidas
         const sanitizedPayload: Record<string, any> = {};
         for (const field of validFields) {
           if (rawData[field] !== undefined) {
@@ -1143,50 +1159,33 @@ export async function dbSaveCompanyProfile(userId: string, profile: CompanyProfi
 
         let { error } = await supabaseClient
           .from("company_profile")
-          .upsert(sanitizedPayload, { onConflict: "id" });
+          .upsert(sanitizedPayload, { onConflict: "user_id" });
 
-        // Se ocorrer erro PGRST204 (schema cache mismatch), capturar com segurança
-        if (error) {
-          const isPgrst204 = (error as any).code === "PGRST204" || 
-            error.message?.includes("schema cache") || 
-            error.message?.includes("Could not find the");
-
-          if (isPgrst204) {
-            console.warn("Aviso schema cache PGRST204 ao salvar company_profile:", error.message);
-
-            // Tenta remover coluna informada no erro e retentar
-            const colMatch = error.message?.match(/Could not find the '([^']+)' column/i);
-            if (colMatch && colMatch[1]) {
-              const missingCol = colMatch[1];
-              delete sanitizedPayload[missingCol];
-              const retry = await supabaseClient
-                .from("company_profile")
-                .upsert(sanitizedPayload, { onConflict: "id" });
-              error = retry.error;
-            }
-
-            // Se persistir erro PGRST204: mantém alterações salvas no estado local (IndexedDB / LocalStorage) e recarrega
-            if (error && ((error as any).code === "PGRST204" || error.message?.includes("schema cache") || error.message?.includes("Could not find the"))) {
-              console.warn("Erro PGRST204 capturado no try/catch. Dados preservados no IndexedDB/State. Recarregando sem travar.");
-              try {
-                await supabaseClient
-                  .from("empresa_config")
-                  .upsert({
-                    id: userId,
-                    user_id: userId,
-                    nome: profile.tradingName || "",
-                    trading_name: profile.tradingName || "",
-                    logo: profile.logo || null,
-                    updated_at: new Date().toISOString()
-                  }, { onConflict: "id" });
-              } catch (e) {}
-
-              notifyRealtimeSync(userId, "company_profile_updated", { profile });
-              return true;
-            }
+        // Strip missing columns iteratively if schema differs
+        let attempts = 0;
+        while (error && attempts < 15) {
+          attempts++;
+          const msg = error.message || "";
+          const colMatch = msg.match(/Could not find the '([^']+)' column/i) || msg.match(/column "([^"]+)" of relation/i);
+          if (colMatch && colMatch[1] && colMatch[1] !== "user_id") {
+            delete sanitizedPayload[colMatch[1]];
+            const retry = await supabaseClient
+              .from("company_profile")
+              .upsert(sanitizedPayload, { onConflict: "user_id" });
+            error = retry.error;
+          } else if (msg.toLowerCase().includes("no unique or exclusion constraint") || msg.toLowerCase().includes("on conflict")) {
+            const retryById = await supabaseClient
+              .from("company_profile")
+              .upsert(sanitizedPayload, { onConflict: "id" });
+            error = retryById.error;
+            if (!error) break;
+          } else {
+            break;
           }
+        }
 
-          // Fallback para empresa_config que garante a persistência de nome e logo
+        if (error) {
+          // Fallback to empresa_config
           try {
             await supabaseClient
               .from("empresa_config")
@@ -1204,13 +1203,6 @@ export async function dbSaveCompanyProfile(userId: string, profile: CompanyProfi
         }
       } catch (err: any) {
         console.warn("Aviso na sincronização de company_profile capturado:", err?.message || err);
-        const isPgrst204 = err?.code === "PGRST204" || 
-          err?.message?.includes("schema cache") || 
-          err?.message?.includes("Could not find the");
-        if (isPgrst204) {
-          notifyRealtimeSync(userId, "company_profile_updated", { profile });
-          return true;
-        }
       }
     }
   }
@@ -1285,48 +1277,114 @@ export async function dbSaveEmpresaConfig(userId: string, config: { nome: string
 // ==========================================
 
 export interface CaixaStatusRecord {
-  id: string; // uuid
+  id?: string;
   user_id: string;
-  date: string; // YYYY-MM-DD
-  status: "ABERTO" | "FECHADO";
-  opened_at: string;
-  closed_at: string | null;
-  valor_abertura: number;
-  valor_fechamento: number | null;
+  status: "aberto" | "fechado" | "ABERTO" | "FECHADO";
+  aberto?: boolean;
+  data_abertura?: string | null;
+  data_fechamento?: string | null;
+  created_at?: string;
+  valor_abertura?: number;
+  valor_fechamento?: number | null;
 }
 
-const ensureCaixaUUID = (val?: string | null): string => {
-  if (typeof val === "string" && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(val)) {
-    return val;
-  }
-  if (typeof crypto !== "undefined" && typeof crypto.randomUUID === "function") {
-    return crypto.randomUUID();
-  }
-  return "xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx".replace(/[xy]/g, (c) => {
-    const r = (Math.random() * 16) | 0;
-    const v = c === "x" ? r : (r & 0x3) | 0x8;
-    return v.toString(16);
-  });
-};
+const CASH_CLOSE_COOLDOWN_KEY = "NUCLEO_CASH_CLOSE_COOLDOWN_UNTIL";
+let memoryCashCloseCooldownUntil = 0;
 
-const getTodayDateStr = (dateInput?: string | Date): string => {
-  const d = dateInput ? new Date(dateInput) : new Date();
-  if (isNaN(d.getTime())) {
-    const fallback = new Date();
-    return `${fallback.getFullYear()}-${String(fallback.getMonth() + 1).padStart(2, "0")}-${String(fallback.getDate()).padStart(2, "0")}`;
+export function markCashRegisterJustClosed(durationMs = 20000): void {
+  const until = Date.now() + durationMs;
+  memoryCashCloseCooldownUntil = until;
+  try {
+    if (typeof localStorage !== "undefined") {
+      localStorage.setItem(CASH_CLOSE_COOLDOWN_KEY, String(until));
+    }
+  } catch (e) {}
+}
+
+export function clearCashRegisterCloseCooldown(): void {
+  memoryCashCloseCooldownUntil = 0;
+  try {
+    if (typeof localStorage !== "undefined") {
+      localStorage.removeItem(CASH_CLOSE_COOLDOWN_KEY);
+    }
+  } catch (e) {}
+}
+
+export function isCashRegisterInCloseCooldown(): boolean {
+  const now = Date.now();
+  if (now < memoryCashCloseCooldownUntil) return true;
+  try {
+    if (typeof localStorage !== "undefined") {
+      const raw = localStorage.getItem(CASH_CLOSE_COOLDOWN_KEY);
+      const storedUntil = raw ? Number(raw) : 0;
+      if (storedUntil > now) {
+        memoryCashCloseCooldownUntil = storedUntil;
+        return true;
+      }
+      if (raw) {
+        localStorage.removeItem(CASH_CLOSE_COOLDOWN_KEY);
+      }
+    }
+  } catch (e) {}
+  return false;
+}
+
+async function upsertCaixaStatusResilient(
+  supabase: any,
+  userId: string,
+  rawPayload: Record<string, any>
+): Promise<boolean> {
+  const payload = { ...rawPayload, user_id: userId };
+  let { error } = await supabase
+    .from("caixa_status")
+    .upsert(payload, { onConflict: "user_id" });
+
+  let attempts = 0;
+  while (error && attempts < 8) {
+    attempts++;
+    const msg = error.message || "";
+    const colMatch =
+      msg.match(/Could not find the '([^']+)' column/i) ||
+      msg.match(/column "([^"]+)" of relation/i);
+    if (colMatch && colMatch[1] && colMatch[1] !== "user_id" && colMatch[1] !== "status") {
+      delete payload[colMatch[1]];
+      const retry = await supabase
+        .from("caixa_status")
+        .upsert(payload, { onConflict: "user_id" });
+      error = retry.error;
+    } else if (msg.toLowerCase().includes("no unique or exclusion constraint") || msg.toLowerCase().includes("on conflict")) {
+      // Fallback: update existing row by user_id or insert
+      const { data: existing } = await supabase
+        .from("caixa_status")
+        .select("id")
+        .eq("user_id", userId)
+        .order("created_at", { ascending: false })
+        .limit(1)
+        .maybeSingle();
+      if (existing?.id) {
+        const upd = await supabase.from("caixa_status").update(payload).eq("id", existing.id);
+        error = upd.error;
+      } else {
+        const ins = await supabase.from("caixa_status").insert(payload);
+        error = ins.error;
+      }
+      if (!error) break;
+    } else {
+      break;
+    }
   }
-  const year = d.getFullYear();
-  const month = String(d.getMonth() + 1).padStart(2, "0");
-  const day = String(d.getDate()).padStart(2, "0");
-  return `${year}-${month}-${day}`;
-};
+
+  return !error;
+}
 
 export async function dbUpsertCaixaStatus(
   userId: string,
-  status: "ABERTO" | "FECHADO",
+  status: "ABERTO" | "FECHADO" | "aberto" | "fechado",
   options?: {
     id?: string;
     date?: string;
+    data_abertura?: string;
+    data_fechamento?: string | null;
     opened_at?: string;
     closed_at?: string | null;
     valor_abertura?: number;
@@ -1337,35 +1395,24 @@ export async function dbUpsertCaixaStatus(
   const supabase = getSupabase();
   if (!supabase || !userId) return false;
 
-  const cleanStatus = status.toUpperCase() as "ABERTO" | "FECHADO";
-  const isOpen = cleanStatus === "ABERTO";
+  const isOpen = String(status).toLowerCase().trim() === "aberto";
+  const cleanStatus = isOpen ? "aberto" : "fechado";
   const nowISO = new Date().toISOString();
-  const todayStr = options?.date ? getTodayDateStr(options.date) : getTodayDateStr();
 
   try {
     const payload: Record<string, any> = {
       user_id: userId,
-      date: todayStr,
       status: cleanStatus,
       aberto: isOpen,
-      opened_at: options?.opened_at || nowISO,
-      closed_at: isOpen ? null : (options?.closed_at || nowISO),
+      data_abertura: options?.data_abertura || options?.opened_at || nowISO,
+      data_fechamento: isOpen ? null : (options?.data_fechamento || options?.closed_at || nowISO),
       valor_abertura: options?.valor_abertura !== undefined ? Number(options.valor_abertura) : 0,
-      valor_fechamento: isOpen ? null : (options?.valor_fechamento !== undefined ? Number(options.valor_fechamento) : null),
-      updated_at: nowISO
+      valor_fechamento: isOpen ? null : (options?.valor_fechamento !== undefined && options?.valor_fechamento !== null ? Number(options.valor_fechamento) : null)
     };
 
-    const { error } = await supabase
-      .from("caixa_status")
-      .upsert(payload, { onConflict: "user_id" });
-
-    if (error) {
-      console.warn("Error upserting caixa_status with onConflict user_id, retrying plain upsert:", error);
-      await supabase.from("caixa_status").upsert(payload);
-    }
-
-    notifyRealtimeSync(userId, "caixa_status_updated", { status: cleanStatus, aberto: isOpen, date: todayStr });
-    return true;
+    const ok = await upsertCaixaStatusResilient(supabase, userId, payload);
+    notifyRealtimeSync(userId, "caixa_status_updated", { status: cleanStatus, aberto: isOpen });
+    return ok;
   } catch (err) {
     console.warn("Exceção ao atualizar caixa_status:", err);
     return false;
@@ -1373,34 +1420,32 @@ export async function dbUpsertCaixaStatus(
 }
 
 export async function dbGetCaixaStatus(
-  userId: string,
-  targetDate?: string
+  userId: string
 ): Promise<CaixaStatusRecord | null> {
   if (!userId || !userId.trim() || !getAuthenticatedUserIdFromStorage()) return null;
   const supabase = getSupabase();
   if (!supabase || !userId) return null;
 
-  const todayStr = targetDate ? getTodayDateStr(targetDate) : getTodayDateStr();
-
   try {
     const { data, error } = await supabase
       .from("caixa_status")
-      .select("id, user_id, date, status, opened_at, closed_at, valor_abertura, valor_fechamento")
+      .select("*")
       .eq("user_id", userId)
-      .eq("date", todayStr)
-      .order("opened_at", { ascending: false })
+      .order("created_at", { ascending: false })
       .limit(1)
       .maybeSingle();
 
-    if (!error && data && data.status) {
-      const st = String(data.status).toUpperCase();
+    if (!error && data) {
+      const st = String(data.status || "").toLowerCase().trim();
+      const isClosed = st === "fechado" || st === "closed" || data.aberto === false;
       return {
         id: data.id,
         user_id: data.user_id,
-        date: data.date,
-        status: st === "ABERTO" ? "ABERTO" : "FECHADO",
-        opened_at: data.opened_at,
-        closed_at: data.closed_at,
+        status: isClosed ? "fechado" : "aberto",
+        aberto: !isClosed,
+        data_abertura: data.data_abertura || data.created_at || null,
+        data_fechamento: data.data_fechamento || null,
+        created_at: data.created_at,
         valor_abertura: Number(data.valor_abertura) || 0,
         valor_fechamento: data.valor_fechamento !== null && data.valor_fechamento !== undefined ? Number(data.valor_fechamento) : null
       };
@@ -3930,51 +3975,49 @@ export function isCashSessionExplicitlyClosed(row: any): boolean {
 
 export async function dbGetCashRegister(userId: string): Promise<CashRegisterState | null> {
   if (!userId || !userId.trim() || !getAuthenticatedUserIdFromStorage()) return null;
-  // 1. Primary: fetch through secure server API with service_role to avoid RLS/table discrepancies across machines
-  if (userId) {
+
+  const readLocalHistory = (): CashRegisterSession[] => {
     try {
-      const res = await fetch(`/api/cash-register?userId=${encodeURIComponent(userId)}`);
-      if (res.ok) {
-        const json = await res.json();
-        if (json.success && json.data) {
-          return json.data as CashRegisterState;
-        }
+      const saved = localStorage.getItem("NUCLEO_CASH_REGISTER");
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        if (Array.isArray(parsed?.history)) return parsed.history;
       }
-    } catch (apiErr) {
-      console.warn("Direct /api/cash-register GET error, falling back to direct client:", apiErr);
-    }
+    } catch (e) {}
+    return [];
+  };
+
+  // Cooldown guard right after closing the register: never let a delayed remote read reopen it
+  if (isCashRegisterInCloseCooldown()) {
+    return {
+      currentSession: null,
+      history: readLocalHistory()
+    };
   }
 
   const supabase = getSupabase();
-  let effectiveUserId = userId;
-  if (supabase?.auth) {
-    try {
-      const { data: authData } = await supabase.auth.getUser();
-      if (authData?.user?.id) {
-        effectiveUserId = authData.user.id;
-      }
-    } catch (e) {}
-  }
-
-  // 2. Real table: check public.sessoes_caixa for any active open session
   if (supabase) {
     try {
-      const companyId = effectiveUserId;
-      if (!companyId) return null;
+      let effectiveUserId = userId;
+      if (supabase.auth) {
+        try {
+          const { data: authData } = await supabase.auth.getUser();
+          if (authData?.user?.id) {
+            effectiveUserId = authData.user.id;
+          }
+        } catch (e) {}
+      }
 
-      const candidateEmpresas = Array.from(new Set([
-        companyId,
-        userId,
-        "62f892b2-3855-4ae9-8b2d-42d4b6223815"
-      ].filter(Boolean)));
+      const candidateUserIds = Array.from(new Set([userId, effectiveUserId].filter(Boolean)));
+      if (candidateUserIds.length === 0) return null;
 
-      // Fetch history items first from public.historico_caixas
+      // 1. Fetch history items from public.historico_caixas using only valid columns (user_id, data_fechamento)
       let historyItems: CashRegisterSession[] = [];
       try {
         const { data: histRows } = await supabase
           .from("historico_caixas")
           .select("*")
-          .in("empresa_id", candidateEmpresas)
+          .in("user_id", candidateUserIds)
           .order("data_fechamento", { ascending: false })
           .limit(50);
         if (histRows && histRows.length > 0) {
@@ -3988,8 +4031,8 @@ export async function dbGetCashRegister(userId: string): Promise<CashRegisterSta
             return {
               id: h.id,
               status: "fechado" as const,
-              valorAbertura: 0,
-              dataAbertura: h.data_fechamento,
+              valorAbertura: Number(h.valor_abertura) || 0,
+              dataAbertura: h.data_abertura || h.data_fechamento || h.created_at,
               operador: "Operador",
               dataFechamento: h.data_fechamento,
               valorFechamentoReal: Number(h.saldo_final) || 0,
@@ -4000,19 +4043,33 @@ export async function dbGetCashRegister(userId: string): Promise<CashRegisterSta
         }
       } catch (hErr) {}
 
-      // 0. Check caixa_status for explicit closure
+      // Re-check cooldown after async query
+      if (isCashRegisterInCloseCooldown()) {
+        return {
+          currentSession: null,
+          history: historyItems.length > 0 ? historyItems : readLocalHistory()
+        };
+      }
+
+      // 2. Authoritative check on public.caixa_status (ordered by created_at)
+      let caixaStatusRow: any = null;
       try {
         const { data: statusRows } = await supabase
           .from("caixa_status")
-          .select("status, aberto")
-          .in("user_id", candidateEmpresas)
-          .order("opened_at", { ascending: false })
+          .select("*")
+          .in("user_id", candidateUserIds)
+          .order("created_at", { ascending: false })
           .limit(1);
 
         if (statusRows && statusRows.length > 0) {
-          const r = statusRows[0];
-          const isClosed = String(r.status || "").toUpperCase() === "FECHADO" || r.aberto === false;
-          if (isClosed) {
+          caixaStatusRow = statusRows[0];
+          const st = String(caixaStatusRow.status || "").toLowerCase().trim();
+          const isExplicitlyClosed =
+            st === "fechado" ||
+            st === "closed" ||
+            caixaStatusRow.aberto === false;
+
+          if (isExplicitlyClosed) {
             return {
               currentSession: null,
               history: historyItems
@@ -4021,58 +4078,48 @@ export async function dbGetCashRegister(userId: string): Promise<CashRegisterSta
         }
       } catch (e) {}
 
-      // Query active open session from sessoes_caixa for this company
+      // 3. Query active open session from public.sessoes_caixa using valid columns (user_id, status, data_abertura)
       const { data: openSessions, error: sessErr } = await supabase
         .from("sessoes_caixa")
         .select("*")
-        .eq("status", "aberto")
-        .in("empresa_id", candidateEmpresas)
+        .in("user_id", candidateUserIds)
         .order("data_abertura", { ascending: false })
         .limit(10);
 
       if (!sessErr && openSessions && openSessions.length > 0) {
         const sessRow = openSessions.find((s: any) => isCashSessionActiveOrOpen(s));
         if (sessRow) {
-          // Sessão aberta no banco: deve permanecer aberta até que o usuário feche manualmente
-          const openState: CashRegisterState = {
+          return {
             currentSession: {
               id: sessRow.id || sessRow.session_id || `session_${Date.now()}`,
               status: "aberto",
               valorAbertura: Number(sessRow.valor_abertura ?? sessRow.valor_inicial ?? sessRow.fundo_troco) || 0,
-              dataAbertura: sessRow.data_abertura || new Date().toISOString(),
+              dataAbertura: sessRow.data_abertura || sessRow.created_at || new Date().toISOString(),
               operador: sessRow.operador || sessRow.usuario || "Operador"
             },
             history: historyItems
           };
-          return openState;
         }
       }
 
-      // Se não há sessão aberta na tabela sessoes_caixa, verificar candidatos na tabela sales
-      try {
-        const { data: salesCandidates } = await supabase
-          .from("sales")
-          .select("id, items, date")
-          .in("id", [`cash_register_state_${companyId}`, `cash_register_state_${effectiveUserId}`, "cash_register_state"])
-          .limit(3);
-
-        if (salesCandidates && salesCandidates.length > 0) {
-          for (const cand of salesCandidates) {
-            let candState = cand.items;
-            if (typeof candState === "string") {
-              try { candState = JSON.parse(candState); } catch (e) {}
-            }
-            if (candState && candState.currentSession && isCashSessionActiveOrOpen(candState.currentSession)) {
-              return {
-                currentSession: candState.currentSession,
-                history: historyItems.length > 0 ? historyItems : (candState.history || [])
-              };
-            }
-          }
+      // 4. If caixa_status explicitly states aberto: true / status: 'aberto', reconstruct session
+      if (caixaStatusRow) {
+        const st = String(caixaStatusRow.status || "").toLowerCase().trim();
+        const isExplicitlyOpen = st === "aberto" || st === "open" || caixaStatusRow.aberto === true;
+        if (isExplicitlyOpen && !isCashRegisterInCloseCooldown()) {
+          return {
+            currentSession: {
+              id: caixaStatusRow.id || `session_${Date.now()}`,
+              status: "aberto",
+              valorAbertura: Number(caixaStatusRow.valor_abertura) || 0,
+              dataAbertura: caixaStatusRow.data_abertura || caixaStatusRow.created_at || new Date().toISOString(),
+              operador: "Operador"
+            },
+            history: historyItems
+          };
         }
-      } catch (salesErr) {}
+      }
 
-      // Se não há sessão aberta em nenhuma das tabelas, o caixa está fechado
       return {
         currentSession: null,
         history: historyItems
@@ -4082,7 +4129,7 @@ export async function dbGetCashRegister(userId: string): Promise<CashRegisterSta
     }
   }
 
-  return { currentSession: null, history: [] };
+  return { currentSession: null, history: readLocalHistory() };
 }
 
 export async function dbSaveCashRegister(userId: string, state: CashRegisterState): Promise<boolean> {
@@ -4094,11 +4141,15 @@ export async function dbSaveCashRegister(userId: string, state: CashRegisterStat
   try {
     localStorage.setItem("NUCLEO_LAST_CASH_REGISTER_SYNCED_DATE", nowISO);
     localStorage.setItem("NUCLEO_CASH_REGISTER", JSON.stringify(state));
+    if (state.currentSession && state.currentSession.status === "aberto") {
+      localStorage.setItem("NUCLEO_CASH_REGISTER_ACTIVE", "true");
+    } else {
+      localStorage.removeItem("NUCLEO_CASH_REGISTER_ACTIVE");
+    }
   } catch (e) {
     console.warn("Storage write failed:", e);
   }
 
-  // Determine authoritative Auth UID
   let effectiveUserId = userId;
   if (supabase?.auth) {
     try {
@@ -4108,63 +4159,63 @@ export async function dbSaveCashRegister(userId: string, state: CashRegisterStat
       }
     } catch (e) {}
   }
+  const targetUserId = userId || effectiveUserId;
 
-  // 1. Primary: save through secure server API with service_role to broadcast SSE and save reliably
-  let serverSaved = false;
-  if (effectiveUserId) {
-    try {
-      const res = await fetch("/api/cash-register", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ userId: effectiveUserId, state })
-      });
-      if (res.ok) {
-        const json = await res.json();
-        if (json.success) {
-          serverSaved = true;
-        }
-      }
-    } catch (apiErr) {
-      console.warn("Direct /api/cash-register POST error, continuing with direct client fallback:", apiErr);
-    }
-  }
-
-  // 2. Real table: synchronize public.sessoes_caixa and public.historico_caixas
+  // Direct Supabase sync: public.caixa_status, public.sessoes_caixa, public.historico_caixas
   if (supabase) {
     try {
       if (state.currentSession && state.currentSession.status === "aberto") {
-        const isUUID = typeof state.currentSession.id === "string" && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(state.currentSession.id);
-        if (isUUID) {
-          await supabase.from("sessoes_caixa").upsert({
-            id: state.currentSession.id,
-            empresa_id: userId,
-            status: "aberto",
-            valor_abertura: state.currentSession.valorAbertura || 0,
-            data_abertura: state.currentSession.dataAbertura || nowISO
-          });
-        }
-      } else if (!state.currentSession) {
-        // NUNCA fechar todas as sessões inadvertidamente!
-        // Apenas marcar como fechado se houver uma sessão explicitamente encerrada recentemente no histórico
-        const lastClosed = state.history && state.history.length > 0 ? state.history[0] : null;
-        if (lastClosed && lastClosed.id && lastClosed.dataFechamento) {
-          const closedRecently = (Date.now() - new Date(lastClosed.dataFechamento).getTime()) < 10 * 60 * 1000;
-          if (closedRecently) {
-            await supabase.from("sessoes_caixa").update({
-              status: "fechado",
-              data_fechamento: lastClosed.dataFechamento || nowISO
-            }).eq("id", lastClosed.id);
-          }
-        }
+        await dbUpsertCaixaStatus(targetUserId, "aberto", {
+          data_abertura: state.currentSession.dataAbertura || nowISO,
+          valor_abertura: Number(state.currentSession.valorAbertura) || 0
+        });
 
-        if (state.history && state.history.length > 0) {
-          const lastClosed = state.history[0];
+        const isUUID = typeof state.currentSession.id === "string" && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(state.currentSession.id);
+        await supabase.from("sessoes_caixa").upsert({
+          ...(isUUID ? { id: state.currentSession.id } : {}),
+          user_id: targetUserId,
+          status: "aberto",
+          valor_abertura: Number(state.currentSession.valorAbertura) || 0,
+          data_abertura: state.currentSession.dataAbertura || nowISO
+        });
+      } else if (!state.currentSession) {
+        const lastClosed = state.history && state.history.length > 0 ? state.history[0] : null;
+        const closingDate = lastClosed?.dataFechamento || nowISO;
+
+        await dbUpsertCaixaStatus(targetUserId, "fechado", {
+          data_abertura: lastClosed?.dataAbertura || closingDate,
+          data_fechamento: closingDate,
+          valor_abertura: Number(lastClosed?.valorAbertura) || 0,
+          valor_fechamento: lastClosed?.valorFechamentoReal !== undefined ? Number(lastClosed.valorFechamentoReal) : null
+        });
+
+        await supabase
+          .from("sessoes_caixa")
+          .update({
+            status: "fechado",
+            data_fechamento: closingDate
+          })
+          .eq("user_id", targetUserId)
+          .in("status", ["aberto", "ABERTO", "aberta", "ativo", "open"]);
+
+        if (lastClosed && lastClosed.id) {
           const isUUID = typeof lastClosed.id === "string" && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(lastClosed.id);
+          if (isUUID) {
+            await supabase
+              .from("sessoes_caixa")
+              .update({
+                status: "fechado",
+                data_fechamento: closingDate
+              })
+              .eq("id", lastClosed.id);
+          }
+
           await supabase.from("historico_caixas").upsert({
             ...(isUUID ? { id: lastClosed.id } : {}),
-            usuario_id: userId,
-            empresa_id: userId,
-            data_fechamento: lastClosed.dataFechamento || nowISO,
+            user_id: targetUserId,
+            status: "fechado",
+            data_abertura: lastClosed.dataAbertura || closingDate,
+            data_fechamento: closingDate,
             total_vendas: Number((lastClosed as any).totalVendas || 0),
             total_despesas: Number((lastClosed as any).totalDespesas || 0),
             saldo_final: Number(lastClosed.valorFechamentoReal || 0),
@@ -4175,35 +4226,31 @@ export async function dbSaveCashRegister(userId: string, state: CashRegisterStat
     } catch (sessErr) {
       console.warn("Notice: syncing sessoes_caixa/historico_caixas:", sessErr);
     }
-  }
 
-  // 3. Direct Supabase client sales row
-  if (supabase) {
-    const createPayload = (rowId: string, uid: string) => ({
-      id: rowId,
-      user_id: uid,
-      client_name: "CASH_REGISTER_SYNCED_STATE",
-      client_phone: "CASH_REGISTER",
-      items: state as any,
-      total_value: 0,
-      is_budget: true,
-      operation_cost: 0,
-      balance_due: 0,
-      net_profit: 0,
-      discount: 0,
-      down_payment: 0,
-      motoboy_cost: 0,
-      date: nowISO
-    });
-
+    // Keep sales metadata mirror updated (with closed currentSession: null when closed)
     try {
-      const scopedPayload = createPayload(`cash_register_state_${effectiveUserId}`, effectiveUserId);
+      const scopedPayload = {
+        id: `cash_register_state_${targetUserId}`,
+        user_id: targetUserId,
+        client_name: "CASH_REGISTER_SYNCED_STATE",
+        client_phone: "CASH_REGISTER",
+        items: state as any,
+        total_value: 0,
+        is_budget: true,
+        operation_cost: 0,
+        balance_due: 0,
+        net_profit: 0,
+        discount: 0,
+        down_payment: 0,
+        motoboy_cost: 0,
+        date: nowISO
+      };
       await supabase.from("sales").upsert(scopedPayload);
     } catch (err) {}
   }
 
-  // 4. Instant multi-terminal broadcast via notifyRealtimeSync & local event
-  notifyRealtimeSync(effectiveUserId, "cash_register_updated", { state });
+  // Instant multi-terminal broadcast via notifyRealtimeSync & local event
+  notifyRealtimeSync(targetUserId, "cash_register_updated", { state });
   if (typeof window !== "undefined") {
     window.dispatchEvent(new CustomEvent("cash_register_remote_sync", { detail: { state } }));
   }
@@ -4414,59 +4461,22 @@ export async function dbDeleteCliente(clienteId: string, ownerId?: string): Prom
 
 export async function dbCheckGlobalCashRegister(userId: string): Promise<boolean> {
   if (!userId || !userId.trim() || !getAuthenticatedUserIdFromStorage()) return false;
-  // 1. Primary: check canonical cash register state via dbGetCashRegister (which calls /api/cash-register first)
+  if (isCashRegisterInCloseCooldown()) return false;
+
   try {
     const state = await dbGetCashRegister(userId);
     if (state?.currentSession && isCashSessionActiveOrOpen(state.currentSession)) {
-      console.log(`[dbCheckGlobalCashRegister] Open session active in cash_register_state for user ${userId}`);
       return true;
     }
   } catch (err) {}
 
-  const supabase = getSupabase();
-  if (!supabase) return false;
-
-  try {
-    let effectiveUserId = userId;
-    if (supabase.auth) {
-      try {
-        const { data: authData } = await supabase.auth.getUser();
-        if (authData?.user?.id) {
-          effectiveUserId = authData.user.id;
-        }
-      } catch (e) {}
-    }
-
-    // 2. Real table check on public.sessoes_caixa for any active session
-    try {
-      const { data: sessData, error: sessErr } = await supabase
-        .from("sessoes_caixa")
-        .select("*")
-        .eq("status", "aberto")
-        .eq("empresa_id", effectiveUserId)
-        .order("data_abertura", { ascending: false })
-        .limit(5);
-
-      if (!sessErr && sessData && sessData.length > 0) {
-        const openItem = sessData.find((s: any) => isCashSessionActiveOrOpen(s));
-        if (openItem) {
-          console.log(`[dbCheckGlobalCashRegister] Open/active session found in sessoes_caixa:`, openItem.id);
-          return true;
-        }
-      }
-    } catch (err) {
-      console.warn("[dbCheckGlobalCashRegister] sessoes_caixa check notice:", err);
-    }
-
-    return false;
-  } catch (err) {
-    console.error("Exception in dbCheckGlobalCashRegister:", err);
-    return false;
-  }
+  return false;
 }
 
 export async function dbOpenGlobalCashRegister(userId: string, session: any): Promise<boolean> {
   if (!userId || !userId.trim() || !getAuthenticatedUserIdFromStorage()) return false;
+  clearCashRegisterCloseCooldown();
+
   const supabase = getSupabase();
   let effectiveUserId = userId;
   if (supabase?.auth) {
@@ -4477,83 +4487,58 @@ export async function dbOpenGlobalCashRegister(userId: string, session: any): Pr
       }
     } catch (e) {}
   }
-
+  const targetUserId = userId || effectiveUserId;
   const nowISO = new Date().toISOString();
 
-  // 1. Primary: open via server API with service_role privileges
-  try {
-    const apiRes = await fetch("/api/cash-register/open", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        userId: effectiveUserId,
-        session,
-        state: { currentSession: session }
-      })
-    });
-    if (apiRes.ok) {
-      console.log("[dbOpenGlobalCashRegister] Successfully opened register via server API");
-    }
-  } catch (apiErr) {
-    console.warn("[dbOpenGlobalCashRegister] /api/cash-register/open notice:", apiErr);
-  }
-
-  // 2. Direct client backup: upsert into public.sessoes_caixa
   if (supabase) {
+    // 1. Update caixa_status directly with onConflict: 'user_id'
+    try {
+      await dbUpsertCaixaStatus(targetUserId, "aberto", {
+        data_abertura: session.dataAbertura || nowISO,
+        valor_abertura: Number(session.valorAbertura) || 0
+      });
+    } catch (e) {}
+
+    // 2. Upsert active session in public.sessoes_caixa using user_id
     try {
       const isUUID = typeof session.id === "string" && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(session.id);
-      if (isUUID) {
-        const { error: sessErr } = await supabase
-          .from("sessoes_caixa")
-          .upsert({
-            id: session.id,
-            empresa_id: userId,
-            status: "aberto",
-            valor_abertura: session.valorAbertura || 0,
-            data_abertura: session.dataAbertura || nowISO
-          });
-        if (!sessErr) {
-          console.log("[dbOpenGlobalCashRegister] Successfully opened register in sessoes_caixa");
-        }
+      const sessPayload: Record<string, any> = {
+        ...(isUUID ? { id: session.id } : {}),
+        user_id: targetUserId,
+        operador: session.operador || "Operador",
+        status: "aberto",
+        valor_abertura: Number(session.valorAbertura) || 0,
+        data_abertura: session.dataAbertura || nowISO
+      };
+      const { error: sessErr } = await supabase.from("sessoes_caixa").upsert(sessPayload);
+      if (sessErr && sessErr.message?.includes("operador")) {
+        delete sessPayload.operador;
+        await supabase.from("sessoes_caixa").upsert(sessPayload);
       }
     } catch (e) {}
 
-    const today = new Date();
-    const yyyy = today.getFullYear();
-    const mm = String(today.getMonth() + 1).padStart(2, '0');
-    const dd = String(today.getDate()).padStart(2, '0');
-    const todayStr = `${yyyy}-${mm}-${dd}`;
-
-    const payload = {
-      user_id: effectiveUserId,
-      company_id: effectiveUserId,
-      data: todayStr,
-      data_abertura: session.dataAbertura || nowISO,
-      valor_abertura: session.valorAbertura || 0,
-      operador: session.operador || "Operador",
-      status: "aberto",
-      session_id: session.id,
-      updated_at: nowISO
-    };
-
-    const tableNames = ["fluxo_caixa", "fluxo_de_caixa", "fluxo_caixas", "fluxo_de_caixas"];
-    for (const tableName of tableNames) {
-      try {
-        const { error } = await supabase
-          .from(tableName)
-          .upsert(payload, { onConflict: "user_id,data" });
-
-        if (!error) {
-          console.log(`[dbOpenGlobalCashRegister] Successfully opened register in ${tableName}`);
-        }
-      } catch (err) {
-        // Try next
-      }
-    }
+    // 3. Best-effort update fluxo_caixa using valid columns
+    try {
+      const today = new Date();
+      const todayStr = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, "0")}-${String(today.getDate()).padStart(2, "0")}`;
+      await supabase
+        .from("fluxo_caixa")
+        .upsert(
+          {
+            user_id: targetUserId,
+            data: todayStr,
+            data_abertura: session.dataAbertura || nowISO,
+            valor_abertura: Number(session.valorAbertura) || 0,
+            operador: session.operador || "Operador",
+            status: "aberto"
+          },
+          { onConflict: "user_id,data" }
+        );
+    } catch (err) {}
   }
 
-  // 2. Realtime notification broadcast
-  notifyRealtimeSync(effectiveUserId, "cash_register_updated", { session, isOpen: true, state: { currentSession: session } });
+  // 4. Realtime notification broadcast
+  notifyRealtimeSync(targetUserId, "cash_register_updated", { session, isOpen: true, state: { currentSession: session } });
   if (typeof window !== "undefined") {
     window.dispatchEvent(new CustomEvent("cash_register_remote_sync", { detail: { session, isOpen: true, state: { currentSession: session } } }));
   }
@@ -4563,6 +4548,10 @@ export async function dbOpenGlobalCashRegister(userId: string, session: any): Pr
 
 export async function dbCloseGlobalCashRegister(userId: string, sessionId?: string, closingData: any = {}): Promise<boolean> {
   if (!userId || !userId.trim() || !getAuthenticatedUserIdFromStorage()) return false;
+
+  // Immediately lock background pollers/reads from reopening the register
+  markCashRegisterJustClosed(20000);
+
   const supabase = getSupabase();
   let effectiveUserId = userId;
   if (supabase?.auth) {
@@ -4573,30 +4562,48 @@ export async function dbCloseGlobalCashRegister(userId: string, sessionId?: stri
       }
     } catch (e) {}
   }
+  const targetUserId = userId || effectiveUserId;
+  const candidateUserIds = Array.from(new Set([userId, effectiveUserId].filter(Boolean)));
 
   const nowISO = new Date().toISOString();
   const safeClosingData = closingData || {};
 
-  // 0. High priority server-side closure with service_role privileges
+  // Immediately persist closed state in localStorage
   try {
-    await fetch("/api/cash-register/close", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        userId: effectiveUserId,
-        closingData: { id: sessionId, ...safeClosingData }
-      })
-    });
-  } catch (apiErr) {
-    console.warn("[dbCloseGlobalCashRegister] /api/cash-register/close fallback notice:", apiErr);
-  }
+    localStorage.removeItem("NUCLEO_CASH_REGISTER_ACTIVE");
+    localStorage.setItem("NUCLEO_LAST_CASH_REGISTER_SYNCED_DATE", safeClosingData.dataFechamento || nowISO);
+    const saved = localStorage.getItem("NUCLEO_CASH_REGISTER");
+    if (saved) {
+      const parsed = JSON.parse(saved);
+      parsed.currentSession = null;
+      if (safeClosingData && safeClosingData.id) {
+        parsed.history = [safeClosingData, ...(parsed.history || []).filter((h: any) => h.id !== safeClosingData.id)];
+      }
+      localStorage.setItem("NUCLEO_CASH_REGISTER", JSON.stringify(parsed));
+    }
+  } catch (e) {}
 
-  // 1. Primary: update public.sessoes_caixa using sessionId and empresa_id
   if (supabase) {
-    const closingDate = safeClosingData.dataFechamento || safeClosingData.closed_at || nowISO;
+    const closingDate = safeClosingData.dataFechamento || nowISO;
+    const isUUID = typeof sessionId === "string" && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(sessionId);
 
-    // 1.1 If sessionId is available, update that specific session record
-    if (sessionId) {
+    // 1. Update caixa_status directly to fechado (onConflict: 'user_id')
+    try {
+      const finalObserved = safeClosingData.valorFechamentoReal ?? safeClosingData.saldo_final ?? null;
+      for (const uid of candidateUserIds) {
+        await dbUpsertCaixaStatus(uid, "fechado", {
+          data_abertura: safeClosingData.dataAbertura || closingDate,
+          data_fechamento: closingDate,
+          valor_abertura: Number(safeClosingData.valorAbertura) || 0,
+          valor_fechamento: finalObserved !== null ? Number(finalObserved) : null
+        });
+      }
+    } catch (e) {
+      console.warn("Aviso ao fechar caixa_status em dbCloseGlobalCashRegister:", e);
+    }
+
+    // 2. Close active session(s) in public.sessoes_caixa using user_id & sessionId
+    if (isUUID && sessionId) {
       try {
         await supabase
           .from("sessoes_caixa")
@@ -4608,7 +4615,6 @@ export async function dbCloseGlobalCashRegister(userId: string, sessionId?: stri
       } catch (e) {}
     }
 
-    // 1.2 Close all open sessions for this company
     try {
       await supabase
         .from("sessoes_caixa")
@@ -4616,96 +4622,80 @@ export async function dbCloseGlobalCashRegister(userId: string, sessionId?: stri
           status: "fechado",
           data_fechamento: closingDate
         })
-        .eq("empresa_id", effectiveUserId)
-        .eq("status", "aberto");
+        .in("user_id", candidateUserIds)
+        .in("status", ["aberto", "ABERTO", "aberta", "ativo", "open"]);
       console.log("[dbCloseGlobalCashRegister] Successfully marked sessoes_caixa as fechado");
     } catch (e) {}
 
-    // 1.3 Update caixa_status table to FECHADO
+    // 3. Record closing in public.historico_caixas using valid columns (user_id, data_abertura, data_fechamento, status)
     try {
-      const todayStr = getTodayDateStr();
-      const finalObserved = safeClosingData.valorFechamentoReal ?? safeClosingData.saldo_final ?? null;
-      await dbUpsertCaixaStatus(effectiveUserId, "FECHADO", {
-        id: typeof sessionId === "string" && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(sessionId) ? sessionId : undefined,
-        date: todayStr,
-        opened_at: safeClosingData.dataAbertura || closingDate,
-        closed_at: closingDate,
-        valor_abertura: Number(safeClosingData.valorAbertura) || 0,
-        valor_fechamento: finalObserved !== null ? Number(finalObserved) : null
-      });
-    } catch (e) {
-      console.warn("Aviso ao fechar caixa_status em dbCloseGlobalCashRegister:", e);
-    }
+      const histPayload: Record<string, any> = {
+        ...(isUUID ? { id: sessionId } : {}),
+        user_id: targetUserId,
+        status: "fechado",
+        data_abertura: safeClosingData.dataAbertura || closingDate,
+        data_fechamento: closingDate,
+        total_vendas: Number(safeClosingData.totalVendas || 0),
+        total_despesas: Number(safeClosingData.totalDespesas || 0),
+        saldo_final: Number(safeClosingData.valorFechamentoReal ?? safeClosingData.saldo_final ?? 0),
+        dados_completos_json: {
+          id: sessionId,
+          status: "fechado",
+          valorAbertura: safeClosingData.valorAbertura || 0,
+          dataAbertura: safeClosingData.dataAbertura || nowISO,
+          operador: safeClosingData.operador || "Operador",
+          dataFechamento: closingDate,
+          valorFechamentoReal: Number(safeClosingData.valorFechamentoReal ?? safeClosingData.saldo_final ?? 0),
+          valorFechamentoEsperado: Number(safeClosingData.valorFechamentoEsperado ?? 0),
+          observacoes: safeClosingData.observacoes || ""
+        }
+      };
 
-    // 2. Primary: record in public.historico_caixas
-    try {
-      const isUUID = typeof sessionId === "string" && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(sessionId);
-      await supabase
-        .from("historico_caixas")
-        .upsert({
-          ...(isUUID ? { id: sessionId } : {}),
-          usuario_id: effectiveUserId,
-          empresa_id: effectiveUserId,
-          data_fechamento: closingDate,
-          total_vendas: Number(safeClosingData.totalVendas || 0),
-          total_despesas: Number(safeClosingData.totalDespesas || 0),
-          saldo_final: Number(safeClosingData.valorFechamentoReal ?? safeClosingData.saldo_final ?? 0),
-          dados_completos_json: {
-            id: sessionId,
-            status: "fechado",
-            valorAbertura: safeClosingData.valorAbertura || 0,
-            dataAbertura: safeClosingData.dataAbertura || nowISO,
-            operador: safeClosingData.operador || "Operador",
-            dataFechamento: closingDate,
-            closed_at: closingDate,
-            valorFechamentoReal: Number(safeClosingData.valorFechamentoReal ?? safeClosingData.saldo_final ?? 0),
-            valorFechamentoEsperado: Number(safeClosingData.valorFechamentoEsperado ?? 0),
-            observacoes: safeClosingData.observacoes || ""
-          }
-        });
-      console.log("[dbCloseGlobalCashRegister] Successfully logged closing to historico_caixas");
+      let { error: histErr } = await supabase.from("historico_caixas").upsert(histPayload);
+      let hAttempts = 0;
+      while (histErr && hAttempts < 4) {
+        hAttempts++;
+        const colMatch = histErr.message?.match(/Could not find the '([^']+)' column/i);
+        if (colMatch && colMatch[1] && colMatch[1] !== "user_id") {
+          delete histPayload[colMatch[1]];
+          const retry = await supabase.from("historico_caixas").upsert(histPayload);
+          histErr = retry.error;
+        } else {
+          break;
+        }
+      }
+      if (!histErr) {
+        console.log("[dbCloseGlobalCashRegister] Successfully logged closing to historico_caixas");
+      }
     } catch (e) {}
 
-    const payload = {
-      status: "fechado",
-      data_fechamento: closingDate,
-      updated_at: closingDate
-    };
-
-    const tableNames = ["fluxo_caixa", "fluxo_caixas"];
-    for (const tableName of tableNames) {
-      try {
-        await supabase
-          .from(tableName)
-          .update(payload)
-          .eq("status", "aberto");
-      } catch (err) {}
-    }
+    // 4. Update fluxo_caixa for this user
+    try {
+      await supabase
+        .from("fluxo_caixa")
+        .update({
+          status: "fechado",
+          data_fechamento: closingDate
+        })
+        .in("user_id", candidateUserIds)
+        .in("status", ["aberto", "ABERTO"]);
+    } catch (err) {}
   }
 
-  // Clear localStorage keys
-  try {
-    localStorage.removeItem("NUCLEO_CASH_REGISTER_ACTIVE");
-    localStorage.removeItem("NUCLEO_LAST_CASH_REGISTER_SYNCED_DATE");
-    const saved = localStorage.getItem("NUCLEO_CASH_REGISTER");
-    if (saved) {
-      const parsed = JSON.parse(saved);
-      parsed.currentSession = null;
-      if (safeClosingData) {
-        parsed.history = [safeClosingData, ...(parsed.history || []).filter((h: any) => h.id !== safeClosingData.id)];
-      }
-      localStorage.setItem("NUCLEO_CASH_REGISTER", JSON.stringify(parsed));
-    }
-  } catch (e) {}
+  // Re-arm cooldown after async writes complete
+  markCashRegisterJustClosed(20000);
 
-  // 3. Realtime notification broadcast
-  notifyRealtimeSync(effectiveUserId, "cash_register_updated", { closed: true, sessionId });
+  // 5. Realtime notification broadcast
+  notifyRealtimeSync(targetUserId, "cash_register_updated", { closed: true, sessionId });
   if (typeof window !== "undefined") {
     window.dispatchEvent(new CustomEvent("cash_register_remote_sync", { detail: { closed: true, sessionId } }));
   }
 
   return true;
 }
+
+export const dbOpenCashRegister = dbOpenGlobalCashRegister;
+export const dbCloseCashRegister = dbCloseGlobalCashRegister;
 
 export async function dbGetSupportFeedbacks(userId?: string): Promise<SupportFeedback[]> {
   if (!getAuthenticatedUserIdFromStorage()) return [];

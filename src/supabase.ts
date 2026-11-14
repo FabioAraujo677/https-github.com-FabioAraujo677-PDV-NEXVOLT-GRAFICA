@@ -84,6 +84,19 @@ export function isSupabaseConfigured(): boolean {
   return !!url && !!key;
 }
 
+export function getAuthenticatedUserIdFromStorage(): string | null {
+  if (typeof window === "undefined") return null;
+  try {
+    const raw = localStorage.getItem("NUCLEO_CURRENT_USER");
+    if (!raw) return null;
+    const parsed = JSON.parse(raw);
+    if (parsed && typeof parsed.id === "string" && parsed.id.trim().length > 0) {
+      return parsed.id.trim();
+    }
+  } catch {}
+  return null;
+}
+
 export function normalizeUserString(str: string): string {
   return (str || "")
     .trim()
@@ -481,6 +494,7 @@ export async function dbSignOut(): Promise<void> {
 }
 
 export async function dbVerifyUserSession(userId: string): Promise<User | null> {
+  if (!userId || !userId.trim() || !getAuthenticatedUserIdFromStorage()) return null;
   const supabase = getSupabase();
   if (!supabase) return null;
 
@@ -526,39 +540,42 @@ export async function dbVerifyUserSession(userId: string): Promise<User | null> 
 }
 
 export async function dbLoadSessionUser(): Promise<User | null> {
+  if (!getAuthenticatedUserIdFromStorage()) return null;
   const supabase = getSupabase();
   if (!supabase) return null;
 
   try {
-    // 1. Prioritize supabase.auth.getUser() to get fresh authoritative authenticated user directly
+    // 1. Check local session first (no network request if unauthenticated)
     let u: any = null;
+    const { data, error } = await supabase.auth.getSession();
+    if (error) {
+      console.warn("Supabase session error, clearing stale auth data:", error.message);
+      try {
+        const keys = Object.keys(localStorage);
+        for (const key of keys) {
+          if (key.startsWith("sb-")) {
+            localStorage.removeItem(key);
+          }
+        }
+        await supabase.auth.signOut().catch(() => {});
+      } catch (cleanErr) {
+        console.error("Failed to clean up storage keys:", cleanErr);
+      }
+      return null;
+    }
+
+    u = data?.session?.user || null;
+    if (!u) {
+      return null;
+    }
+
+    // Refresh authoritative user object only when an active local session exists
     try {
       const { data: userData, error: userError } = await supabase.auth.getUser();
       if (!userError && userData?.user) {
         u = userData.user;
       }
     } catch (e) {}
-
-    // Fallback to getSession if getUser didn't return
-    if (!u) {
-      const { data, error } = await supabase.auth.getSession();
-      if (error) {
-        console.warn("Supabase session error, clearing stale auth data:", error.message);
-        try {
-          const keys = Object.keys(localStorage);
-          for (const key of keys) {
-            if (key.startsWith("sb-")) {
-              localStorage.removeItem(key);
-            }
-          }
-          await supabase.auth.signOut().catch(() => {});
-        } catch (cleanErr) {
-          console.error("Failed to clean up storage keys:", cleanErr);
-        }
-        return null;
-      }
-      u = data?.session?.user || null;
-    }
 
     if (u) {
       const name = u.user_metadata?.name || u.user_metadata?.fullName || u.email?.split("@")[0] || "Usuário";
@@ -673,6 +690,7 @@ export async function dbLoadSessionUser(): Promise<User | null> {
 // ==========================================
 
 export async function dbUpdateSubscriptionStatus(userId: string, status: string): Promise<boolean> {
+  if (!userId || !userId.trim() || !getAuthenticatedUserIdFromStorage()) return false;
   const supabase = getSupabase();
   if (!supabase) return false;
   try {
@@ -691,6 +709,7 @@ export async function dbUpdateSubscriptionStatus(userId: string, status: string)
 }
 
 export async function dbUpdateUserAdminActions(userId: string, updates: { status_assinatura?: string; created_at?: string }): Promise<boolean> {
+  if (!userId || !userId.trim() || !getAuthenticatedUserIdFromStorage()) return false;
   const supabase = getSupabase();
   if (!supabase) return false;
   try {
@@ -710,7 +729,7 @@ export async function dbUpdateUserAdminActions(userId: string, updates: { status
 }
 
 export async function dbGetUsers(loggedInUserId?: string): Promise<User[] | null> {
-  if (!loggedInUserId || !loggedInUserId.trim()) return [];
+  if (!loggedInUserId || !loggedInUserId.trim() || !getAuthenticatedUserIdFromStorage()) return [];
   const supabase = getSupabase();
   if (!supabase) return null;
   
@@ -923,6 +942,7 @@ export async function dbSaveUser(user: User, ownerId?: string): Promise<boolean>
 }
 
 export async function dbDeleteUser(userId: string): Promise<boolean> {
+  if (!userId || !userId.trim() || !getAuthenticatedUserIdFromStorage()) return false;
   const supabase = getSupabase();
   if (!supabase) return false;
 
@@ -965,7 +985,7 @@ export async function dbDeleteUser(userId: string): Promise<boolean> {
 // ==========================================
 
 export async function dbGetCompanyProfile(userId: string): Promise<CompanyProfile | null> {
-  if (!userId || !userId.trim()) return null;
+  if (!userId || !userId.trim() || !getAuthenticatedUserIdFromStorage()) return null;
 
   // 1. Try server-side API with service_role to ensure bypass of RLS and canonical owner resolution
   try {
@@ -1033,6 +1053,7 @@ export async function dbGetCompanyProfile(userId: string): Promise<CompanyProfil
 }
 
 export async function dbSaveCompanyProfile(userId: string, profile: CompanyProfile): Promise<boolean> {
+  if (!userId || !userId.trim() || !getAuthenticatedUserIdFromStorage()) return false;
   // 1. Immediately ensure localStorage and IndexedDB have the latest data
   try {
     localStorage.setItem("NUCLEO_COMPANY_PROFILE", JSON.stringify(profile));
@@ -1209,6 +1230,7 @@ export interface DbEmpresaConfig {
 }
 
 export async function dbGetEmpresaConfig(userId: string): Promise<DbEmpresaConfig | null> {
+  if (!userId || !userId.trim() || !getAuthenticatedUserIdFromStorage()) return null;
   const supabase = getSupabase();
   if (!supabase) return null;
 
@@ -1233,6 +1255,7 @@ export async function dbGetEmpresaConfig(userId: string): Promise<DbEmpresaConfi
 }
 
 export async function dbSaveEmpresaConfig(userId: string, config: { nome: string; logo: string | null }): Promise<boolean> {
+  if (!userId || !userId.trim() || !getAuthenticatedUserIdFromStorage()) return false;
   const supabase = getSupabase();
   if (!supabase) return false;
 
@@ -1310,6 +1333,7 @@ export async function dbUpsertCaixaStatus(
     valor_fechamento?: number | null;
   }
 ): Promise<boolean> {
+  if (!userId || !userId.trim() || !getAuthenticatedUserIdFromStorage()) return false;
   const supabase = getSupabase();
   if (!supabase || !userId) return false;
 
@@ -1352,6 +1376,7 @@ export async function dbGetCaixaStatus(
   userId: string,
   targetDate?: string
 ): Promise<CaixaStatusRecord | null> {
+  if (!userId || !userId.trim() || !getAuthenticatedUserIdFromStorage()) return null;
   const supabase = getSupabase();
   if (!supabase || !userId) return null;
 
@@ -1391,7 +1416,7 @@ export async function dbGetCaixaStatus(
 // ==========================================
 
 export async function dbGetSales(userId: string): Promise<Sale[] | null> {
-  if (!userId || !userId.trim()) return [];
+  if (!userId || !userId.trim() || !getAuthenticatedUserIdFromStorage()) return [];
   // 1. Primary: fetch through secure server API with service_role to avoid RLS 42501
   try {
     const res = await fetch(`/api/sales?userId=${encodeURIComponent(userId)}`);
@@ -1503,6 +1528,7 @@ export async function dbGetSales(userId: string): Promise<Sale[] | null> {
 }
 
 export async function dbSaveSale(userId: string, sale: Sale): Promise<boolean> {
+  if (!userId || !userId.trim() || !getAuthenticatedUserIdFromStorage()) return false;
   // 1. Primary: save through secure server API with service_role to avoid RLS 42501
   try {
     const res = await fetch("/api/sales", {
@@ -1606,6 +1632,7 @@ export async function dbSaveSale(userId: string, sale: Sale): Promise<boolean> {
 }
 
 export async function dbDeleteSale(saleId: string): Promise<boolean> {
+  if (!saleId || !saleId.trim() || !getAuthenticatedUserIdFromStorage()) return false;
   // 1. Primary: delete through secure server API
   try {
     const res = await fetch(`/api/sales/${encodeURIComponent(saleId)}`, {
@@ -1647,7 +1674,7 @@ export async function dbDeleteSale(saleId: string): Promise<boolean> {
 // ==========================================
 
 export async function dbGetExpenses(userId: string): Promise<Expense[] | null> {
-  if (!userId || !userId.trim()) return [];
+  if (!userId || !userId.trim() || !getAuthenticatedUserIdFromStorage()) return [];
   let remoteList: Expense[] = [];
   try {
     const res = await fetch(`/api/expenses?userId=${encodeURIComponent(userId)}`);
@@ -1725,6 +1752,7 @@ export async function dbGetExpenses(userId: string): Promise<Expense[] | null> {
 }
 
 export async function dbSaveExpense(userId: string, expense: Expense): Promise<{ success: boolean; error?: string }> {
+  if (!userId || !userId.trim() || !getAuthenticatedUserIdFromStorage()) return { success: false, error: "Usuário não autenticado" };
   let cleanId = expense.id;
   const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
   if (!uuidRegex.test(cleanId)) {
@@ -1801,6 +1829,7 @@ export async function dbSaveExpense(userId: string, expense: Expense): Promise<{
 }
 
 export async function dbDeleteExpense(expenseId: string): Promise<boolean> {
+  if (!expenseId || !expenseId.trim() || !getAuthenticatedUserIdFromStorage()) return false;
   // 1. Primary: delete via server API
   try {
     const res = await fetch(`/api/expenses/${encodeURIComponent(expenseId)}`, {
@@ -1849,6 +1878,7 @@ interface DBGoals {
 }
 
 export async function dbGetGoals(userId: string): Promise<DBGoals | null> {
+  if (!userId || !userId.trim() || !getAuthenticatedUserIdFromStorage()) return null;
   // 1. Primary: Server API with service_role to avoid FK 23503 and RLS
   try {
     const res = await fetch(`/api/goals?userId=${encodeURIComponent(userId)}`);
@@ -1898,6 +1928,7 @@ export async function dbSaveGoals(
   notifiedGoalValue: number,
   notifiedGoalDate: string
 ): Promise<boolean> {
+  if (!userId || !userId.trim() || !getAuthenticatedUserIdFromStorage()) return false;
   // 1. Primary: Server API with service_role to avoid FK 23503 and RLS
   try {
     const res = await fetch("/api/goals", {
@@ -2143,7 +2174,8 @@ export async function notifyRealtimeSync(
   event: string,
   data?: any
 ): Promise<void> {
-  const safeCompanyId = companyId || "global";
+  if (!companyId || !companyId.trim() || !getAuthenticatedUserIdFromStorage()) return;
+  const safeCompanyId = companyId;
   const payload = { companyId: safeCompanyId, event, data, timestamp: Date.now() };
 
   // 1. Instant WebSocket + SSE broadcast engine
@@ -3193,6 +3225,7 @@ export interface DbQuickSale {
 }
 
 export async function dbGetQuickSales(userId: string): Promise<DbQuickSale[] | null> {
+  if (!userId || !userId.trim() || !getAuthenticatedUserIdFromStorage()) return [];
   const supabase = getSupabase();
   if (!supabase && !isSupabaseConfigured()) return null;
 
@@ -3296,7 +3329,68 @@ export async function dbGetQuickSales(userId: string): Promise<DbQuickSale[] | n
   return [];
 }
 
+export async function dbSaveAllQuickSales(userId: string, items: DbQuickSale[]): Promise<boolean> {
+  if (!userId || !userId.trim() || !getAuthenticatedUserIdFromStorage()) return false;
+  const cleanItems = Array.isArray(items) ? items : [];
+  try {
+    localStorage.setItem(`NUCLEO_QUICK_SALES_${userId}`, JSON.stringify(cleanItems));
+  } catch {}
+
+  const supabase = getSupabase();
+  if (supabase) {
+    try {
+      const { error } = await supabase
+        .from("configuracoes_sistema")
+        .upsert(
+          {
+            user_id: userId,
+            chave: "vendas_rapidas",
+            valor: cleanItems,
+            updated_at: new Date().toISOString()
+          },
+          { onConflict: "user_id,chave" }
+        );
+      if (error) {
+        console.warn("Error saving quick sales list to configuracoes_sistema:", error.message);
+      }
+    } catch (e) {
+      console.warn("Exception saving quick sales list to configuracoes_sistema:", e);
+    }
+
+    try {
+      await supabase
+        .from("vendas_rapidas_itens")
+        .delete()
+        .eq("user_id", userId);
+
+      if (cleanItems.length > 0) {
+        const rows = cleanItems.map((item) => ({
+          id: item.id,
+          user_id: userId,
+          description: item.description,
+          descricao: item.description,
+          price: item.price,
+          preco: item.price,
+          cost: item.cost || 0,
+          custo: item.cost || 0,
+          gradient: item.gradient || "from-purple-600 via-fuchsia-600 to-pink-500",
+          cor: item.gradient || "from-purple-600 via-fuchsia-600 to-pink-500",
+          created_at: new Date().toISOString()
+        }));
+        await supabase.from("vendas_rapidas_itens").upsert(rows);
+      }
+    } catch (e) {
+      console.warn("Notice syncing vendas_rapidas_itens in dbSaveAllQuickSales:", e);
+    }
+
+    notifyRealtimeSync(userId, "quick_sales_updated", { items: cleanItems });
+  }
+
+  return true;
+}
+
 export async function dbSaveQuickSale(userId: string, item: DbQuickSale): Promise<boolean> {
+  if (!userId || !userId.trim() || !getAuthenticatedUserIdFromStorage()) return false;
   // 1. Update local storage immediately
   let updatedList: DbQuickSale[] = [];
   try {
@@ -3356,6 +3450,7 @@ export async function dbSaveQuickSale(userId: string, item: DbQuickSale): Promis
 }
 
 export async function dbDeleteQuickSale(userId: string, id: string): Promise<boolean> {
+  if (!userId || !userId.trim() || !getAuthenticatedUserIdFromStorage()) return false;
   let updatedList: DbQuickSale[] = [];
   try {
     const key = `NUCLEO_QUICK_SALES_${userId}`;
@@ -3499,6 +3594,7 @@ export async function dbPublishSystemStructure(
 }
 
 export async function dbGetSystemConfig(): Promise<any | null> {
+  if (!getAuthenticatedUserIdFromStorage()) return null;
   const supabase = getSupabase();
   if (supabase) {
     try {
@@ -3520,6 +3616,7 @@ export async function dbGetSystemConfig(): Promise<any | null> {
 }
 
 export async function dbGetCatalogProducts(userId: string): Promise<CatalogProduct[]> {
+  if (!userId || !userId.trim() || !getAuthenticatedUserIdFromStorage()) return [];
   const isAdmin = isSystemAdminUser();
 
   // 1. Primary: fetch through secure server API with service_role to avoid RLS 42501
@@ -3591,6 +3688,7 @@ export async function dbGetCatalogProducts(userId: string): Promise<CatalogProdu
 }
 
 export async function dbSaveCatalogProduct(userId: string, product: CatalogProduct): Promise<boolean> {
+  if (!userId || !userId.trim() || !getAuthenticatedUserIdFromStorage()) return false;
   const isAdmin = isSystemAdminUser();
   // Se for o administrador sistemadevendaadm@gmail.com, salva como 'rascunho' a menos que já esteja ativo
   const finalStatus = product.status || (isAdmin ? "rascunho" : "ativo");
@@ -3659,6 +3757,7 @@ export async function dbSaveCatalogProduct(userId: string, product: CatalogProdu
 }
 
 export async function dbDeleteCatalogProduct(userId: string, productId: string): Promise<boolean> {
+  if (!userId || !userId.trim() || !getAuthenticatedUserIdFromStorage()) return false;
   try {
     const localStr = localStorage.getItem("NUCLEO_PRODUCTS");
     if (localStr) {
@@ -3691,6 +3790,7 @@ export async function dbDeleteCatalogProduct(userId: string, productId: string):
 }
 
 export async function dbUpdateProductStock(ownerId: string, productId: string, newStock: number): Promise<boolean> {
+  if (!ownerId || !ownerId.trim() || !getAuthenticatedUserIdFromStorage()) return false;
   // Update local storage mirror
   try {
     const localStr = localStorage.getItem("NUCLEO_PRODUCTS");
@@ -3829,7 +3929,7 @@ export function isCashSessionExplicitlyClosed(row: any): boolean {
 }
 
 export async function dbGetCashRegister(userId: string): Promise<CashRegisterState | null> {
-  if (!userId || !userId.trim()) return null;
+  if (!userId || !userId.trim() || !getAuthenticatedUserIdFromStorage()) return null;
   // 1. Primary: fetch through secure server API with service_role to avoid RLS/table discrepancies across machines
   if (userId) {
     try {
@@ -3986,6 +4086,7 @@ export async function dbGetCashRegister(userId: string): Promise<CashRegisterSta
 }
 
 export async function dbSaveCashRegister(userId: string, state: CashRegisterState): Promise<boolean> {
+  if (!userId || !userId.trim() || !getAuthenticatedUserIdFromStorage()) return false;
   const nowISO = new Date().toISOString();
   const supabase = getSupabase();
 
@@ -4115,6 +4216,7 @@ export async function dbSaveCashRegister(userId: string, state: CashRegisterStat
 // ==========================================
 
 export async function dbGetClientes(ownerId?: string): Promise<any[] | null> {
+  if (!getAuthenticatedUserIdFromStorage()) return [];
   // 1. Primary: fetch through secure server API with service_role to avoid RLS 42501
   if (ownerId) {
     try {
@@ -4186,6 +4288,7 @@ export async function dbGetClientes(ownerId?: string): Promise<any[] | null> {
 }
 
 export async function dbSaveCliente(cliente: any, ownerId?: string): Promise<boolean> {
+  if (!getAuthenticatedUserIdFromStorage()) return false;
   // Update local storage mirror first for instant UI response
   try {
     const targetUserId = ownerId || "default";
@@ -4251,6 +4354,7 @@ export async function dbSaveCliente(cliente: any, ownerId?: string): Promise<boo
 }
 
 export async function dbDeleteCliente(clienteId: string, ownerId?: string): Promise<boolean> {
+  if (!getAuthenticatedUserIdFromStorage()) return false;
   // Update local storage mirror
   try {
     const targetUserId = ownerId || "default";
@@ -4309,6 +4413,7 @@ export async function dbDeleteCliente(clienteId: string, ownerId?: string): Prom
 // ==========================================
 
 export async function dbCheckGlobalCashRegister(userId: string): Promise<boolean> {
+  if (!userId || !userId.trim() || !getAuthenticatedUserIdFromStorage()) return false;
   // 1. Primary: check canonical cash register state via dbGetCashRegister (which calls /api/cash-register first)
   try {
     const state = await dbGetCashRegister(userId);
@@ -4361,6 +4466,7 @@ export async function dbCheckGlobalCashRegister(userId: string): Promise<boolean
 }
 
 export async function dbOpenGlobalCashRegister(userId: string, session: any): Promise<boolean> {
+  if (!userId || !userId.trim() || !getAuthenticatedUserIdFromStorage()) return false;
   const supabase = getSupabase();
   let effectiveUserId = userId;
   if (supabase?.auth) {
@@ -4456,6 +4562,7 @@ export async function dbOpenGlobalCashRegister(userId: string, session: any): Pr
 }
 
 export async function dbCloseGlobalCashRegister(userId: string, sessionId?: string, closingData: any = {}): Promise<boolean> {
+  if (!userId || !userId.trim() || !getAuthenticatedUserIdFromStorage()) return false;
   const supabase = getSupabase();
   let effectiveUserId = userId;
   if (supabase?.auth) {
@@ -4601,6 +4708,7 @@ export async function dbCloseGlobalCashRegister(userId: string, sessionId?: stri
 }
 
 export async function dbGetSupportFeedbacks(userId?: string): Promise<SupportFeedback[]> {
+  if (!getAuthenticatedUserIdFromStorage()) return [];
   const supabase = getSupabase();
   let localFeedbacks: SupportFeedback[] = [];
   try {
@@ -4781,6 +4889,8 @@ export async function dbGetSupportConfig(): Promise<SupportConfig> {
   } catch (e) {
     console.error("Failed to parse local support config", e);
   }
+
+  if (!getAuthenticatedUserIdFromStorage()) return defaultConfig;
 
   const supabase = getSupabase();
   if (!supabase) return defaultConfig;
@@ -4977,7 +5087,7 @@ export async function dbUploadSupportImage(imageBlob: Blob): Promise<string | nu
 
 
 export async function dbResetSystemData(userId: string): Promise<{ success: boolean; error?: string }> {
-  if (!userId || !userId.trim()) return { success: false, error: "ID do usuário não fornecido" };
+  if (!userId || !userId.trim() || !getAuthenticatedUserIdFromStorage()) return { success: false, error: "ID do usuário não fornecido" };
 
   const tablesToClean = [
     "sales",

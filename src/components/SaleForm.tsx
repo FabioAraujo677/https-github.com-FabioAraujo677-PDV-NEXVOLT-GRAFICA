@@ -742,7 +742,7 @@ export function SaleForm({
       const updatedList = quickSales.filter(q => q.id !== id);
       setQuickSales(updatedList);
       
-      if (currentUser) {
+      if (currentUser?.id) {
         const ownerId = currentUser.owner_id || currentUser.id;
         await dbSaveAllQuickSales(ownerId, updatedList);
         if (channelRef.current) {
@@ -751,8 +751,6 @@ export function SaleForm({
             event: "quick_sales_config_update",
             payload: { senderId: sessionClientId }
           }).catch((err: any) => console.warn(err));
-        }
-      }
         }
       }
       

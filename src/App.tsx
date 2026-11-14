@@ -229,6 +229,10 @@ export default function App() {
       const saved = localStorage.getItem("NUCLEO_CURRENT_USER");
       if (saved) {
         const parsed = JSON.parse(saved);
+        if (!parsed || typeof parsed.id !== "string" || !parsed.id.trim()) {
+          localStorage.removeItem("NUCLEO_CURRENT_USER");
+          return null;
+        }
         const isMaster = parsed?.email?.toLowerCase().trim() === "vendas.impactodigital2@gmail.com";
         if (isMaster) {
           return {
@@ -539,7 +543,7 @@ export default function App() {
   const [deletionAuditRecords, setDeletionAuditRecords] = useState<DeletionAuditRecord[]>([]);
 
   useEffect(() => {
-    if (!currentUser) return;
+    if (!currentUser?.id) return;
     const ownerId = currentUser.owner_id || currentUser.id;
     if (!ownerId) return;
 
@@ -925,7 +929,7 @@ export default function App() {
 
   // Supabase Realtime: Escuta eventos de alteração DIRETAMENTE na tabela 'profiles' para sincronização instantânea
   useEffect(() => {
-    if (!currentUser || !isSupabaseConfigured()) return;
+    if (!currentUser?.id || !isSupabaseConfigured()) return;
     const client = getSupabase();
     if (!client) return;
 
@@ -1619,7 +1623,8 @@ export default function App() {
 
   const checkGlobalRegisterStatus = async (userIdToUse?: string): Promise<boolean> => {
     const companyOwnerId = currentUser?.owner_id || currentUser?.id || userIdToUse;
-    if (!companyOwnerId) return false;
+    if (!currentUser?.id && (!userIdToUse || !userIdToUse.trim())) return false;
+    if (!companyOwnerId || !String(companyOwnerId).trim()) return false;
 
     // Avoid re-entrant or racing checks
     if (checkingRegisterRef.current) {
@@ -2090,6 +2095,29 @@ export default function App() {
         setIsInitialLoading(false);
         return;
       }
+
+      // Bloqueio estrito antes do login: nunca consultar Supabase/API na tela "Iniciar Sessão"
+      let savedLocalUser: User | null = null;
+      try {
+        const savedLocal = localStorage.getItem("NUCLEO_CURRENT_USER");
+        if (savedLocal) {
+          const parsed = JSON.parse(savedLocal);
+          if (parsed && typeof parsed.id === "string" && parsed.id.trim().length > 0) {
+            savedLocalUser = parsed;
+          } else {
+            localStorage.removeItem("NUCLEO_CURRENT_USER");
+          }
+        }
+      } catch {
+        localStorage.removeItem("NUCLEO_CURRENT_USER");
+      }
+
+      if (!savedLocalUser) {
+        setCurrentUser(null);
+        setIsInitialLoading(false);
+        return;
+      }
+
       try {
         let sessionUser: User | null = null;
         try {
@@ -2098,7 +2126,7 @@ export default function App() {
           console.error("Error calling dbLoadSessionUser:", sessionErr);
         }
 
-        if (sessionUser) {
+        if (sessionUser && sessionUser.id) {
           const isMaster = sessionUser.email?.toLowerCase().trim() === "vendas.impactodigital2@gmail.com";
           if (isMaster) {
             sessionUser.role = "master";
@@ -2122,65 +2150,47 @@ export default function App() {
             });
           }, 1000);
         } else {
-          // If Supabase auth session is null, check if there is a saved user in localStorage
-          const savedLocal = localStorage.getItem("NUCLEO_CURRENT_USER");
-          if (savedLocal) {
+          // Verify saved local user session (only when savedLocalUser exists)
+          try {
+            let activeUser = savedLocalUser;
             try {
-              const parsed = JSON.parse(savedLocal);
-              if (parsed && parsed.id) {
-                let activeUser = parsed;
-                try {
-                  const dbUser = await dbVerifyUserSession(parsed.id);
-                  if (dbUser) activeUser = dbUser;
-                } catch (verifyErr) {
-                  console.warn("dbVerifyUserSession notice, preserving local user:", verifyErr);
-                }
-
-                const isMaster = activeUser.email?.toLowerCase().trim() === "vendas.impactodigital2@gmail.com";
-                if (isMaster) {
-                  activeUser.role = "master";
-                  activeUser.cargo = "master";
-                  activeUser.is_admin = true;
-                }
-
-                setCurrentUser((prev) => {
-                  if (prev && prev.id === activeUser.id && prev.status === activeUser.status && prev.role === activeUser.role) {
-                    return prev;
-                  }
-                  return activeUser;
-                });
-                localStorage.setItem("NUCLEO_CURRENT_USER", JSON.stringify(activeUser));
-                setIsInitialLoading(false);
-
-                setTimeout(() => {
-                  triggerRemoteSync(activeUser, true).catch((syncErr) => {
-                    console.error("Background initial triggerRemoteSync failed for user:", syncErr);
-                  });
-                }, 1000);
-                return;
-              }
-            } catch (err) {
-              console.error("Error verifying local user session:", err);
+              const dbUser = await dbVerifyUserSession(savedLocalUser.id);
+              if (dbUser) activeUser = dbUser;
+            } catch (verifyErr) {
+              console.warn("dbVerifyUserSession notice, preserving local user:", verifyErr);
             }
+
+            const isMaster = activeUser.email?.toLowerCase().trim() === "vendas.impactodigital2@gmail.com";
+            if (isMaster) {
+              activeUser.role = "master";
+              activeUser.cargo = "master";
+              activeUser.is_admin = true;
+            }
+
+            setCurrentUser((prev) => {
+              if (prev && prev.id === activeUser.id && prev.status === activeUser.status && prev.role === activeUser.role) {
+                return prev;
+              }
+              return activeUser;
+            });
+            localStorage.setItem("NUCLEO_CURRENT_USER", JSON.stringify(activeUser));
+            setIsInitialLoading(false);
+
+            setTimeout(() => {
+              triggerRemoteSync(activeUser, true).catch((syncErr) => {
+                console.error("Background initial triggerRemoteSync failed for user:", syncErr);
+              });
+            }, 1000);
+            return;
+          } catch (err) {
+            console.error("Error verifying local user session:", err);
           }
-          // Only clear if no saved local user exists
           setCurrentUser(null);
           setIsInitialLoading(false);
         }
       } catch (err) {
         console.error("Failed to check active Supabase session on startup:", err);
-        // PRESERVE LOGGED IN USER on startup exception
-        const savedLocal = localStorage.getItem("NUCLEO_CURRENT_USER");
-        if (savedLocal) {
-          try {
-            const parsed = JSON.parse(savedLocal);
-            if (parsed) {
-              setCurrentUser(parsed);
-              setIsInitialLoading(false);
-              return;
-            }
-          } catch (e) {}
-        }
+        setCurrentUser(savedLocalUser);
         setIsInitialLoading(false);
       }
     };
@@ -2189,7 +2199,7 @@ export default function App() {
 
   // Listen to Supabase Auth state changes and handle token/session expiration gracefully
   useEffect(() => {
-    if (!isSupabaseConfigured()) return;
+    if (!currentUser?.id || !isSupabaseConfigured()) return;
     const supabase = getSupabase();
     if (!supabase) return;
 
@@ -2323,7 +2333,7 @@ export default function App() {
   // Component-level function to trigger remote data synchronization
   const triggerRemoteSync = async (userRecord?: User, isBackground = false, forceAll = false) => {
     const activeUser = userRecord || currentUser;
-    if (!activeUser) return;
+    if (!activeUser || !activeUser.id || !String(activeUser.id).trim()) return;
     if (!isSupabaseConfigured()) return;
     
     // Guard against concurrent execution overlapping
@@ -2830,7 +2840,7 @@ export default function App() {
 
   // Active real-time background sync loop to keep data perfectly synchronized across multiple machines (every 45s fallback)
   useEffect(() => {
-    if (!currentUser || !isSupabaseConfigured()) return;
+    if (!currentUser?.id || !isSupabaseConfigured()) return;
 
     const syncInterval = setInterval(() => {
       triggerRemoteSync(currentUser, true);
@@ -2851,7 +2861,7 @@ export default function App() {
 
   // Busca e sincroniza vendas e orçamentos da tabela 'sales' em tempo real (com debounce e checagem de igualdade)
   const fetchSales = useCallback(async (immediate = false) => {
-    if (!currentUser || !isSupabaseConfigured()) return;
+    if (!currentUser?.id || !isSupabaseConfigured()) return;
     const companyOwnerId = currentUser.owner_id || currentUser.id;
     if (!companyOwnerId) return;
 
@@ -2913,7 +2923,7 @@ export default function App() {
 
   // Busca e sincroniza despesas da tabela 'expenses' em tempo real (com debounce e checagem de igualdade)
   const fetchExpenses = useCallback(async (immediate = false) => {
-    if (!currentUser || !isSupabaseConfigured()) return;
+    if (!currentUser?.id || !isSupabaseConfigured()) return;
     const companyOwnerId = currentUser.owner_id || currentUser.id;
     if (!companyOwnerId) return;
 
@@ -3470,6 +3480,7 @@ export default function App() {
 
   // Listener para eventos de sincronização remota via window custom events (app_remote_sync)
   useEffect(() => {
+    if (!currentUser?.id) return;
     const handleRemoteEvent = (evt: any) => {
       const d = evt.detail;
       if (
@@ -3484,11 +3495,11 @@ export default function App() {
     return () => {
       window.removeEventListener("app_remote_sync" as any, handleRemoteEvent);
     };
-  }, [handleApplyRemoteSystemStructure]);
+  }, [currentUser?.id, handleApplyRemoteSystemStructure]);
 
   // Instant Real-Time Cross-Terminal Synchronizer (SSE Stream + Custom Event Bus)
   useEffect(() => {
-    if (!currentUser) return;
+    if (!currentUser?.id) return;
     const companyOwnerId = currentUser.owner_id || currentUser.id;
     if (!companyOwnerId) return;
 
@@ -3788,7 +3799,7 @@ export default function App() {
 
   // Terminal Heartbeat Poller: synchronizes cash register and data across all terminals logged into the account
   useEffect(() => {
-    if (!currentUser) return;
+    if (!currentUser?.id) return;
     const companyOwnerId = currentUser.owner_id || currentUser.id;
     if (!companyOwnerId || !isSupabaseConfigured()) return;
 
@@ -4984,7 +4995,7 @@ export default function App() {
   useEffect(() => {
     localStorage.setItem("NUCLEO_GOAL_VALUE", String(goalValue));
     localStorage.setItem("NUCLEO_GOAL_TYPE", goalType);
-    if (currentUser && isSupabaseConfigured() && goalValue > 0) {
+    if (currentUser?.id && isSupabaseConfigured() && goalValue > 0) {
       const companyOwnerId = currentUser.owner_id || currentUser.id;
       dbSaveGoals(companyOwnerId, goalValue, goalType, notifiedGoalValue, notifiedGoalDate)
         .catch((err) => console.error("Error syncing goals to Supabase:", err));
@@ -6057,7 +6068,7 @@ export default function App() {
   // Sessão de autenticação e caixa permanecem ativos ao atualizar (F5) ou minimizar o navegador;
   // o caixa só fecha quando o usuário clica explicitamente em "Fechar Caixa".
 
-  if (!currentUser) {
+  if (!currentUser || !currentUser.id) {
     return (
       <AuthScreen
         companyLogo={company.logo}

@@ -841,7 +841,7 @@ function registerApiRoutes(app: express.Express) {
       }
 
       const ai = getAiInstance();
-      const modelsToTry = ["gemini-3.8-flash", "gemini-3.6-flash", "gemini-3.1-flash-lite"];
+      const modelsToTry = ["gemini-4-hydrogen", "gemini-3.1-flash-lite"];
       let parsedData: any = null;
       let lastError: any = null;
 
@@ -862,7 +862,8 @@ function registerApiRoutes(app: express.Express) {
                       "2. DESCRIÇÃO DO GASTO: Analise o corpo do comprovante para entender o que foi comprado ou pago (Ex: Combustível, Papel A4, Almoço, Manutenção). A descrição final retornada deve ser a junção do Local + Itens principais (Ex: 'Kalunga - Papel A4 e Canetas').\n" +
                       "3. VALOR TOTAL: Localize o valor total final pago no comprovante e formate como um número decimal puro (Ex: 25.00).\n" +
                       "4. CATEGORIA: Classifique automaticamente o gasto com base nos itens lidos em uma destas categorias padrão: 'Materiais/Insumos', 'Alimentação', 'Combustível/Viagem', 'Manutenção' ou 'Outros'.\n" +
-                      "5. DATA: Se houver data no comprovante, extraia no formato YYYY-MM-DD. Se não encontrar, deixe vazio.\n\n" +
+                      "5. DATA: Se houver data no comprovante, extraia no formato YYYY-MM-DD. Se não encontrar, deixe vazio.\n" +
+                      "6. DISCRIMINAÇÃO DOS ITENS: Liste cada item/produto/serviço discriminado no cupom com sua quantidade e valor quando visível (Ex: ['2x Papel A4 500fl - R$ 48,00', '1x Caneta Esferográfica - R$ 4,50']).\n\n" +
                       "Retorne estritamente um JSON válido.",
               },
             ],
@@ -871,6 +872,10 @@ function registerApiRoutes(app: express.Express) {
               responseSchema: {
                 type: Type.OBJECT,
                 properties: {
+                  estabelecimento: {
+                    type: Type.STRING,
+                    description: "Name of the store or establishment in the receipt header.",
+                  },
                   descricao: {
                     type: Type.STRING,
                     description: "Establishment name + description of main items (Format: 'Nome do Local - Descrição dos Itens').",
@@ -886,7 +891,12 @@ function registerApiRoutes(app: express.Express) {
                   data: {
                     type: Type.STRING,
                     description: "Date of expense in YYYY-MM-DD format if detected, or empty string.",
-                  }
+                  },
+                  itens: {
+                    type: Type.ARRAY,
+                    items: { type: Type.STRING },
+                    description: "Itemized list of products/services extracted from the receipt.",
+                  },
                 },
                 required: ["descricao", "valor", "categoria"],
               },

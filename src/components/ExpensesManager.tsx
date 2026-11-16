@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from "react";
+import React, { useState, useMemo, useEffect, useRef } from "react";
 import { motion, AnimatePresence } from "motion/react";
 import {
   TrendingDown,
@@ -194,20 +194,77 @@ export function ExpensesManager({ expenses, onAddExpense, onDeleteExpense, sales
   const [scanError, setScanError] = useState<string | null>(null);
   const [isPreRegistered, setIsPreRegistered] = useState(false);
   const [scannedFileName, setScannedFileName] = useState("");
-  const [receiptPreview, setReceiptPreview] = useState<string | null>(null);
+  const [image, setImage] = useState<string | null>(null);
+  const [extractedItems, setExtractedItems] = useState<string[]>([]);
 
   // Live Camera Viewfinder Modal states
   const [isCameraActive, setIsCameraActive] = useState<boolean>(false);
   const [cameraError, setCameraError] = useState<string | null>(null);
   const [availableCameras, setAvailableCameras] = useState<MediaDeviceInfo[]>([]);
   const [selectedCameraId, setSelectedCameraId] = useState<string>("");
-  const videoRef = React.useRef<HTMLVideoElement | null>(null);
-  const streamRef = React.useRef<MediaStream | null>(null);
-  const fileInputRef = React.useRef<HTMLInputElement | null>(null);
-  const mobileCameraInputRef = React.useRef<HTMLInputElement | null>(null);
+  const videoRef = useRef<HTMLVideoElement | null>(null);
+  const streamRef = useRef<MediaStream | null>(null);
+  const fileInputRef = useRef<HTMLInputElement | null>(null);
+  const mobileCameraInputRef = useRef<HTMLInputElement | null>(null);
+  const imageCleanupTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const activeObjectUrlRef = useRef<string | null>(null);
 
   // View full size receipt modal
   const [activeViewingReceipt, setActiveViewingReceipt] = useState<string | null>(null);
+
+  const clearTemporaryImage = () => {
+    if (imageCleanupTimerRef.current) {
+      clearTimeout(imageCleanupTimerRef.current);
+      imageCleanupTimerRef.current = null;
+    }
+    if (activeObjectUrlRef.current) {
+      URL.revokeObjectURL(activeObjectUrlRef.current);
+      activeObjectUrlRef.current = null;
+    }
+    setImage(null);
+    setActiveViewingReceipt((prev) => (prev && prev.startsWith("blob:") ? null : prev));
+    setScannedFileName("");
+  };
+
+  const createTemporaryPreview = (fileOrBlob: File | Blob) => {
+    if (imageCleanupTimerRef.current) {
+      clearTimeout(imageCleanupTimerRef.current);
+      imageCleanupTimerRef.current = null;
+    }
+    if (activeObjectUrlRef.current) {
+      URL.revokeObjectURL(activeObjectUrlRef.current);
+      activeObjectUrlRef.current = null;
+    }
+
+    const tempObjectUrl = URL.createObjectURL(fileOrBlob);
+    activeObjectUrlRef.current = tempObjectUrl;
+    setImage(tempObjectUrl);
+
+    // Destruição automática após 5 minutos: apaga apenas a imagem/preview e mantém os campos de texto extraídos intactos
+    imageCleanupTimerRef.current = setTimeout(() => {
+      if (activeObjectUrlRef.current === tempObjectUrl) {
+        URL.revokeObjectURL(tempObjectUrl);
+        activeObjectUrlRef.current = null;
+      }
+      setImage(null);
+      setActiveViewingReceipt((prev) => (prev === tempObjectUrl ? null : prev));
+      setScannedFileName("");
+      imageCleanupTimerRef.current = null;
+    }, 5 * 60 * 1000);
+  };
+
+  useEffect(() => {
+    return () => {
+      if (imageCleanupTimerRef.current) {
+        clearTimeout(imageCleanupTimerRef.current);
+        imageCleanupTimerRef.current = null;
+      }
+      if (activeObjectUrlRef.current) {
+        URL.revokeObjectURL(activeObjectUrlRef.current);
+        activeObjectUrlRef.current = null;
+      }
+    };
+  }, []);
 
   const stopCamera = () => {
     if (streamRef.current) {
@@ -281,30 +338,46 @@ export function ExpensesManager({ expenses, onAddExpense, onDeleteExpense, sales
       const ctx = canvas.getContext("2d");
       if (!ctx) return;
       ctx.drawImage(video, 0, 0, width, height);
-      const dataUrl = canvas.toDataURL("image/jpeg", 0.85);
       stopCamera();
-      const parts = dataUrl.split(",");
-      processReceiptImage(parts[1] || "", "image/jpeg", "foto_camera.jpg", dataUrl);
+
+      canvas.toBlob(
+        (blob) => {
+          if (!blob) {
+            setScanError("Erro ao capturar foto da câmera. Tente novamente.");
+            return;
+          }
+          createTemporaryPreview(blob);
+          const reader = new FileReader();
+          reader.onloadend = () => {
+            const resultStr = reader.result as string;
+            const pureBase64 = resultStr?.includes(",") ? resultStr.split(",")[1] : "";
+            processReceiptImage(pureBase64 || "", "image/jpeg", "foto_camera.jpg");
+          };
+          reader.readAsDataURL(blob);
+        },
+        "image/jpeg",
+        0.85
+      );
     } catch (err: any) {
       console.error("Capture photo error:", err);
       setScanError("Erro ao capturar foto: " + (err.message || "tente novamente"));
     }
   };
 
-  const compressAndResizeImage = (file: File, maxWidth = 1400, maxHeight = 1400): Promise<{ base64: string, type: string, previewUrl: string }> => {
+  const compressAndResizeImage = (file: File, maxWidth = 1400, maxHeight = 1400): Promise<{ base64: string, type: string }> => {
     return new Promise((resolve, reject) => {
       const reader = new FileReader();
       reader.readAsDataURL(file);
       reader.onload = (event) => {
         const resultStr = event.target?.result as string;
         if (!resultStr) {
-          resolve({ base64: "", type: file.type || "image/jpeg", previewUrl: "" });
+          resolve({ base64: "", type: file.type || "image/jpeg" });
           return;
         }
 
         if (!file.type.startsWith("image/")) {
           const parts = resultStr.split(",");
-          resolve({ base64: parts[1] || "", type: file.type || "application/octet-stream", previewUrl: resultStr });
+          resolve({ base64: parts[1] || "", type: file.type || "application/octet-stream" });
           return;
         }
 
@@ -333,7 +406,7 @@ export function ExpensesManager({ expenses, onAddExpense, onDeleteExpense, sales
             const ctx = canvas.getContext("2d");
             if (!ctx) {
               const parts = resultStr.split(",");
-              resolve({ base64: parts[1] || "", type: file.type || "image/jpeg", previewUrl: resultStr });
+              resolve({ base64: parts[1] || "", type: file.type || "image/jpeg" });
               return;
             }
 
@@ -341,19 +414,19 @@ export function ExpensesManager({ expenses, onAddExpense, onDeleteExpense, sales
             const dataUrl = canvas.toDataURL("image/jpeg", 0.82);
             const parts = dataUrl.split(",");
             if (parts.length > 1) {
-              resolve({ base64: parts[1], type: "image/jpeg", previewUrl: dataUrl });
+              resolve({ base64: parts[1], type: "image/jpeg" });
             } else {
               const fallbackParts = resultStr.split(",");
-              resolve({ base64: fallbackParts[1] || "", type: file.type || "image/jpeg", previewUrl: resultStr });
+              resolve({ base64: fallbackParts[1] || "", type: file.type || "image/jpeg" });
             }
           } catch {
             const parts = resultStr.split(",");
-            resolve({ base64: parts[1] || "", type: file.type || "image/jpeg", previewUrl: resultStr });
+            resolve({ base64: parts[1] || "", type: file.type || "image/jpeg" });
           }
         };
         img.onerror = () => {
           const parts = resultStr.split(",");
-          resolve({ base64: parts[1] || "", type: file.type || "image/jpeg", previewUrl: resultStr });
+          resolve({ base64: parts[1] || "", type: file.type || "image/jpeg" });
         };
         img.src = resultStr;
       };
@@ -361,12 +434,10 @@ export function ExpensesManager({ expenses, onAddExpense, onDeleteExpense, sales
     });
   };
 
-  const processReceiptImage = async (base64: string, type: string, fileName: string, previewUrl?: string) => {
+  const processReceiptImage = async (base64: string, type: string, fileName: string) => {
     setIsScanning(true);
     setScanError(null);
     setScannedFileName(fileName);
-    const preview = previewUrl || (base64.startsWith("data:") ? base64 : `data:${type || "image/jpeg"};base64,${base64}`);
-    setReceiptPreview(preview);
     setIsPreRegistered(true);
 
     try {
@@ -384,8 +455,14 @@ export function ExpensesManager({ expenses, onAddExpense, onDeleteExpense, sales
 
       if (response.ok) {
         const data = await response.json();
-        if (data.descricao && typeof data.descricao === "string" && data.descricao.trim()) {
-          setDescription(data.descricao.trim());
+        const estabelecimento =
+          typeof data.estabelecimento === "string" ? data.estabelecimento.trim() : "";
+        const descricao =
+          typeof data.descricao === "string" ? data.descricao.trim() : "";
+        if (descricao) {
+          setDescription(descricao);
+        } else if (estabelecimento) {
+          setDescription(estabelecimento);
         }
         if (data.valor !== undefined && data.valor !== null && Number(data.valor) > 0) {
           setValue(String(data.valor));
@@ -402,20 +479,28 @@ export function ExpensesManager({ expenses, onAddExpense, onDeleteExpense, sales
         if (data.categoria && CATEGORIES.includes(data.categoria)) {
           setCategory(data.categoria);
         }
+        if (Array.isArray(data.itens)) {
+          const cleanedItems = data.itens
+            .filter((item: unknown): item is string => typeof item === "string" && item.trim().length > 0)
+            .map((item: string) => item.trim());
+          setExtractedItems(cleanedItems);
+        } else {
+          setExtractedItems([]);
+        }
 
         if (data.aviso) {
           setSuccessMsg(data.aviso);
         } else {
-          setSuccessMsg("Comprovante anexado e analisado com sucesso! Revise os dados abaixo.");
+          setSuccessMsg("Comprovante lido com sucesso! A foto temporária será removida automaticamente em 5 minutos.");
         }
         setTimeout(() => setSuccessMsg(null), 5000);
       } else {
-        setSuccessMsg("Comprovante anexado com sucesso! Preencha a descrição e valor.");
+        setSuccessMsg("Comprovante anexado temporariamente! Preencha a descrição e valor.");
         setTimeout(() => setSuccessMsg(null), 5000);
       }
     } catch (err: any) {
       console.warn("Aviso na análise com IA:", err);
-      setSuccessMsg("Comprovante anexado com sucesso! Preencha a descrição e valor.");
+      setSuccessMsg("Comprovante anexado temporariamente! Preencha a descrição e valor.");
       setTimeout(() => setSuccessMsg(null), 5000);
     } finally {
       setIsScanning(false);
@@ -427,8 +512,9 @@ export function ExpensesManager({ expenses, onAddExpense, onDeleteExpense, sales
     if (!file) return;
 
     try {
-      const { base64, type, previewUrl } = await compressAndResizeImage(file);
-      await processReceiptImage(base64, type, file.name, previewUrl);
+      createTemporaryPreview(file);
+      const { base64, type } = await compressAndResizeImage(file);
+      await processReceiptImage(base64, type, file.name);
     } catch (err: any) {
       console.error(err);
       setScanError(err.message || "Falha ao processar arquivo de imagem.");
@@ -448,8 +534,8 @@ export function ExpensesManager({ expenses, onAddExpense, onDeleteExpense, sales
     const day = String(localDate.getDate()).padStart(2, '0');
     setDate(`${year}-${month}-${day}`);
     setIsPreRegistered(false);
-    setScannedFileName("");
-    setReceiptPreview(null);
+    setExtractedItems([]);
+    clearTemporaryImage();
     setScanError(null);
   };
   
@@ -532,8 +618,6 @@ export function ExpensesManager({ expenses, onAddExpense, onDeleteExpense, sales
       date,
       category,
       paymentMethod,
-      comprovanteUrl: receiptPreview || undefined,
-      receiptImage: receiptPreview || undefined,
     };
 
     const saveOk = await onAddExpense(newExpense);
@@ -550,8 +634,8 @@ export function ExpensesManager({ expenses, onAddExpense, onDeleteExpense, sales
     setValue("");
     setPaymentMethod("dinheiro");
     setIsPreRegistered(false);
-    setScannedFileName("");
-    setReceiptPreview(null);
+    setExtractedItems([]);
+    clearTemporaryImage();
   };
 
   const formatBRL = (val: number) => {
@@ -1232,8 +1316,9 @@ export function ExpensesManager({ expenses, onAddExpense, onDeleteExpense, sales
               const file = e.dataTransfer.files?.[0];
               if (file) {
                 try {
-                  const { base64, type, previewUrl } = await compressAndResizeImage(file);
-                  await processReceiptImage(base64, type, file.name, previewUrl);
+                  createTemporaryPreview(file);
+                  const { base64, type } = await compressAndResizeImage(file);
+                  await processReceiptImage(base64, type, file.name);
                 } catch (err: any) {
                   setScanError(err.message || "Falha ao processar imagem arrastada.");
                 }
@@ -1251,7 +1336,7 @@ export function ExpensesManager({ expenses, onAddExpense, onDeleteExpense, sales
               </span>
             </div>
             <p className="text-[10.5px] text-slate-400 leading-relaxed">
-              Arraste, faça upload ou tire uma foto do recibo para ler o valor, data e descrição automaticamente com IA.
+              Arraste, faça upload ou tire uma foto do recibo para ler estabelecimento, valor, data e itens com IA. A imagem é usada apenas em memória e descartada em 5 min.
             </p>
 
             {/* Hidden file inputs */}
@@ -1303,30 +1388,30 @@ export function ExpensesManager({ expenses, onAddExpense, onDeleteExpense, sales
               </button>
             </div>
 
-            {/* Thumbnail preview if receipt is scanned */}
-            {receiptPreview && (
+            {/* Thumbnail preview temporário (removido automaticamente após 5 min) */}
+            {image && (
               <div className="flex items-center justify-between p-2 bg-slate-900/90 border border-slate-700/60 rounded-lg gap-2">
                 <div className="flex items-center gap-2 overflow-hidden">
                   <img
-                    src={receiptPreview}
-                    alt="Comprovante"
+                    src={image}
+                    alt="Comprovante temporário"
                     className="h-10 w-10 object-cover rounded border border-slate-700 cursor-pointer hover:opacity-80 transition-opacity shrink-0"
-                    onClick={() => setActiveViewingReceipt(receiptPreview)}
+                    onClick={() => setActiveViewingReceipt(image)}
                     title="Clique para ampliar"
                   />
                   <div className="min-w-0">
                     <span className="text-[10px] font-bold text-slate-200 block truncate">
-                      {scannedFileName || "Comprovante anexado"}
+                      {scannedFileName || "Comprovante temporário"}
                     </span>
                     <span className="text-[9px] text-emerald-400 font-medium flex items-center gap-1">
-                      <CheckCircle2 className="h-3 w-3" /> Imagem vinculada ao gasto
+                      <CheckCircle2 className="h-3 w-3 shrink-0" /> Preview temporário (auto-remove em 5 min)
                     </span>
                   </div>
                 </div>
                 <div className="flex items-center gap-1 shrink-0">
                   <button
                     type="button"
-                    onClick={() => setActiveViewingReceipt(receiptPreview)}
+                    onClick={() => setActiveViewingReceipt(image)}
                     className="p-1 text-slate-400 hover:text-white hover:bg-slate-800 rounded transition-colors"
                     title="Ver em tamanho real"
                   >
@@ -1334,12 +1419,9 @@ export function ExpensesManager({ expenses, onAddExpense, onDeleteExpense, sales
                   </button>
                   <button
                     type="button"
-                    onClick={() => {
-                      setReceiptPreview(null);
-                      setScannedFileName("");
-                    }}
+                    onClick={() => clearTemporaryImage()}
                     className="p-1 text-rose-400 hover:text-rose-300 hover:bg-rose-950/40 rounded transition-colors"
-                    title="Remover foto"
+                    title="Remover foto temporária (mantém dados em texto)"
                   >
                     <X className="h-3.5 w-3.5" />
                   </button>
@@ -1484,6 +1566,43 @@ export function ExpensesManager({ expenses, onAddExpense, onDeleteExpense, sales
                 </select>
               </div>
             </div>
+
+            {extractedItems.length > 0 && (
+              <div className="bg-slate-950/90 border border-amber-500/30 rounded-xl p-3 space-y-2">
+                <div className="flex items-center justify-between">
+                  <span className="text-[10px] font-black text-amber-400 uppercase tracking-wider">
+                    Discriminação dos Itens Extraídos ({extractedItems.length})
+                  </span>
+                  <button
+                    type="button"
+                    onClick={() => setExtractedItems([])}
+                    className="text-[9px] text-slate-400 hover:text-rose-400 transition-colors cursor-pointer"
+                  >
+                    Limpar lista
+                  </button>
+                </div>
+                <ul className="space-y-1 max-h-36 overflow-y-auto pr-1 text-[11px] text-slate-300">
+                  {extractedItems.map((itemText, idx) => (
+                    <li
+                      key={`${idx}-${itemText.slice(0, 16)}`}
+                      className="flex items-start justify-between gap-2 bg-slate-900/70 border border-slate-800/80 rounded-lg px-2.5 py-1.5"
+                    >
+                      <span className="leading-snug">{itemText}</span>
+                      <button
+                        type="button"
+                        onClick={() =>
+                          setExtractedItems((prev) => prev.filter((_, itemIndex) => itemIndex !== idx))
+                        }
+                        className="text-slate-500 hover:text-rose-400 transition-colors shrink-0 cursor-pointer"
+                        title="Remover item da discriminação"
+                      >
+                        <X className="h-3 w-3" />
+                      </button>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
 
             {successMsg && (
               <div className="p-2.5 bg-emerald-500/10 border border-emerald-500/20 rounded-xl text-emerald-400 font-mono text-[10px] text-center animate-pulse">

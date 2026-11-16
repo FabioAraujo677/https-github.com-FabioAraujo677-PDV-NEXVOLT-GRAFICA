@@ -351,11 +351,15 @@ export function Header({
                 <div className="absolute -inset-2 bg-gradient-to-r from-brand-magenta via-brand-cyan to-purple-600 rounded-3xl opacity-30 blur-xl group-hover:opacity-60 transition duration-1000 animate-pulse"></div>
                 
                 {companyLogo ? (
-                  <div className="relative flex h-20 w-20 sm:h-24 sm:w-24 items-center justify-center bg-slate-950/60 rounded-2xl border border-white/10 p-1 overflow-hidden shadow-[0_0_25px_rgba(0,0,0,0.5)] backdrop-blur-sm">
+                  <div
+                    className="relative flex h-20 w-20 sm:h-24 sm:w-24 items-center justify-center bg-transparent rounded-2xl border border-white/10 p-1 overflow-hidden"
+                    style={{ background: "transparent" }}
+                  >
                     <img 
                       src={companyLogo} 
                       alt={companyName || "Logo"} 
-                      className="max-h-full max-w-full object-contain filter drop-shadow-[0_2px_8px_rgba(0,0,0,0.5)] group-hover:scale-110 transition-transform duration-500"
+                      style={{ background: "transparent" }}
+                      className="max-h-full max-w-full object-contain bg-transparent group-hover:scale-110 transition-transform duration-500"
                       referrerPolicy="no-referrer"
                     />
                   </div>

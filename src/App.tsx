@@ -1542,7 +1542,11 @@ export default function App() {
 
         if (!error && data) {
           const name = data.trading_name || data.nome;
-          const logo = data.logo || data.logo_url;
+          const logo =
+            (data.logo_url && String(data.logo_url).startsWith("http") ? data.logo_url : null) ||
+            (data.logo && String(data.logo).startsWith("http") ? data.logo : null) ||
+            data.logo_url ||
+            data.logo;
           const { cleanBusinessHours, extractedSettings } = extractSettingsFromBusinessHours(data.business_hours);
           setCompany((prev) => ({
             ...prev,
@@ -1599,7 +1603,11 @@ export default function App() {
         (payload: any) => {
           if (payload.new) {
             const name = payload.new.trading_name || payload.new.nome;
-            const logo = payload.new.logo || payload.new.logo_url;
+            const logo =
+              (payload.new.logo_url && String(payload.new.logo_url).startsWith("http") ? payload.new.logo_url : null) ||
+              (payload.new.logo && String(payload.new.logo).startsWith("http") ? payload.new.logo : null) ||
+              payload.new.logo_url ||
+              payload.new.logo;
             setCompany((prev) => ({
               ...prev,
               ...(name ? { tradingName: name } : {}),
@@ -3691,7 +3699,12 @@ export default function App() {
               city: profile.city || profile.cidade || "",
               state: profile.state || profile.estado || profile.uf || "",
               cnpjCpf: profile.cnpjCpf || profile.cnpj_cpf || "",
-              logo: profile.logo || profile.logo_url || null,
+              logo:
+                (profile.logo_url && String(profile.logo_url).startsWith("http") ? profile.logo_url : null) ||
+                (profile.logo && String(profile.logo).startsWith("http") ? profile.logo : null) ||
+                profile.logo_url ||
+                profile.logo ||
+                null,
               pixKey: profile.pixKey || profile.pix_key || "",
               ...extractedSettings,
               ...(profile.openingTime !== undefined ? { openingTime: profile.openingTime } : {}),

@@ -1011,7 +1011,12 @@ export async function dbGetCompanyProfile(userId: string): Promise<CompanyProfil
           city: data.city || data.cidade || "",
           state: data.state || data.uf || "",
           cnpjCpf: data.cnpj_cpf || data.cnpj || "",
-          logo: data.logo || data.logo_url || null,
+          logo:
+            (data.logo_url && String(data.logo_url).startsWith("http") ? data.logo_url : null) ||
+            (data.logo && String(data.logo).startsWith("http") ? data.logo : null) ||
+            data.logo_url ||
+            data.logo ||
+            null,
           pixKey: data.pix_key || data.pixKey || "",
           ...extractedSettings,
           businessHours: cleanBusinessHours,
@@ -1079,7 +1084,6 @@ export async function dbSaveCompanyProfile(userId: string, profile: CompanyProfi
 
     try {
       const validFields = [
-        "id",
         "user_id",
         "name",
         "nome_fantasia",
@@ -1107,7 +1111,6 @@ export async function dbSaveCompanyProfile(userId: string, profile: CompanyProfi
       ];
 
       const rawData: Record<string, any> = {
-        id: userId,
         user_id: userId,
         name: profile.tradingName || "",
         nome_fantasia: profile.tradingName || "",
@@ -1160,7 +1163,7 @@ export async function dbSaveCompanyProfile(userId: string, profile: CompanyProfi
         } else if (msg.toLowerCase().includes("no unique or exclusion constraint") || msg.toLowerCase().includes("on conflict")) {
           const retryById = await supabaseClient
             .from("company_profile")
-            .upsert(sanitizedPayload, { onConflict: "id" });
+            .upsert({ id: userId, ...sanitizedPayload }, { onConflict: "id" });
           error = retryById.error;
           if (!error) break;
         } else {
@@ -1216,6 +1219,91 @@ export async function dbSaveCompanyProfile(userId: string, profile: CompanyProfi
 
   notifyRealtimeSync(userId, "company_profile_updated", { profile });
   return true;
+}
+
+export async function dbSaveCompanyLogoUrl(userId: string, logoUrl: string | null): Promise<boolean> {
+  if (!userId || !userId.trim() || !getAuthenticatedUserIdFromStorage()) return false;
+  if (!isSupabaseConfigured()) return false;
+
+  const supabaseClient = getSupabase();
+  if (!supabaseClient) return false;
+
+  try {
+    const nowIso = new Date().toISOString();
+    const { data: existingRow } = await supabaseClient
+      .from("company_profile")
+      .select("user_id")
+      .eq("user_id", userId)
+      .limit(1)
+      .maybeSingle();
+
+    const payload: Record<string, any> = {
+      logo_url: logoUrl,
+      logo: logoUrl,
+      updated_at: nowIso
+    };
+
+    let error: any = null;
+
+    if (existingRow) {
+      const res = await supabaseClient
+        .from("company_profile")
+        .update(payload)
+        .eq("user_id", userId);
+      error = res.error;
+    } else {
+      const insertPayload: Record<string, any> = {
+        user_id: userId,
+        trading_name: "Minha Empresa",
+        ...payload
+      };
+      const res = await supabaseClient
+        .from("company_profile")
+        .upsert(insertPayload, { onConflict: "user_id" });
+      error = res.error;
+    }
+
+    let attempts = 0;
+    while (error && attempts < 6) {
+      attempts++;
+      const msg = error.message || "";
+      const colMatch = msg.match(/Could not find the '([^']+)' column/i) || msg.match(/column "([^"]+)" of relation/i);
+      if (colMatch && colMatch[1] && colMatch[1] !== "user_id") {
+        delete payload[colMatch[1]];
+        if (existingRow) {
+          const retry = await supabaseClient.from("company_profile").update(payload).eq("user_id", userId);
+          error = retry.error;
+        } else {
+          const retry = await supabaseClient
+            .from("company_profile")
+            .upsert({ user_id: userId, trading_name: "Minha Empresa", ...payload }, { onConflict: "user_id" });
+          error = retry.error;
+        }
+      } else {
+        break;
+      }
+    }
+
+    if (error) {
+      console.error("Erro ao salvar logo_url em company_profile:", error.message);
+      return false;
+    }
+
+    try {
+      const existingLocal = localStorage.getItem("NUCLEO_COMPANY_PROFILE");
+      if (existingLocal) {
+        const parsed = JSON.parse(existingLocal);
+        parsed.logo = logoUrl;
+        localStorage.setItem("NUCLEO_COMPANY_PROFILE", JSON.stringify(parsed));
+      }
+    } catch (e) {}
+
+    notifyRealtimeSync(userId, "company_profile_updated", { logo: logoUrl, logo_url: logoUrl });
+    return true;
+  } catch (err: any) {
+    console.error("Exceção ao atualizar logo_url no Supabase:", err?.message || err);
+    return false;
+  }
 }
 
 
@@ -2137,84 +2225,120 @@ export async function dbUploadImages(files: File[]): Promise<string[]> {
 }
 
 /**
- * Uploads a local company logo File to the 'logos' public bucket on Supabase Storage.
- * Auto-creates bucket if necessary, falls back to 'comprovantes' bucket if required.
+ * Uploads a local company logo File to the 'logos' public bucket on Supabase Storage
+ * using supabase.storage.from('logos').upload(...) and returns the public URL + error details.
  */
-export async function dbUploadLogo(file: File): Promise<string | null> {
-  const supabase = getSupabase();
-  if (!supabase) {
-    return null;
+export async function dbUploadLogoDetailed(
+  file: File,
+  userId?: string
+): Promise<{ publicUrl: string | null; error: string | null }> {
+  const supabaseClient = getSupabase();
+  if (!supabaseClient) {
+    return { publicUrl: null, error: "Cliente Supabase não configurado." };
   }
 
   try {
-    const cleanName = file.name.replace(/[^A-Za-z0-9.]/g, "_");
+    const contentType = file.type || "image/png";
+    const ext = contentType === "image/png"
+      ? "png"
+      : (file.name.split(".").pop()?.replace(/[^A-Za-z0-9]/g, "").toLowerCase() || "png");
     const randomId = Math.random().toString(36).substring(2, 10);
-    const uniqueName = `logo_${Date.now()}_${randomId}_${cleanName}`;
+    const rootFileName = `logo_${Date.now()}_${randomId}.${ext}`;
+    const safeUserFolder = userId ? userId.replace(/[^A-Za-z0-9_-]/g, "_") : "";
+    const primaryPath = safeUserFolder ? `${safeUserFolder}/${rootFileName}` : rootFileName;
     const bucketName = "logos";
 
-    const { data, error } = await supabase.storage
+    let { data, error } = await supabaseClient.storage
       .from(bucketName)
-      .upload(uniqueName, file, {
+      .upload(primaryPath, file, {
         cacheControl: "3600",
-        upsert: false
+        upsert: true,
+        contentType
       });
+
+    let finalPath = primaryPath;
+
+    // If folder-scoped path failed (e.g., storage policy on root), retry root filename in 'logos'
+    if (error && primaryPath !== rootFileName) {
+      const rootRetry = await supabaseClient.storage
+        .from(bucketName)
+        .upload(rootFileName, file, {
+          cacheControl: "3600",
+          upsert: true,
+          contentType
+        });
+      if (!rootRetry.error && rootRetry.data) {
+        data = rootRetry.data;
+        error = null;
+        finalPath = rootFileName;
+      } else if (rootRetry.error) {
+        error = rootRetry.error;
+      }
+    }
 
     if (error) {
       console.warn("Supabase Storage Logo Upload Error:", error);
 
       // Try to provision 'logos' bucket if it doesn't exist
-      if (error.message?.includes("bucket") || error.message?.includes("not found")) {
+      if (error.message?.toLowerCase().includes("bucket") || error.message?.toLowerCase().includes("not found")) {
         try {
-          console.log(`Bucket '${bucketName}' not found. Attempting creation...`);
-          await supabase.storage.createBucket(bucketName, {
+          console.log(`Bucket '${bucketName}' não encontrado. Tentando criar...`);
+          await supabaseClient.storage.createBucket(bucketName, {
             public: true,
             fileSizeLimit: 5242880 // 5MB Limit
           });
 
-          // Retry upload
-          const { data: retryData, error: retryError } = await supabase.storage
+          const retryRes = await supabaseClient.storage
             .from(bucketName)
-            .upload(uniqueName, file, {
+            .upload(rootFileName, file, {
               cacheControl: "3600",
-              upsert: false
+              upsert: true,
+              contentType
             });
 
-          if (!retryError && retryData) {
-            const { data: publicUrlData } = supabase.storage.from(bucketName).getPublicUrl(uniqueName);
-            return publicUrlData?.publicUrl || null;
-          } else {
-            console.warn("Retry logo upload failed:", retryError);
+          if (!retryRes.error && retryRes.data) {
+            const { data: publicUrlData } = supabaseClient.storage.from(bucketName).getPublicUrl(retryRes.data.path || rootFileName);
+            return { publicUrl: publicUrlData?.publicUrl || null, error: null };
+          } else if (retryRes.error) {
+            error = retryRes.error;
           }
-        } catch (createErr) {
+        } catch (createErr: any) {
           console.error("Bucket creation or retry exception for logos:", createErr);
         }
       }
 
-      // Fallback: use comprovantes bucket
-      console.log("Trying to upload logo to fallack comprovantes bucket...");
-      const { data: compData, error: compError } = await supabase.storage
+      // Fallback: use 'comprovantes' bucket if 'logos' bucket isn't writable
+      console.log("Tentando upload fallback no bucket 'comprovantes'...");
+      const { data: compData, error: compError } = await supabaseClient.storage
         .from("comprovantes")
-        .upload(uniqueName, file, {
+        .upload(rootFileName, file, {
           cacheControl: "3600",
-          upsert: false
+          upsert: true,
+          contentType
         });
 
       if (!compError && compData) {
-        const { data: publicUrlData } = supabase.storage.from("comprovantes").getPublicUrl(uniqueName);
-        return publicUrlData?.publicUrl || null;
+        const { data: publicUrlData } = supabaseClient.storage.from("comprovantes").getPublicUrl(compData.path || rootFileName);
+        return { publicUrl: publicUrlData?.publicUrl || null, error: null };
       }
 
-      return null;
+      return { publicUrl: null, error: error.message || compError?.message || "Falha ao enviar logotipo ao Storage." };
     }
 
     if (data) {
-      const { data: publicUrlData } = supabase.storage.from(bucketName).getPublicUrl(uniqueName);
-      return publicUrlData?.publicUrl || null;
+      const { data: publicUrlData } = supabaseClient.storage.from(bucketName).getPublicUrl(data.path || finalPath);
+      return { publicUrl: publicUrlData?.publicUrl || null, error: null };
     }
-  } catch (err) {
-    console.error("dbUploadLogo unexpected error:", err);
+    return { publicUrl: null, error: "Upload não retornou dados." };
+  } catch (err: any) {
+    console.error("dbUploadLogoDetailed unexpected error:", err);
+    return { publicUrl: null, error: err?.message || "Erro inesperado ao enviar logotipo." };
   }
-  return null;
+}
+
+export async function dbUploadLogo(file: File, userId?: string): Promise<string | null> {
+  const res = await dbUploadLogoDetailed(file, userId);
+  return res.publicUrl;
 }
 
 /**

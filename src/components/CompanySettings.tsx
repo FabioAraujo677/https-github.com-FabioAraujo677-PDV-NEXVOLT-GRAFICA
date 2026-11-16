@@ -42,7 +42,7 @@ import {
   Package
 } from "lucide-react";
 import { CompanyProfile, User, CustomReminder, CashRegisterState, CashRegisterSession, BusinessHours, DailyAutoBackupMode, DailyAutoBackupMeta, DailyLocalBackupSnapshot } from "../types";
-import { dbExportAllData, dbImportAllData, dbGetCompanyProfile, dbSaveCompanyProfile, isSupabaseConfigured, getAdminDomain, normalizeUserString, notifyRealtimeSync, getSupabase, supabase, dbResetSystemData } from "../supabase";
+import { dbExportAllData, dbImportAllData, dbGetCompanyProfile, dbSaveCompanyProfile, dbSaveCompanyLogoUrl, dbUploadLogoDetailed, isSupabaseConfigured, getAdminDomain, normalizeUserString, notifyRealtimeSync, getSupabase, supabase, dbResetSystemData } from "../supabase";
 import { setIndexedDbItem } from "../utils/indexedDb";
 import { extractSettingsFromBusinessHours } from "../utils/companySettingsSerializer";
 import {
@@ -1164,7 +1164,12 @@ CREATE TABLE IF NOT EXISTS meus_dados (
           const resolvedCity = data.city || data.cidade || "";
           const resolvedState = data.state || data.uf || "";
           const resolvedCnpj = data.cnpj_cpf || data.cnpj || "";
-          const resolvedLogo = data.logo || data.logo_url || null;
+          const resolvedLogo =
+            (data.logo_url && String(data.logo_url).startsWith("http") ? data.logo_url : null) ||
+            (data.logo && String(data.logo).startsWith("http") ? data.logo : null) ||
+            data.logo_url ||
+            data.logo ||
+            null;
           const resolvedPix = data.pix_key || "";
 
           setTradingName(resolvedTradingName);
@@ -1393,39 +1398,87 @@ CREATE TABLE IF NOT EXISTS meus_dados (
     setUploadingLogo(true);
     try {
       const { compressImage, compressImageToBase64 } = await import("../utils/imageCompressor");
-      const compressedFile = await compressImage(file, 400, 400, 0.75);
-      
-      // Criar hash/versão baseada em tempo para evitar cache stale
+      // Force output format to 'image/png' to preserve alpha transparency (never convert to JPEG)
+      const compressedFile = await compressImage(file, 400, 400, 0.9, "image/png");
+
       const logoVersion = Date.now().toString();
-      
+      const activeUserId = currentUser?.owner_id || currentUser?.id;
+
       let publicUrl: string | null = null;
-      const { isSupabaseConfigured, dbUploadLogo } = await import("../supabase");
+      let uploadError: string | null = null;
+
       if (isSupabaseConfigured()) {
         try {
-          const uploadPromise = dbUploadLogo(compressedFile);
-          const timeoutPromise = new Promise<null>((_, reject) => 
-            setTimeout(() => reject(new Error("Timeout upload logo")), 8000)
+          const uploadPromise = dbUploadLogoDetailed(compressedFile, activeUserId);
+          const timeoutPromise = new Promise<{ publicUrl: string | null; error: string | null }>((_, reject) =>
+            setTimeout(() => reject(new Error("Tempo limite excedido ao enviar logotipo para o Supabase Storage.")), 25000)
           );
-          publicUrl = await Promise.race([uploadPromise, timeoutPromise]) as string | null;
-        } catch (uploadErr) {
-          console.warn("Supabase logo upload timeout or error, using base64 fallback:", uploadErr);
+          const uploadRes = await Promise.race([uploadPromise, timeoutPromise]);
+          publicUrl = uploadRes.publicUrl;
+          uploadError = uploadRes.error;
+        } catch (uploadErr: any) {
+          uploadError = uploadErr?.message || "Erro no envio do logotipo.";
+          console.warn("Supabase logo upload error:", uploadErr);
         }
       }
 
-      const finalLogo = publicUrl || await compressImageToBase64(file, 400, 400, 0.75);
-      
+      const finalLogo = publicUrl || (await compressImageToBase64(file, 400, 400, 0.9, "image/png"));
       setLogo(finalLogo);
 
-      // Salvar no IndexedDB com timestamp para gerenciamento de cache
+      // Save public URL directly to 'logo_url' column in 'company_profile'
+      if (publicUrl && activeUserId && isSupabaseConfigured()) {
+        const logoSaved = await dbSaveCompanyLogoUrl(activeUserId, publicUrl);
+        if (logoSaved) {
+          setStatusMessage("Logotipo enviado ao Storage e salvo com sucesso!");
+          setTimeout(() => setStatusMessage(null), 4000);
+          if (addToast) addToast("Logotipo PNG enviado e salvo na nuvem! 🖼️", "success");
+        } else {
+          if (addToast) addToast("Upload concluído, clique em 'Salvar Dados da Empresa' para confirmar.", "info");
+        }
+      } else if (uploadError) {
+        console.warn("Storage upload falhou, mantendo fallback PNG transparente:", uploadError);
+        if (addToast) addToast("Aviso Storage: " + uploadError + " (usando fallback PNG).", "warning");
+      }
+
+      // Sync local state & cache
       const { setIndexedDbItem } = await import("../utils/indexedDb");
       await setIndexedDbItem("NUCLEO_COMPANY_LOGO", {
         data: finalLogo,
         updatedAt: logoVersion
       });
-
-      // Salvar também no LocalStorage como backup imediato
       localStorage.setItem("NUCLEO_COMPANY_LOGO_VERSION", logoVersion);
 
+      await onSaveCompany(
+        {
+          ...company,
+          tradingName: tradingName.trim() || company.tradingName,
+          phone: phone.trim(),
+          cep: cep.trim(),
+          address: address.trim(),
+          number: number.trim(),
+          neighborhood: neighborhood.trim(),
+          city: city.trim(),
+          state: state.trim(),
+          cnpjCpf: cnpjCpf.trim(),
+          logo: finalLogo,
+          pixKey: pixKey.trim(),
+          goalsReminderEnabled,
+          goalsReminderTime,
+          openingTime,
+          closingTime,
+          autoCloseRegisterEnabled,
+          autoBackupDownloadEnabled,
+          dailyAutoBackupEnabled,
+          dailyAutoBackupMode,
+          dailyAutoBackupTime,
+          dailyAutoBackupUseClosingTime,
+          businessHours,
+          cashClosingReminderEnabled,
+          cashClosingReminderTime,
+          cashClosingReminderMessage
+        },
+        true
+      );
     } catch (err: any) {
       console.error("Erro ao processar imagem:", err);
       alert("Erro ao processar imagem: " + (err.message || err));
@@ -1826,17 +1879,24 @@ CREATE TABLE IF NOT EXISTS meus_dados (
 
             <div
               onClick={() => !uploadingLogo && fileInputRef.current?.click()}
-              className="border border-dashed border-slate-700/80 hover:border-brand-magenta/60 bg-slate-950/60 rounded-xl p-3 text-center cursor-pointer transition-all flex flex-col items-center justify-center min-h-[175px] max-h-[195px] flex-1"
+              style={{ background: "transparent" }}
+              className="border border-dashed border-slate-700/80 hover:border-brand-magenta/60 bg-transparent rounded-xl p-3 text-center cursor-pointer transition-all flex flex-col items-center justify-center min-h-[175px] max-h-[195px] flex-1"
             >
               {uploadingLogo ? (
-                <div className="space-y-2 py-3">
+                <div className="space-y-2 py-3 bg-transparent">
                   <RefreshCw className="h-6 w-6 mx-auto text-brand-magenta animate-spin" />
-                  <p className="text-xs font-semibold text-slate-300">Otimizando e Enviando...</p>
+                  <p className="text-xs font-semibold text-slate-300">Otimizando PNG e Enviando...</p>
                 </div>
               ) : logo ? (
-                <div className="space-y-2 w-full flex flex-col items-center justify-center">
-                  <div className="max-w-[170px] max-h-24 mx-auto flex items-center justify-center">
-                    <img src={logo} alt="Logo" className="max-h-20 max-w-full object-contain filter drop-shadow-md" />
+                <div className="space-y-2 w-full flex flex-col items-center justify-center bg-transparent" style={{ background: "transparent" }}>
+                  <div className="max-w-[170px] max-h-24 mx-auto flex items-center justify-center bg-transparent" style={{ background: "transparent" }}>
+                    <img
+                      src={logo}
+                      alt="Logo"
+                      style={{ background: "transparent" }}
+                      className="max-h-20 max-w-full object-contain bg-transparent"
+                      referrerPolicy="no-referrer"
+                    />
                   </div>
                   <button
                     type="button"
@@ -2926,12 +2986,14 @@ CREATE TABLE IF NOT EXISTS meus_dados (
               </div>
 
               <div className="flex items-center gap-4 pt-1">
-                <div className="w-16 h-16 flex items-center justify-center shrink-0">
+                <div className="w-16 h-16 flex items-center justify-center shrink-0 bg-transparent" style={{ background: "transparent" }}>
                   {backupPreview.companyLogo ? (
                     <img
                       src={backupPreview.companyLogo}
                       alt="Logo Empresa"
-                      className="max-h-full max-w-full object-contain filter drop-shadow-md"
+                      style={{ background: "transparent" }}
+                      className="max-h-full max-w-full object-contain bg-transparent"
+                      referrerPolicy="no-referrer"
                     />
                   ) : (
                     <div className="w-14 h-14 rounded-xl bg-slate-900 border border-slate-700/80 flex items-center justify-center">

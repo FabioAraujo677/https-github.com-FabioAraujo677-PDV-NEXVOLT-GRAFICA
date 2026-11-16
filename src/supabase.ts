@@ -1071,7 +1071,130 @@ export async function dbGetCompanyProfile(userId: string): Promise<CompanyProfil
 
 export async function dbSaveCompanyProfile(userId: string, profile: CompanyProfile): Promise<boolean> {
   if (!userId || !userId.trim() || !getAuthenticatedUserIdFromStorage()) return false;
-  // 1. Immediately ensure localStorage and IndexedDB have the latest data
+
+  // 1. Primary: Direct Supabase upsert on company_profile BEFORE updating localStorage/cache
+  if (isSupabaseConfigured()) {
+    const supabaseClient = getSupabase();
+    if (!supabaseClient) return false;
+
+    try {
+      const validFields = [
+        "id",
+        "user_id",
+        "name",
+        "nome_fantasia",
+        "trading_name",
+        "cnpj",
+        "cnpj_cpf",
+        "telefone",
+        "phone",
+        "cep",
+        "logradouro",
+        "numero",
+        "number",
+        "bairro",
+        "neighborhood",
+        "cidade",
+        "city",
+        "uf",
+        "state",
+        "address",
+        "pix_key",
+        "logo",
+        "logo_url",
+        "business_hours",
+        "updated_at"
+      ];
+
+      const rawData: Record<string, any> = {
+        id: userId,
+        user_id: userId,
+        name: profile.tradingName || "",
+        nome_fantasia: profile.tradingName || "",
+        trading_name: profile.tradingName || "",
+        cnpj: (profile.cnpjCpf || (profile as any).cnpj || "").trim(),
+        cnpj_cpf: (profile.cnpjCpf || (profile as any).cnpj || "").trim(),
+        telefone: (profile.phone || (profile as any).telefone || "").trim(),
+        phone: (profile.phone || (profile as any).telefone || "").trim(),
+        cep: (profile.cep || "").trim(),
+        logradouro: (profile.address || (profile as any).logradouro || "").trim(),
+        numero: (profile.number || (profile as any).numero || "").trim(),
+        number: (profile.number || (profile as any).numero || "").trim(),
+        bairro: (profile.neighborhood || (profile as any).bairro || "").trim(),
+        neighborhood: (profile.neighborhood || (profile as any).bairro || "").trim(),
+        cidade: (profile.city || (profile as any).cidade || "").trim(),
+        city: (profile.city || (profile as any).cidade || "").trim(),
+        uf: (profile.state || (profile as any).uf || "").trim(),
+        state: (profile.state || (profile as any).uf || "").trim(),
+        address: (profile.address || "").trim(),
+        pix_key: profile.pixKey || (profile as any).pix_key || null,
+        logo: profile.logo || null,
+        logo_url: profile.logo || null,
+        business_hours: packBusinessHoursWithSettings(profile),
+        updated_at: new Date().toISOString()
+      };
+
+      const sanitizedPayload: Record<string, any> = {};
+      for (const field of validFields) {
+        if (rawData[field] !== undefined) {
+          sanitizedPayload[field] = rawData[field];
+        }
+      }
+
+      let { error } = await supabaseClient
+        .from("company_profile")
+        .upsert(sanitizedPayload, { onConflict: "user_id" });
+
+      // Strip missing columns iteratively if schema differs
+      let attempts = 0;
+      while (error && attempts < 15) {
+        attempts++;
+        const msg = error.message || "";
+        const colMatch = msg.match(/Could not find the '([^']+)' column/i) || msg.match(/column "([^"]+)" of relation/i);
+        if (colMatch && colMatch[1] && colMatch[1] !== "user_id") {
+          delete sanitizedPayload[colMatch[1]];
+          const retry = await supabaseClient
+            .from("company_profile")
+            .upsert(sanitizedPayload, { onConflict: "user_id" });
+          error = retry.error;
+        } else if (msg.toLowerCase().includes("no unique or exclusion constraint") || msg.toLowerCase().includes("on conflict")) {
+          const retryById = await supabaseClient
+            .from("company_profile")
+            .upsert(sanitizedPayload, { onConflict: "id" });
+          error = retryById.error;
+          if (!error) break;
+        } else {
+          break;
+        }
+      }
+
+      if (error) {
+        console.error("Erro ao salvar company_profile no Supabase:", error.message);
+        const { error: empErr } = await supabaseClient
+          .from("empresa_config")
+          .upsert({
+            id: userId,
+            user_id: userId,
+            nome: profile.tradingName || "",
+            trading_name: profile.tradingName || "",
+            logo: profile.logo || null,
+            updated_at: new Date().toISOString()
+          }, { onConflict: "user_id" });
+
+        if (empErr) {
+          console.error("Erro no fallback empresa_config:", empErr.message);
+          return false;
+        }
+      } else {
+        console.log("Dados company_profile sincronizados com sucesso!");
+      }
+    } catch (err: any) {
+      console.error("Exceção ao sincronizar company_profile no Supabase:", err?.message || err);
+      return false;
+    }
+  }
+
+  // 2. Update localStorage and IndexedDB only after remote persistence succeeds
   try {
     localStorage.setItem("NUCLEO_COMPANY_PROFILE", JSON.stringify(profile));
     if (profile.tradingName) {
@@ -1089,122 +1212,6 @@ export async function dbSaveCompanyProfile(userId: string, profile: CompanyProfi
     await setIndexedDbItem("NUCLEO_COMPANY_PROFILE", profile);
   } catch (e) {
     console.warn("IndexedDB save note:", e);
-  }
-
-  // 2. Direct Supabase upsert on company_profile (no /api/company-profile call)
-  if (isSupabaseConfigured()) {
-    const supabaseClient = getSupabase();
-    if (supabaseClient) {
-      try {
-        const validFields = [
-          "id",
-          "user_id",
-          "name",
-          "nome_fantasia",
-          "trading_name",
-          "cnpj",
-          "cnpj_cpf",
-          "telefone",
-          "phone",
-          "cep",
-          "logradouro",
-          "numero",
-          "number",
-          "bairro",
-          "neighborhood",
-          "cidade",
-          "city",
-          "uf",
-          "state",
-          "address",
-          "pix_key",
-          "logo",
-          "logo_url",
-          "business_hours"
-        ];
-
-        const rawData: Record<string, any> = {
-          id: userId,
-          user_id: userId,
-          name: profile.tradingName || "",
-          nome_fantasia: profile.tradingName || "",
-          trading_name: profile.tradingName || "",
-          cnpj: (profile.cnpjCpf || (profile as any).cnpj || "").trim(),
-          cnpj_cpf: (profile.cnpjCpf || (profile as any).cnpj || "").trim(),
-          telefone: (profile.phone || (profile as any).telefone || "").trim(),
-          phone: (profile.phone || (profile as any).telefone || "").trim(),
-          cep: (profile.cep || "").trim(),
-          logradouro: (profile.address || (profile as any).logradouro || "").trim(),
-          numero: (profile.number || (profile as any).numero || "").trim(),
-          number: (profile.number || (profile as any).numero || "").trim(),
-          bairro: (profile.neighborhood || (profile as any).bairro || "").trim(),
-          neighborhood: (profile.neighborhood || (profile as any).bairro || "").trim(),
-          cidade: (profile.city || (profile as any).cidade || "").trim(),
-          city: (profile.city || (profile as any).cidade || "").trim(),
-          uf: (profile.state || (profile as any).uf || "").trim(),
-          state: (profile.state || (profile as any).uf || "").trim(),
-          address: (profile.address || "").trim(),
-          pix_key: profile.pixKey || (profile as any).pix_key || null,
-          logo: profile.logo || null,
-          logo_url: profile.logo || null,
-          business_hours: packBusinessHoursWithSettings(profile)
-        };
-
-        const sanitizedPayload: Record<string, any> = {};
-        for (const field of validFields) {
-          if (rawData[field] !== undefined) {
-            sanitizedPayload[field] = rawData[field];
-          }
-        }
-
-        let { error } = await supabaseClient
-          .from("company_profile")
-          .upsert(sanitizedPayload, { onConflict: "user_id" });
-
-        // Strip missing columns iteratively if schema differs
-        let attempts = 0;
-        while (error && attempts < 15) {
-          attempts++;
-          const msg = error.message || "";
-          const colMatch = msg.match(/Could not find the '([^']+)' column/i) || msg.match(/column "([^"]+)" of relation/i);
-          if (colMatch && colMatch[1] && colMatch[1] !== "user_id") {
-            delete sanitizedPayload[colMatch[1]];
-            const retry = await supabaseClient
-              .from("company_profile")
-              .upsert(sanitizedPayload, { onConflict: "user_id" });
-            error = retry.error;
-          } else if (msg.toLowerCase().includes("no unique or exclusion constraint") || msg.toLowerCase().includes("on conflict")) {
-            const retryById = await supabaseClient
-              .from("company_profile")
-              .upsert(sanitizedPayload, { onConflict: "id" });
-            error = retryById.error;
-            if (!error) break;
-          } else {
-            break;
-          }
-        }
-
-        if (error) {
-          // Fallback to empresa_config
-          try {
-            await supabaseClient
-              .from("empresa_config")
-              .upsert({
-                id: userId,
-                user_id: userId,
-                nome: profile.tradingName || "",
-                trading_name: profile.tradingName || "",
-                logo: profile.logo || null,
-                updated_at: new Date().toISOString()
-              }, { onConflict: "id" });
-          } catch (e) {}
-        } else {
-          console.log("Dados company_profile sincronizados com sucesso!");
-        }
-      } catch (err: any) {
-        console.warn("Aviso na sincronização de company_profile capturado:", err?.message || err);
-      }
-    }
   }
 
   notifyRealtimeSync(userId, "company_profile_updated", { profile });
@@ -1583,28 +1590,25 @@ export async function dbGetCaixaStatus(
 
 export async function dbGetSales(userId: string): Promise<Sale[] | null> {
   if (!userId || !userId.trim() || !getAuthenticatedUserIdFromStorage()) return [];
-  // 1. Primary: fetch through secure server API with service_role to avoid RLS 42501
-  try {
-    const res = await fetch(`/api/sales?userId=${encodeURIComponent(userId)}`);
-    if (res.ok) {
-      const json = await res.json();
-      if (json.success && Array.isArray(json.data)) {
-        return json.data;
-      }
-    }
-  } catch (apiErr) {
-    console.warn("Direct /api/sales GET error, falling back to direct client:", apiErr);
-  }
-
-  // 2. Fallback: direct Supabase client
   const supabase = getSupabase();
   if (!supabase) return null;
 
   try {
-    const { data, error } = await supabase
+    let { data, error } = await supabase
       .from("sales")
       .select("*")
-      .eq("user_id", userId);
+      .eq("user_id", userId)
+      .order("created_at", { ascending: false });
+
+    if (error && (error.message || "").toLowerCase().includes("created_at")) {
+      const retry = await supabase
+        .from("sales")
+        .select("*")
+        .eq("user_id", userId)
+        .order("date", { ascending: false });
+      data = retry.data;
+      error = retry.error;
+    }
 
     if (error) {
       console.error("Error fetching sales from Supabase:", error);
@@ -1666,13 +1670,13 @@ export async function dbGetSales(userId: string): Promise<Sale[] | null> {
         operationCost: Number(d.operation_cost),
         costItems: d.cost_items || [],
         totalValue: Number(d.total_value),
-        balance_due: d.balance_due, // Handle balanceDue column mapping correctly
+        balance_due: d.balance_due,
         balanceDue: Number(d.balance_due),
         netProfit: d.net_profit ? Number(d.net_profit) : Number(d.total_value) - Number(d.operation_cost),
         clientImage: d.client_image || null,
         date: d.date,
         isBudget: d.is_budget,
-        paymentMethod: d.payment_method || d.paymentMethod || 'dinheiro',
+        paymentMethod: d.payment_method || d.paymentMethod || metaObj?.paymentMethod || 'dinheiro',
         orderDate: orderDate || undefined,
         deliveryDate: deliveryDate || undefined,
         deliveryReason: deliveryReason || undefined,
@@ -1695,35 +1699,17 @@ export async function dbGetSales(userId: string): Promise<Sale[] | null> {
 
 export async function dbSaveSale(userId: string, sale: Sale): Promise<boolean> {
   if (!userId || !userId.trim() || !getAuthenticatedUserIdFromStorage()) return false;
-  // 1. Primary: save through secure server API with service_role to avoid RLS 42501
-  try {
-    const res = await fetch("/api/sales", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ userId, sale })
-    });
-    if (res.ok) {
-      const json = await res.json();
-      if (json.success) {
-        notifyRealtimeSync(userId, "sales_updated", { saleId: sale.id });
-        return true;
-      }
-    }
-  } catch (apiErr) {
-    console.warn("Direct /api/sales POST error, falling back to direct client:", apiErr);
-  }
-
-  // 2. Fallback: direct Supabase client
   const supabase = getSupabase();
   if (!supabase) return false;
 
-  const metaStr = JSON.stringify({ 
-    orderDate: sale.orderDate, 
+  const metaStr = JSON.stringify({
+    orderDate: sale.orderDate,
     deliveryDate: sale.deliveryDate,
     deliveryReason: sale.deliveryReason || "",
     deliveryAddress: sale.deliveryAddress || "",
     motoboyCost: Number(sale.motoboyCost) || 0,
     useMotoboy: !!sale.useMotoboy,
+    paymentMethod: sale.paymentMethod || "dinheiro",
     payments: sale.payments || [],
     materialEntregue: !!sale.materialEntregue,
     sellerId: sale.sellerId || "",
@@ -1736,59 +1722,54 @@ export async function dbSaveSale(userId: string, sale: Sale): Promise<boolean> {
   });
   const clientPhoneWithMeta = `${sale.clientPhone || ""}::${metaStr}`;
 
+  const salePayload: Record<string, any> = {
+    id: sale.id,
+    user_id: userId,
+    client_name: sale.clientName || "",
+    client_phone: clientPhoneWithMeta,
+    items: sale.items || [],
+    use_motoboy: !!sale.useMotoboy,
+    motoboy_cost: Number(sale.motoboyCost) || 0,
+    discount: Number(sale.discount) || 0,
+    down_payment: Number(sale.downPayment) || 0,
+    operation_cost: Number(sale.operationCost) || 0,
+    cost_items: sale.costItems || [],
+    total_value: Number(sale.totalValue) || 0,
+    balance_due: Number(sale.balanceDue) || 0,
+    net_profit: Number(sale.netProfit) || 0,
+    client_image: sale.clientImage || null,
+    date: sale.date || new Date().toISOString(),
+    is_budget: !!sale.isBudget
+  };
+
   try {
-    const { error } = await supabase
+    let { error } = await supabase
       .from("sales")
-      .upsert({
-        id: sale.id,
-        user_id: userId,
-        client_name: sale.clientName,
-        client_phone: clientPhoneWithMeta,
-        items: sale.items,
-        use_motoboy: sale.useMotoboy,
-        motoboy_cost: sale.motoboyCost,
-        discount: sale.discount,
-        down_payment: sale.downPayment,
-        operation_cost: sale.operationCost,
-        cost_items: sale.costItems || [],
-        total_value: sale.totalValue,
-        balance_due: sale.balanceDue,
-        net_profit: sale.netProfit,
-        client_image: sale.clientImage,
-        date: sale.date,
-        is_budget: !!sale.isBudget,
-        payment_method: sale.paymentMethod || 'dinheiro'
-      });
+      .upsert(salePayload, { onConflict: "id" });
 
-    if (error) {
-      console.warn("Error upserting sale with payment_method column, trying fallback:", error);
-      const { error: fallbackError } = await supabase
-        .from("sales")
-        .upsert({
-          id: sale.id,
-          user_id: userId,
-          client_name: sale.clientName,
-          client_phone: clientPhoneWithMeta,
-          items: sale.items,
-          use_motoboy: sale.useMotoboy,
-          motoboy_cost: sale.motoboyCost,
-          discount: sale.discount,
-          down_payment: sale.downPayment,
-          operation_cost: sale.operationCost,
-          cost_items: sale.costItems || [],
-          total_value: sale.totalValue,
-          balance_due: sale.balanceDue,
-          net_profit: sale.netProfit,
-          client_image: sale.clientImage,
-          date: sale.date,
-          is_budget: !!sale.isBudget
-        });
-
-      if (fallbackError) {
-        console.warn("Direct client sales fallback notice (offline or RLS enforced):", fallbackError.message);
-        return false;
+    let attempts = 0;
+    while (error && attempts < 10) {
+      attempts++;
+      const msg = error.message || "";
+      const colMatch =
+        msg.match(/Could not find the '([^']+)' column/i) ||
+        msg.match(/column "([^"]+)" of relation/i);
+      if (colMatch && colMatch[1] && colMatch[1] !== "id" && colMatch[1] !== "user_id") {
+        delete salePayload[colMatch[1]];
+        const retry = await supabase
+          .from("sales")
+          .upsert(salePayload, { onConflict: "id" });
+        error = retry.error;
+      } else {
+        break;
       }
     }
+
+    if (error) {
+      console.error("Error saving sale to Supabase:", error.message);
+      return false;
+    }
+
     notifyRealtimeSync(userId, "sales_updated", { saleId: sale.id });
     return true;
   } catch (err) {
@@ -1799,22 +1780,6 @@ export async function dbSaveSale(userId: string, sale: Sale): Promise<boolean> {
 
 export async function dbDeleteSale(saleId: string): Promise<boolean> {
   if (!saleId || !saleId.trim() || !getAuthenticatedUserIdFromStorage()) return false;
-  // 1. Primary: delete through secure server API
-  try {
-    const res = await fetch(`/api/sales/${encodeURIComponent(saleId)}`, {
-      method: "DELETE"
-    });
-    if (res.ok) {
-      const json = await res.json();
-      if (json.success) {
-        return true;
-      }
-    }
-  } catch (apiErr) {
-    console.warn("Direct /api/sales DELETE error, falling back to direct client:", apiErr);
-  }
-
-  // 2. Fallback: direct Supabase client
   const supabase = getSupabase();
   if (!supabase) return false;
 
@@ -1842,54 +1807,54 @@ export async function dbDeleteSale(saleId: string): Promise<boolean> {
 export async function dbGetExpenses(userId: string): Promise<Expense[] | null> {
   if (!userId || !userId.trim() || !getAuthenticatedUserIdFromStorage()) return [];
   let remoteList: Expense[] = [];
-  try {
-    const res = await fetch(`/api/expenses?userId=${encodeURIComponent(userId)}`);
-    if (res.ok) {
-      const json = await res.json();
-      if (json.success && Array.isArray(json.data)) {
-        remoteList = json.data.map((d: any) => ({
-          id: d.id,
-          description: d.description || d.descricao || "",
-          value: Number(d.value ?? d.amount ?? d.valor ?? 0),
-          date: d.date || "",
-          category: d.category || d.categoria || "Outros",
-          paymentMethod: d.payment_method || d.paymentMethod || "dinheiro",
-          createdAt: d.created_at || d.createdAt
-        }));
-      }
-    }
-  } catch (apiErr) {
-    console.warn("Direct /api/expenses GET error, falling back to direct client:", apiErr);
-  }
+  let fetchedSuccessfully = false;
 
-  if (remoteList.length === 0) {
-    const supabase = getSupabase();
-    if (supabase) {
-      try {
-        const { data, error } = await supabase
+  const supabase = getSupabase();
+  if (supabase) {
+    try {
+      let { data, error } = await supabase
+        .from("expenses")
+        .select("*")
+        .eq("user_id", userId)
+        .order("created_at", { ascending: false });
+
+      if (error && (error.message || "").toLowerCase().includes("created_at")) {
+        const retry = await supabase
           .from("expenses")
           .select("*")
-          .eq("user_id", userId);
+          .eq("user_id", userId)
+          .order("date", { ascending: false });
+        data = retry.data;
+        error = retry.error;
+      }
 
-        if (!error && data) {
-          remoteList = data.map((d: any) => ({
+      if (!error && data) {
+        fetchedSuccessfully = true;
+        remoteList = data.map((d: any) => {
+          const rawDesc = d.description || d.descricao || "";
+          let inferredMethod = d.payment_method || d.paymentMethod || "";
+          if (!inferredMethod) {
+            if (rawDesc.startsWith("[Pix]")) inferredMethod = "pix";
+            else if (rawDesc.startsWith("[Cartão]")) inferredMethod = "cartao";
+            else inferredMethod = "dinheiro";
+          }
+          return {
             id: d.id,
-            description: d.description || d.descricao || "",
+            description: rawDesc,
             value: Number(d.value ?? d.amount ?? d.valor ?? 0),
             date: d.date || "",
             category: d.category || d.categoria || "Outros",
-            paymentMethod: d.payment_method || d.paymentMethod || "dinheiro",
+            paymentMethod: inferredMethod,
             createdAt: d.created_at || d.createdAt
-          }));
-        }
-      } catch (err) {
-        console.error("Supabase query expenses exception:", err);
+          };
+        });
       }
+    } catch (err) {
+      console.error("Supabase query expenses exception:", err);
     }
   }
 
-  // Protection against deletion in sync:
-  // Never delete local expenses that are still pending synchronization or created in the last 60 minutes
+  // Protection against deletion in sync if offline or pending local sync
   let localExpenses: Expense[] = [];
   try {
     const localRaw = localStorage.getItem("NUCLEO_EXPENSES");
@@ -1898,6 +1863,10 @@ export async function dbGetExpenses(userId: string): Promise<Expense[] | null> {
       if (Array.isArray(parsed)) localExpenses = parsed;
     }
   } catch (e) {}
+
+  if (!fetchedSuccessfully && localExpenses.length > 0) {
+    return localExpenses;
+  }
 
   const now = Date.now();
   const remoteIds = new Set(remoteList.map(e => e.id));
@@ -1908,7 +1877,7 @@ export async function dbGetExpenses(userId: string): Promise<Expense[] | null> {
       const expAny = localExp as any;
       const createdAtTime = expAny.createdAt || expAny.created_at ? new Date(expAny.createdAt || expAny.created_at).getTime() : 0;
       const ageMinutes = createdAtTime ? (now - createdAtTime) / (1000 * 60) : 0;
-      if (!createdAtTime || ageMinutes <= 60) {
+      if (createdAtTime && ageMinutes <= 60) {
         merged.push(localExp);
       }
     }
@@ -1937,50 +1906,49 @@ export async function dbSaveExpense(userId: string, expense: Expense): Promise<{
   }
 
   const expAny = expense as any;
-  // Exact mapping of columns for expenses table in Supabase:
-  // id, user_id, description, value, category, payment_method, date, created_at
-  const expensePayload = {
+  let finalDesc = expense.description || "Despesa";
+  const pm = expense.paymentMethod || expAny.payment_method;
+  if (pm && !finalDesc.startsWith("[")) {
+    const tag = pm === "pix" ? "[Pix] " : pm === "cartao" ? "[Cartão] " : "[Dinheiro] ";
+    finalDesc = `${tag}${finalDesc}`;
+  }
+
+  // Exact mapping matching schema.sql public.expenses (no payment_method column)
+  const expensePayload: Record<string, any> = {
     id: cleanId,
     user_id: userId,
-    description: expense.description || "Despesa",
+    description: finalDesc,
     value: Number(expense.value) || 0,
     category: expense.category || "Outros",
-    payment_method: expense.paymentMethod || expAny.payment_method || "dinheiro",
     date: expense.date || new Date().toISOString(),
     created_at: expAny.createdAt || expAny.created_at || new Date().toISOString()
   };
 
-  // 1. Primary: save via server API
-  try {
-    const res = await fetch("/api/expenses", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ userId, expense: expensePayload })
-    });
-    if (res.ok) {
-      const json = await res.json();
-      if (json.success) {
-        notifyRealtimeSync(userId, "expenses_updated", { expense: expensePayload });
-        return { success: true };
-      } else {
-        return { success: false, error: json.error || "Erro ao salvar despesa no servidor" };
-      }
-    } else {
-      const errJson = await res.json().catch(() => ({}));
-      return { success: false, error: errJson.error || `Erro HTTP ${res.status}` };
-    }
-  } catch (apiErr: any) {
-    console.warn("Direct /api/expenses POST error, falling back to direct client:", apiErr);
-  }
-
-  // 2. Fallback: direct Supabase client
   const supabase = getSupabase();
   if (!supabase) return { success: false, error: "Cliente Supabase não inicializado" };
 
   try {
-    const { error } = await supabase
+    let { error } = await supabase
       .from("expenses")
-      .upsert(expensePayload);
+      .upsert(expensePayload, { onConflict: "id" });
+
+    let attempts = 0;
+    while (error && attempts < 5) {
+      attempts++;
+      const msg = error.message || "";
+      const colMatch =
+        msg.match(/Could not find the '([^']+)' column/i) ||
+        msg.match(/column "([^"]+)" of relation/i);
+      if (colMatch && colMatch[1] && colMatch[1] !== "id" && colMatch[1] !== "user_id") {
+        delete expensePayload[colMatch[1]];
+        const retry = await supabase
+          .from("expenses")
+          .upsert(expensePayload, { onConflict: "id" });
+        error = retry.error;
+      } else {
+        break;
+      }
+    }
 
     if (error) {
       console.error("Error saving expense to Supabase:", error);
@@ -1996,22 +1964,6 @@ export async function dbSaveExpense(userId: string, expense: Expense): Promise<{
 
 export async function dbDeleteExpense(expenseId: string): Promise<boolean> {
   if (!expenseId || !expenseId.trim() || !getAuthenticatedUserIdFromStorage()) return false;
-  // 1. Primary: delete via server API
-  try {
-    const res = await fetch(`/api/expenses/${encodeURIComponent(expenseId)}`, {
-      method: "DELETE"
-    });
-    if (res.ok) {
-      const json = await res.json();
-      if (json.success) {
-        return true;
-      }
-    }
-  } catch (apiErr) {
-    console.warn("Direct /api/expenses DELETE error, falling back to direct client:", apiErr);
-  }
-
-  // 2. Fallback: direct Supabase client
   const supabase = getSupabase();
   if (!supabase) return false;
 
@@ -2045,20 +1997,6 @@ interface DBGoals {
 
 export async function dbGetGoals(userId: string): Promise<DBGoals | null> {
   if (!userId || !userId.trim() || !getAuthenticatedUserIdFromStorage()) return null;
-  // 1. Primary: Server API with service_role to avoid FK 23503 and RLS
-  try {
-    const res = await fetch(`/api/goals?userId=${encodeURIComponent(userId)}`);
-    if (res.ok) {
-      const json = await res.json();
-      if (json.success && json.data) {
-        return json.data;
-      }
-    }
-  } catch (apiErr) {
-    // Non-blocking, fallback to direct client
-  }
-
-  // 2. Direct client fallback
   const supabase = getSupabase();
   if (!supabase) return null;
 
@@ -2095,30 +2033,6 @@ export async function dbSaveGoals(
   notifiedGoalDate: string
 ): Promise<boolean> {
   if (!userId || !userId.trim() || !getAuthenticatedUserIdFromStorage()) return false;
-  // 1. Primary: Server API with service_role to avoid FK 23503 and RLS
-  try {
-    const res = await fetch("/api/goals", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        userId,
-        goalValue,
-        goalType,
-        notifiedGoalValue,
-        notifiedGoalDate
-      })
-    });
-    if (res.ok) {
-      const json = await res.json();
-      if (json.success) {
-        return true;
-      }
-    }
-  } catch (apiErr) {
-    // Fallback to direct client
-  }
-
-  // 2. Direct client fallback
   const supabase = getSupabase();
   if (!supabase) return false;
 
@@ -2734,24 +2648,7 @@ export async function dbImportAllData(
 
   try {
     let serverRestoreSuccess = false;
-    // 0. Primary: Send full backup to server-side API with service_role to ensure all tables are inserted directly into Supabase and broadcasted instantly to ALL connected computers!
-    try {
-      const srvRes = await fetch("/api/backup/restore", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ userId: currentOwnerId, backupData })
-      });
-      if (srvRes.ok) {
-        const srvJson = await srvRes.json();
-        if (srvJson.success && srvJson.counts) {
-          Object.assign(counts, srvJson.counts);
-          serverRestoreSuccess = true;
-          console.log("[dbImportAllData] Restauração rápida no servidor concluída com sucesso:", counts);
-        }
-      }
-    } catch (srvErr) {
-      console.warn("Direct /api/backup/restore error, continuing with local mirror:", srvErr);
-    }
+    // Direct client Supabase restoration follows below (no /api/backup/restore fetch)
 
     // 0. Unpack full LocalStorage dump first if present to seed the new PC with all application configurations
     if (backupData.localStorageDump && typeof backupData.localStorageDump === "object") {
@@ -3423,31 +3320,8 @@ export async function dbGetQuickSales(userId: string): Promise<DbQuickSale[] | n
     }
   }
 
-  // 2. Secondary: Direct query on quick_sales / vendas_rapidas_itens table
+  // 2. Secondary: Direct query on vendas_rapidas_itens table
   if (supabase) {
-    try {
-      const { data, error } = await supabase
-        .from("quick_sales")
-        .select("*")
-        .eq("user_id", userId)
-        .order("created_at", { ascending: true });
-
-      if (!error && data !== null && data.length > 0) {
-        const formatted: DbQuickSale[] = data.map((item: any) => ({
-          id: item.id,
-          description: item.description || item.descricao || item.nome || "",
-          price: Number(item.price ?? item.preco ?? 0),
-          cost: Number(item.cost ?? item.custo ?? 0),
-          gradient: item.gradient || item.cor || "from-purple-600 via-fuchsia-600 to-pink-500",
-        }));
-        try {
-          localStorage.setItem(`NUCLEO_QUICK_SALES_${userId}`, JSON.stringify(formatted));
-        } catch {}
-        return formatted;
-      }
-    } catch (err) {
-      console.warn("Supabase quick_sales query notice:", err);
-    }
 
     try {
       const { data, error } = await supabase
@@ -3785,31 +3659,23 @@ export async function dbGetCatalogProducts(userId: string): Promise<CatalogProdu
   if (!userId || !userId.trim() || !getAuthenticatedUserIdFromStorage()) return [];
   const isAdmin = isSystemAdminUser();
 
-  // 1. Primary: fetch through secure server API with service_role to avoid RLS 42501
-  try {
-    const res = await fetch(`/api/products?userId=${encodeURIComponent(userId)}`);
-    if (res.ok) {
-      const json = await res.json();
-      if (json.success && Array.isArray(json.data)) {
-        const list = isAdmin ? json.data : json.data.filter((p: any) => p.status !== "rascunho" && !p.is_draft);
-        try {
-          localStorage.setItem("NUCLEO_PRODUCTS", JSON.stringify(list));
-        } catch (e) {}
-        return list;
-      }
-    }
-  } catch (apiErr) {
-    console.warn("Direct /api/products GET error, falling back to direct client:", apiErr);
-  }
-
-  // 2. Fallback: direct Supabase client
   const supabase = getSupabase();
   if (supabase) {
     try {
-      const { data, error } = await supabase
+      let { data, error } = await supabase
         .from("produtos")
         .select("*")
-        .eq("user_id", userId);
+        .eq("user_id", userId)
+        .order("created_at", { ascending: false });
+
+      if (error && (error.message || "").toLowerCase().includes("created_at")) {
+        const retry = await supabase
+          .from("produtos")
+          .select("*")
+          .eq("user_id", userId);
+        data = retry.data;
+        error = retry.error;
+      }
 
       if (!error && data) {
         const mapped: CatalogProduct[] = data.map((d: any) => {
@@ -3838,7 +3704,7 @@ export async function dbGetCatalogProducts(userId: string): Promise<CatalogProdu
     }
   }
 
-  // 3. Fallback: LocalStorage
+  // Fallback: LocalStorage
   try {
     const localStr = localStorage.getItem("NUCLEO_PRODUCTS");
     if (localStr) {
@@ -3856,7 +3722,6 @@ export async function dbGetCatalogProducts(userId: string): Promise<CatalogProdu
 export async function dbSaveCatalogProduct(userId: string, product: CatalogProduct): Promise<boolean> {
   if (!userId || !userId.trim() || !getAuthenticatedUserIdFromStorage()) return false;
   const isAdmin = isSystemAdminUser();
-  // Se for o administrador sistemadevendaadm@gmail.com, salva como 'rascunho' a menos que já esteja ativo
   const finalStatus = product.status || (isAdmin ? "rascunho" : "ativo");
   const finalDraft = product.is_draft !== undefined ? product.is_draft : (isAdmin && finalStatus === "rascunho");
   const effectiveProduct: CatalogProduct = {
@@ -3865,7 +3730,63 @@ export async function dbSaveCatalogProduct(userId: string, product: CatalogProdu
     is_draft: finalDraft
   };
 
-  // Update local storage mirror first for instant UI response
+  // 1. Primary: Direct Supabase upsert on 'produtos' table BEFORE updating localStorage
+  const supabase = getSupabase();
+  if (supabase) {
+    try {
+      const ptPayload: Record<string, any> = {
+        id: effectiveProduct.id,
+        user_id: userId,
+        nome: effectiveProduct.description,
+        name: effectiveProduct.description,
+        description: effectiveProduct.description,
+        preco_custo: Number(effectiveProduct.costPrice) || 0,
+        cost_price: Number(effectiveProduct.costPrice) || 0,
+        preco_venda: Number(effectiveProduct.salePrice) || 0,
+        sale_price: Number(effectiveProduct.salePrice) || 0,
+        lucro: Number(effectiveProduct.profit) || 0,
+        profit: Number(effectiveProduct.profit) || 0,
+        estoque_minimo: Number(effectiveProduct.minStock) || 0,
+        min_stock: Number(effectiveProduct.minStock) || 0,
+        estoque_atual: Number(effectiveProduct.currentStock) || 0,
+        current_stock: Number(effectiveProduct.currentStock) || 0,
+        status: finalStatus,
+        is_draft: finalDraft
+      };
+
+      let { error } = await supabase
+        .from("produtos")
+        .upsert(ptPayload, { onConflict: "id" });
+
+      let attempts = 0;
+      while (error && attempts < 12) {
+        attempts++;
+        const msg = error.message || "";
+        const colMatch =
+          msg.match(/Could not find the '([^']+)' column/i) ||
+          msg.match(/column "([^"]+)" of relation/i);
+        if (colMatch && colMatch[1] && colMatch[1] !== "id" && colMatch[1] !== "user_id") {
+          delete ptPayload[colMatch[1]];
+          const retry = await supabase
+            .from("produtos")
+            .upsert(ptPayload, { onConflict: "id" });
+          error = retry.error;
+        } else {
+          break;
+        }
+      }
+
+      if (error) {
+        console.error("Error saving product to Supabase 'produtos':", error.message);
+        return false;
+      }
+    } catch (e) {
+      console.error("Exception saving product to Supabase 'produtos':", e);
+      return false;
+    }
+  }
+
+  // 2. Update localStorage mirror after Supabase save
   try {
     const localStr = localStorage.getItem("NUCLEO_PRODUCTS");
     let list: CatalogProduct[] = localStr ? JSON.parse(localStr) : [];
@@ -3875,55 +3796,27 @@ export async function dbSaveCatalogProduct(userId: string, product: CatalogProdu
     localStorage.setItem("NUCLEO_PRODUCTS", JSON.stringify(list));
   } catch (e) {}
 
-  // 1. Primary: save through secure server API with service_role to avoid RLS 42501
-  try {
-    const res = await fetch("/api/products", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ userId, product: effectiveProduct })
-    });
-    if (res.ok) {
-      const json = await res.json();
-      if (json.success) {
-        notifyRealtimeSync(userId, "products_updated", { product: effectiveProduct });
-        return true;
-      }
-    }
-  } catch (apiErr) {
-    console.warn("Direct /api/products POST error, falling back to direct client:", apiErr);
-  }
-
-  // 2. Fallback: direct Supabase client
-  const supabase = getSupabase();
-  if (!supabase) return true;
-
-  try {
-    const ptPayload = {
-      id: effectiveProduct.id,
-      user_id: userId,
-      nome: effectiveProduct.description,
-      description: effectiveProduct.description,
-      preco_custo: effectiveProduct.costPrice,
-      preco_venda: effectiveProduct.salePrice,
-      lucro: effectiveProduct.profit,
-      estoque_minimo: effectiveProduct.minStock,
-      estoque_atual: effectiveProduct.currentStock,
-      status: finalStatus,
-      is_draft: finalDraft
-    };
-    const { error } = await supabase.from("produtos").upsert(ptPayload);
-    if (!error) {
-      notifyRealtimeSync(userId, "products_updated", { product: effectiveProduct });
-      return true;
-    }
-  } catch (e) {}
-
   notifyRealtimeSync(userId, "products_updated", { product: effectiveProduct });
   return true;
 }
 
 export async function dbDeleteCatalogProduct(userId: string, productId: string): Promise<boolean> {
   if (!userId || !userId.trim() || !getAuthenticatedUserIdFromStorage()) return false;
+
+  const supabase = getSupabase();
+  if (supabase) {
+    try {
+      const { error } = await supabase.from("produtos").delete().eq("id", productId).eq("user_id", userId);
+      if (error) {
+        console.error("Error deleting product from 'produtos':", error.message);
+        return false;
+      }
+    } catch (e) {
+      console.error("Exception deleting product from 'produtos':", e);
+      return false;
+    }
+  }
+
   try {
     const localStr = localStorage.getItem("NUCLEO_PRODUCTS");
     if (localStr) {
@@ -3932,32 +3825,44 @@ export async function dbDeleteCatalogProduct(userId: string, productId: string):
     }
   } catch (e) {}
 
-  try {
-    const res = await fetch(`/api/products/${encodeURIComponent(productId)}?userId=${encodeURIComponent(userId)}`, {
-      method: "DELETE"
-    });
-    if (res.ok) {
-      notifyRealtimeSync(userId, "products_updated", { deletedId: productId });
-      return true;
-    }
-  } catch (apiErr) {
-    console.warn("Direct /api/products DELETE error, falling back to direct client:", apiErr);
-  }
-
-  const supabase = getSupabase();
-  if (supabase) {
-    try {
-      await supabase.from("produtos").delete().eq("id", productId).eq("user_id", userId);
-    } catch (e) {}
-  }
-
   notifyRealtimeSync(userId, "products_updated", { deletedId: productId });
   return true;
 }
 
 export async function dbUpdateProductStock(ownerId: string, productId: string, newStock: number): Promise<boolean> {
   if (!ownerId || !ownerId.trim() || !getAuthenticatedUserIdFromStorage()) return false;
-  // Update local storage mirror
+
+  const supabase = getSupabase();
+  if (supabase) {
+    try {
+      const { error: bothErr } = await supabase
+        .from("produtos")
+        .update({ estoque_atual: newStock, current_stock: newStock })
+        .eq("id", productId)
+        .eq("user_id", ownerId);
+
+      if (bothErr) {
+        const { error: ptError } = await supabase
+          .from("produtos")
+          .update({ estoque_atual: newStock })
+          .eq("id", productId)
+          .eq("user_id", ownerId);
+
+        if (ptError) {
+          const { error: enError } = await supabase
+            .from("produtos")
+            .update({ current_stock: newStock })
+            .eq("id", productId)
+            .eq("user_id", ownerId);
+          if (enError) return false;
+        }
+      }
+    } catch (err) {
+      console.error("Error updating product stock in Supabase:", err);
+      return false;
+    }
+  }
+
   try {
     const localStr = localStorage.getItem("NUCLEO_PRODUCTS");
     if (localStr) {
@@ -3966,44 +3871,12 @@ export async function dbUpdateProductStock(ownerId: string, productId: string, n
       if (item) {
         item.currentStock = newStock;
         localStorage.setItem("NUCLEO_PRODUCTS", JSON.stringify(list));
-        fetch("/api/products", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ userId: ownerId, product: item })
-        }).catch(() => {});
       }
     }
   } catch (e) {}
 
-  const supabase = getSupabase();
-  if (!supabase) return true;
-
-  try {
-    // Attempt updating in Portuguese table scheme first:
-    const { error: ptError } = await supabase
-      .from("produtos")
-      .update({ estoque_atual: newStock })
-      .eq("id", productId)
-      .eq("user_id", ownerId);
-
-    if (!ptError) {
-      notifyRealtimeSync(ownerId, "products_updated", { productId, newStock });
-      return true;
-    }
-
-    // Try fallback english column name if Portuguese fails:
-    const { error: enError } = await supabase
-      .from("produtos")
-      .update({ current_stock: newStock })
-      .eq("id", productId)
-      .eq("user_id", ownerId);
-
-    notifyRealtimeSync(ownerId, "products_updated", { productId, newStock });
-    return !enError;
-  } catch (err) {
-    console.error("Error updating product stock in Supabase:", err);
-    return false;
-  }
+  notifyRealtimeSync(ownerId, "products_updated", { productId, newStock });
+  return true;
 }
 
 export function getLocalDateString(isoOrDate?: string | Date): string {
@@ -4405,24 +4278,6 @@ export async function dbSaveCashRegister(userId: string, state: CashRegisterStat
 
 export async function dbGetClientes(ownerId?: string): Promise<any[] | null> {
   if (!getAuthenticatedUserIdFromStorage()) return [];
-  // 1. Primary: fetch through secure server API with service_role to avoid RLS 42501
-  if (ownerId) {
-    try {
-      const res = await fetch(`/api/clientes?userId=${encodeURIComponent(ownerId)}`);
-      if (res.ok) {
-        const json = await res.json();
-        if (json.success && Array.isArray(json.data)) {
-          try {
-            localStorage.setItem("NUCLEO_CLIENTS", JSON.stringify(json.data));
-            localStorage.setItem("NUCLEO_CLIENTS_FALLBACK_" + ownerId, JSON.stringify(json.data));
-          } catch (e) {}
-          return json.data;
-        }
-      }
-    } catch (apiErr) {
-      console.warn("Direct /api/clientes GET error, falling back to direct client:", apiErr);
-    }
-  }
 
   const supabase = getSupabase();
   if (!supabase) {
@@ -4445,11 +4300,20 @@ export async function dbGetClientes(ownerId?: string): Promise<any[] | null> {
       targetUserId = authData.user.id;
     }
 
-    // Fetch records filtered by target user/company owner id
-    const { data, error } = await supabase
+    let { data, error } = await supabase
       .from("clientes")
       .select("*")
-      .eq("user_id", targetUserId);
+      .eq("user_id", targetUserId)
+      .order("created_at", { ascending: false });
+
+    if (error && (error.message || "").toLowerCase().includes("created_at")) {
+      const retry = await supabase
+        .from("clientes")
+        .select("*")
+        .eq("user_id", targetUserId);
+      data = retry.data;
+      error = retry.error;
+    }
 
     if (error) {
       console.warn("Error selecting from clientes table, falling back to local storage:", error.message);
@@ -4461,7 +4325,15 @@ export async function dbGetClientes(ownerId?: string): Promise<any[] | null> {
       }
     }
 
-    return data || [];
+    const list = data || [];
+    try {
+      localStorage.setItem("NUCLEO_CLIENTS", JSON.stringify(list));
+      if (targetUserId) {
+        localStorage.setItem("NUCLEO_CLIENTS_FALLBACK_" + targetUserId, JSON.stringify(list));
+      }
+    } catch (e) {}
+
+    return list;
   } catch (err: any) {
     console.warn("Exception in dbGetClientes, falling back to local storage:", err);
     try {
@@ -4477,9 +4349,62 @@ export async function dbGetClientes(ownerId?: string): Promise<any[] | null> {
 
 export async function dbSaveCliente(cliente: any, ownerId?: string): Promise<boolean> {
   if (!getAuthenticatedUserIdFromStorage()) return false;
-  // Update local storage mirror first for instant UI response
+  const supabase = getSupabase();
+  let targetUserId = ownerId || "default";
+
+  if (supabase) {
+    try {
+      if (!ownerId) {
+        const { data: authData, error: authError } = await supabase.auth.getUser();
+        if (authError || !authData?.user) {
+          console.error("Multi-tenant Auth Verification Failure (Insert Clientes):", authError);
+          return false;
+        }
+        targetUserId = authData.user.id;
+      }
+
+      const payload: Record<string, any> = {
+        ...cliente,
+        user_id: targetUserId,
+        updated_at: new Date().toISOString()
+      };
+
+      let { error } = await supabase
+        .from("clientes")
+        .upsert(payload, { onConflict: "id" });
+
+      let attempts = 0;
+      while (error && attempts < 10) {
+        attempts++;
+        const msg = error.message || "";
+        const colMatch =
+          msg.match(/Could not find the '([^']+)' column/i) ||
+          msg.match(/column "([^"]+)" of relation/i);
+        if (colMatch && colMatch[1] && colMatch[1] !== "id" && colMatch[1] !== "user_id") {
+          delete payload[colMatch[1]];
+          const retry = await supabase
+            .from("clientes")
+            .upsert(payload, { onConflict: "id" });
+          error = retry.error;
+        } else {
+          break;
+        }
+      }
+
+      if (error) {
+        console.error("Error saving client to Supabase:", error.message);
+        return false;
+      }
+
+      notifyRealtimeSync(targetUserId, "clients_updated", { cliente: payload });
+    } catch (err) {
+      console.error("Exception in dbSaveCliente:", err);
+      return false;
+    }
+  }
+
+  // Update local storage mirror after Supabase save succeeds
   try {
-    const targetUserId = ownerId || "default";
     const localDataStr = localStorage.getItem("NUCLEO_CLIENTS_FALLBACK_" + targetUserId) || localStorage.getItem("NUCLEO_CLIENTS");
     let list: any[] = localDataStr ? JSON.parse(localDataStr) : [];
     const index = list.findIndex(c => c.id === cliente.id);
@@ -4489,63 +4414,40 @@ export async function dbSaveCliente(cliente: any, ownerId?: string): Promise<boo
     localStorage.setItem("NUCLEO_CLIENTS", JSON.stringify(list));
   } catch (e) {}
 
-  // 1. Primary: save through secure server API with service_role to avoid RLS 42501
-  if (ownerId) {
-    try {
-      const res = await fetch("/api/clientes", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ userId: ownerId, cliente })
-      });
-      if (res.ok) {
-        const json = await res.json();
-        if (json.success) {
-          notifyRealtimeSync(ownerId, "clients_updated", { cliente });
-          return true;
-        }
-      }
-    } catch (apiErr) {
-      console.warn("Direct /api/clientes POST error, falling back to direct client:", apiErr);
-    }
-  }
-
-  const supabase = getSupabase();
-  if (!supabase) return true;
-
-  try {
-    let targetUserId = ownerId;
-    if (!targetUserId) {
-      const { data: authData, error: authError } = await supabase.auth.getUser();
-      if (authError || !authData?.user) {
-        console.error("Multi-tenant Auth Verification Failure (Insert Clientes):", authError);
-        return false;
-      }
-      targetUserId = authData.user.id;
-    }
-
-    const payload = {
-      ...cliente,
-      user_id: targetUserId,
-      updated_at: new Date().toISOString()
-    };
-
-    const { error } = await supabase
-      .from("clientes")
-      .upsert(payload);
-
-    notifyRealtimeSync(targetUserId, "clients_updated", { cliente: payload });
-    return !error;
-  } catch (err) {
-    console.warn("Exception in dbSaveCliente:", err);
-    return true;
-  }
+  return true;
 }
 
 export async function dbDeleteCliente(clienteId: string, ownerId?: string): Promise<boolean> {
   if (!getAuthenticatedUserIdFromStorage()) return false;
-  // Update local storage mirror
+
+  const supabase = getSupabase();
+  let targetUserId = ownerId || "default";
+
+  if (supabase) {
+    try {
+      if (!ownerId) {
+        const { data: authData } = await supabase.auth.getUser();
+        if (authData?.user?.id) targetUserId = authData.user.id;
+      }
+
+      if (targetUserId && targetUserId !== "default") {
+        const { error } = await supabase
+          .from("clientes")
+          .delete()
+          .eq("id", clienteId)
+          .eq("user_id", targetUserId);
+        if (error) {
+          console.error("Error deleting client from Supabase:", error.message);
+          return false;
+        }
+      }
+    } catch (err) {
+      console.error("Exception in dbDeleteCliente:", err);
+      return false;
+    }
+  }
+
   try {
-    const targetUserId = ownerId || "default";
     const localDataStr = localStorage.getItem("NUCLEO_CLIENTS_FALLBACK_" + targetUserId) || localStorage.getItem("NUCLEO_CLIENTS");
     if (localDataStr) {
       let list: any[] = JSON.parse(localDataStr);
@@ -4555,45 +4457,8 @@ export async function dbDeleteCliente(clienteId: string, ownerId?: string): Prom
     }
   } catch (e) {}
 
-  // 1. Primary: delete through secure server API
-  if (ownerId) {
-    try {
-      const res = await fetch(`/api/clientes/${encodeURIComponent(clienteId)}?userId=${encodeURIComponent(ownerId)}`, {
-        method: "DELETE"
-      });
-      if (res.ok) {
-        notifyRealtimeSync(ownerId, "clients_updated", { deletedId: clienteId });
-        return true;
-      }
-    } catch (apiErr) {
-      console.warn("Direct /api/clientes DELETE error, falling back to direct client:", apiErr);
-    }
-  }
-
-  const supabase = getSupabase();
-  if (!supabase) return true;
-
-  try {
-    let targetUserId = ownerId;
-    if (!targetUserId) {
-      const { data: authData } = await supabase.auth.getUser();
-      targetUserId = authData?.user?.id;
-    }
-
-    if (targetUserId) {
-      await supabase
-        .from("clientes")
-        .delete()
-        .eq("id", clienteId)
-        .eq("user_id", targetUserId);
-    }
-
-    notifyRealtimeSync(targetUserId || "global", "clients_updated", { deletedId: clienteId });
-    return true;
-  } catch (err) {
-    console.warn("Exception in dbDeleteCliente:", err);
-    return true;
-  }
+  notifyRealtimeSync(targetUserId || "global", "clients_updated", { deletedId: clienteId });
+  return true;
 }
 
 // ==========================================
@@ -5234,12 +5099,14 @@ export async function dbResetSystemData(userId: string): Promise<{ success: bool
   const tablesToClean = [
     "sales",
     "expenses",
+    "gastos_mensais",
     "fluxo_caixa",
-    "fluxo_de_caixa",
     "historico_caixas",
     "sessoes_caixa",
     "caixa_status",
     "produtos",
+    "clientes",
+    "vendas_rapidas_itens",
     "goals",
     "configuracoes_sistema"
   ];
@@ -5259,14 +5126,6 @@ export async function dbResetSystemData(userId: string): Promise<{ success: bool
         console.warn(`[dbResetSystemData] Warning cleaning table ${tbl}:`, error.message);
       }
     }
-
-    try {
-      await fetch("/api/reset-data", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ userId })
-      });
-    } catch (e) {}
 
     notifyRealtimeSync(userId, "system_reset", { userId });
     return { success: true };

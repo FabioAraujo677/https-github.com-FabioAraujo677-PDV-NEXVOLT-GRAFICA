@@ -85,17 +85,6 @@ export function AuthScreen({
         } catch (e) {}
       }
 
-      // 4. API fallback
-      try {
-        const res = await fetch("/api/company-profile");
-        if (res.ok) {
-          const data = await res.json();
-          if (data && active) {
-            if (data.logo) setCompanyLogo(data.logo);
-            if (data.tradingName) setCompanyName(data.tradingName);
-          }
-        }
-      } catch (e) {}
     };
 
     fetchCompanyData();

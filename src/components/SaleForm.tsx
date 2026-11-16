@@ -52,8 +52,8 @@ interface ImageItem {
 }
 
 interface SaleFormProps {
-  onSaleSaved: (sale: Sale) => void;
-  onBudgetSaved: (budget: Sale) => void;
+  onSaleSaved: (sale: Sale) => void | Promise<boolean | void>;
+  onBudgetSaved: (budget: Sale) => void | Promise<boolean | void>;
   onBudgetExecuted?: (id: string) => void;
   activeEditingSale: Sale | null;
   clearActiveEditing: () => void;
@@ -434,7 +434,7 @@ export function SaleForm({
       };
     }
 
-    // 3. Active Realtime listener (postgres_changes) on configuracoes_sistema, quick_sales, and vendas_rapidas_itens
+    // 3. Active Realtime listener (postgres_changes) on configuracoes_sistema and vendas_rapidas_itens
     const channel = supabase
       .channel(`realtime_quick_sales_${scopeId}_${Date.now()}`)
       .on(
@@ -444,17 +444,6 @@ export function SaleForm({
           schema: "public",
           table: "configuracoes_sistema",
           filter: `user_id=eq.${scopeId}`
-        },
-        () => {
-          fetchQuickSalesFromDb();
-        }
-      )
-      .on(
-        "postgres_changes",
-        {
-          event: "*",
-          schema: "public",
-          table: "quick_sales",
         },
         () => {
           fetchQuickSalesFromDb();
@@ -1386,7 +1375,8 @@ export function SaleForm({
                 : []))
     };
 
-    onSaleSaved(savedSale);
+    const savedResult = await onSaleSaved(savedSale);
+    if (savedResult === false) return;
     setSavedSaleSummary(savedSale);
     
     setSuccessMessage(
@@ -1451,7 +1441,8 @@ export function SaleForm({
       deliveryDate: deliveryDate || undefined,
     };
 
-    onBudgetSaved(savedBudget);
+    const savedResult = await onBudgetSaved(savedBudget);
+    if (savedResult === false) return;
     
     setSuccessMessage(
       activeEditingSale 
@@ -1527,8 +1518,9 @@ export function SaleForm({
         : []
     };
 
-    // Convert into a System Sale
-    onSaleSaved(convertedSale);
+    // Convert into a System Sale (awaits Supabase save first)
+    const savedResult = await onSaleSaved(convertedSale);
+    if (savedResult === false) return;
 
     // Remove from the budgets list
     if (onBudgetExecuted && activeEditingSale) {
@@ -2113,24 +2105,7 @@ export function SaleForm({
     const receiptText = `Recibo #${docId}\nCliente: ${finalClient}\nValor: R$ ${finalTotalValue.toFixed(2)}\nPagamento: ${chosenMethod}\nPIX: ${pixKeyStr}\nEntrega: ${deliveryAddress || (useMotoboy ? "Motoboy" : "Balcão")}`;
     (window as any).latestReceiptText = receiptText;
 
-    // Send to backend store for headless/E2E test verification
-    try {
-      fetch("/api/receipts/latest", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          pdfBase64: base64Pdf,
-          filename: docName,
-          clientName: finalClient,
-          totalValue: finalTotalValue,
-          paymentMethod: chosenMethod,
-          pixKey: pixKeyStr,
-          textContent: receiptText
-        })
-      }).catch(() => {});
-    } catch (err) {}
-
-    // In-app modal state so tests and users can see and interact with the receipt immediately
+    // In-app modal state so users can see and interact with the receipt immediately
     setLatestReceiptModalData({
       pdfBlobUrl: blobUrl,
       pdfBase64: base64Pdf,

@@ -6,7 +6,7 @@ import {
   DailyLocalBackupSnapshot,
 } from "../types";
 import { getIndexedDbItem, setIndexedDbItem } from "./indexedDb";
-import { dbExportAllData } from "../supabase";
+import { dbExportAllData, getSupabase } from "../supabase";
 
 export const DAILY_BACKUP_META_KEY = "NUCLEO_DAILY_AUTO_BACKUP_META";
 export const DAILY_BACKUP_LAST_DATE_KEY = "NUCLEO_LAST_DAILY_BACKUP_DATE";
@@ -196,20 +196,22 @@ export async function runDailyAutoBackup(params: {
       triggerJsonDownload(fileName, jsonContent);
     }
 
-    // Optional background cloud sync to meus_dados (non-blocking)
+    // Optional background cloud sync directly to Supabase meus_dados (non-blocking)
     if (syncToCloud) {
       try {
-        const compactJson = JSON.stringify(data);
-        fetch("/api/backups", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            titulo: fileName,
-            descricao: compactJson,
-            valor: compactJson.length,
-            userId: ownerId,
-          }),
-        }).catch(() => {});
+        const supabase = getSupabase();
+        if (supabase && ownerId) {
+          const compactJson = JSON.stringify(data);
+          supabase
+            .from("meus_dados")
+            .insert({
+              user_id: ownerId,
+              titulo: fileName,
+              descricao: compactJson,
+              valor: compactJson.length,
+            })
+            .then(() => {}, () => {});
+        }
       } catch {}
     }
 

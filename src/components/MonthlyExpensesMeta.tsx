@@ -122,7 +122,8 @@ export function MonthlyExpensesMeta({ todayNetProfit, bills, setBills, daysWorke
       const { data, error } = await supabase
         .from("gastos_mensais")
         .select("*")
-        .eq("user_id", companyOwnerId);
+        .eq("user_id", companyOwnerId)
+        .order("created_at", { ascending: true });
 
       if (error) {
         console.error("Erro ao carregar os dados do Supabase:", error);
@@ -282,7 +283,25 @@ export function MonthlyExpensesMeta({ todayNetProfit, bills, setBills, daysWorke
 
     try {
       if (editingBillId) {
-        // Edit existing bill
+        // 1. Save to Supabase FIRST
+        if (companyOwnerId) {
+          const ok = await dbSaveMonthlyBill(
+            editingBillId,
+            formName.trim(),
+            numericVal,
+            formCategory,
+            formDueDate,
+            formObservation.trim(),
+            companyOwnerId
+          );
+          if (!ok) {
+            showLocalToast("Erro ao salvar gasto mensal no banco de dados.", "error");
+            return;
+          }
+          notifyRealtimeSync(companyOwnerId, "gastos_mensais_updated", { billId: editingBillId });
+        }
+
+        // 2. Update React state
         setBills((prev) =>
           prev.map((b) =>
             b.id === editingBillId
@@ -298,20 +317,6 @@ export function MonthlyExpensesMeta({ todayNetProfit, bills, setBills, daysWorke
           )
         );
 
-        // Save to Supabase
-        if (companyOwnerId) {
-          dbSaveMonthlyBill(
-            editingBillId,
-            formName.trim(),
-            numericVal,
-            formCategory,
-            formDueDate,
-            formObservation.trim(),
-            companyOwnerId
-          );
-          notifyRealtimeSync(companyOwnerId, "gastos_mensais_updated", { billId: editingBillId });
-        }
-
         showLocalToast("Gasto mensal atualizado com sucesso! 📝", "success");
         setIsFormOpen(false);
       } else {
@@ -326,11 +331,9 @@ export function MonthlyExpensesMeta({ todayNetProfit, bills, setBills, daysWorke
           observation: formObservation.trim(),
         };
 
-        setBills((prev) => [newBill, ...prev]);
-
-        // Save to Supabase
+        // 1. Save to Supabase FIRST
         if (companyOwnerId) {
-          dbSaveMonthlyBill(
+          const ok = await dbSaveMonthlyBill(
             cleanId,
             formName.trim(),
             numericVal,
@@ -339,8 +342,15 @@ export function MonthlyExpensesMeta({ todayNetProfit, bills, setBills, daysWorke
             formObservation.trim(),
             companyOwnerId
           );
+          if (!ok) {
+            showLocalToast("Erro ao salvar gasto mensal no banco de dados.", "error");
+            return;
+          }
           notifyRealtimeSync(companyOwnerId, "gastos_mensais_updated", { billId: cleanId });
         }
+
+        // 2. Update React state
+        setBills((prev) => [newBill, ...prev]);
 
         showLocalToast("Gasto cadastrado! O formulário está pronto para o próximo cadastro. 🔥", "success");
 

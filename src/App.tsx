@@ -2434,7 +2434,7 @@ export default function App() {
           Promise.all([
             dbGetCompanyProfile(companyOwnerId),
             dbGetGoals(companyOwnerId),
-            supabase ? supabase.from("gastos_mensais").select("*").eq("user_id", companyOwnerId) : Promise.resolve({ data: [], error: null }),
+            supabase ? supabase.from("gastos_mensais").select("*").eq("user_id", companyOwnerId).order("created_at", { ascending: true }) : Promise.resolve({ data: [], error: null }),
             dbGetCatalogProducts(companyOwnerId),
           ])
         );
@@ -2790,7 +2790,7 @@ export default function App() {
   useEffect(() => {
     if (currentUser?.id && initialSyncDoneForUserRef.current !== currentUser.id) {
       initialSyncDoneForUserRef.current = currentUser.id;
-      triggerRemoteSync(currentUser, true);
+      triggerRemoteSync(currentUser, true, true);
     }
   }, [currentUser?.id]);
 
@@ -4781,26 +4781,28 @@ export default function App() {
     return true;
   };
 
-  const handleAddExpense = (expense: Expense) => {
+  const handleAddExpense = async (expense: Expense): Promise<boolean> => {
     if (!requireOpenCashRegister("qualquer despesa")) {
-      return;
+      return false;
+    }
+    if (currentUser && isSupabaseConfigured()) {
+      const companyOwnerId = currentUser.owner_id || currentUser.id;
+      try {
+        const res = await dbSaveExpense(companyOwnerId, expense);
+        if (!res.success) {
+          addToast(`⚠️ Erro ao salvar despesa no Supabase: ${res.error || "Falha de conexão"}`, "error");
+          return false;
+        }
+      } catch (err: any) {
+        console.error("Error syncing expense to Supabase:", err);
+        addToast("⚠️ Falha ao conectar ao servidor ao salvar despesa.", "error");
+        return false;
+      }
     }
     setExpenses((prev) => [...prev, expense]);
     playAlertSound("success");
     addToast(`Despesa registrada com sucesso: ${expense.description}! 🧾`, "success");
-    if (currentUser && isSupabaseConfigured()) {
-      const companyOwnerId = currentUser.owner_id || currentUser.id;
-      dbSaveExpense(companyOwnerId, expense)
-        .then((ok) => {
-          if (!ok) {
-            addToast("⚠️ Sincronização offline: Salvo localmente, mas falhou ao sincronizar com a nuvem.", "warning");
-          }
-        })
-        .catch((err) => {
-          console.error("Error syncing expense to Supabase:", err);
-          addToast("⚠️ Falha ao conectar ao servidor. Gasto foi salvo localmente.", "warning");
-        });
-    }
+    return true;
   };
 
   const handleDeleteExpense = (id: string) => {
@@ -5495,41 +5497,12 @@ export default function App() {
     setShowAutoClosePrompt(false);
   };
 
-  // Save or edit action handler
-  const handleSaleSaved = (newSale: Sale) => {
+  // Save or edit action handler (Supabase-first persistence before updating React state / localStorage)
+  const handleSaleSaved = async (newSale: Sale): Promise<boolean> => {
     if (!requireOpenCashRegister("qualquer venda")) {
-      return;
+      return false;
     }
     const exists = sales.some((s) => s.id === newSale.id);
-    
-    // Decrement stock of matched catalog products on a new sale
-    if (!exists) {
-      newSale.items.forEach((item) => {
-        const descMatch = String(item.description).trim().toLowerCase();
-        const matchedProduct = catalogProducts.find(
-          (p) => String(p.description).trim().toLowerCase() === descMatch
-        );
-
-        if (matchedProduct) {
-          const qty = Number(item.quantity) || 0;
-          if (qty > 0) {
-            const newStock = Math.max(0, matchedProduct.currentStock - qty);
-            
-            // 1. Update local state
-            setCatalogProducts((prev) =>
-              prev.map((p) => (p.id === matchedProduct.id ? { ...p, currentStock: newStock } : p))
-            );
-
-            // 2. Sync with Supabase
-            if (currentUser && isSupabaseConfigured()) {
-              const companyOwnerId = currentUser.owner_id || currentUser.id;
-              dbUpdateProductStock(companyOwnerId, matchedProduct.id, newStock)
-                .catch((err) => console.error(`Error updating stock for product ${matchedProduct.description}:`, err));
-            }
-          }
-        }
-      });
-    }
 
     const operatorRole: "atendente" | "administrador" = 
       (currentUser?.role === "atendente" || currentUser?.role === "seller") ? "atendente" : "administrador";
@@ -5545,12 +5518,55 @@ export default function App() {
 
     const companyOwnerId = currentUser?.owner_id || currentUser?.id || "global";
 
-    // 1. WRITE-AHEAD LOGGING (WAL) PRE-COMMIT: Write transaction intent synchronously to disk before network sync
+    // 1. WRITE-AHEAD LOGGING (WAL) PRE-COMMIT
     const walEntry = writeToSalesWal("SAVE_SALE", attributedSale, companyOwnerId);
 
+    // 2. Persist to Supabase FIRST before updating React state / localStorage
+    if (currentUser && isSupabaseConfigured()) {
+      try {
+        const ok = await dbSaveSale(companyOwnerId, attributedSale);
+        if (!ok) {
+          updateSalesWalEntryStatus(walEntry.id, "failed", "dbSaveSale returned false");
+          addToast("❌ Erro ao salvar venda no Supabase. Tente novamente.", "error");
+          return false;
+        }
+        updateSalesWalEntryStatus(walEntry.id, "synced");
+      } catch (err: any) {
+        console.error("Error syncing sale to Supabase via WAL:", err);
+        updateSalesWalEntryStatus(walEntry.id, "failed", err?.message);
+        addToast("❌ Falha ao sincronizar venda com o banco de dados.", "error");
+        return false;
+      }
+    }
+
+    // 3. Decrement stock of matched catalog products on a new sale
+    if (!exists) {
+      for (const item of newSale.items) {
+        const descMatch = String(item.description).trim().toLowerCase();
+        const matchedProduct = catalogProducts.find(
+          (p) => String(p.description).trim().toLowerCase() === descMatch
+        );
+
+        if (matchedProduct) {
+          const qty = Number(item.quantity) || 0;
+          if (qty > 0) {
+            const newStock = Math.max(0, matchedProduct.currentStock - qty);
+            if (currentUser && isSupabaseConfigured()) {
+              await dbUpdateProductStock(companyOwnerId, matchedProduct.id, newStock)
+                .catch((err) => console.error(`Error updating stock for product ${matchedProduct.description}:`, err));
+            }
+            setCatalogProducts((prev) =>
+              prev.map((p) => (p.id === matchedProduct.id ? { ...p, currentStock: newStock } : p))
+            );
+          }
+        }
+      }
+    }
+
+    // 4. Update React state & localStorage after Supabase save
     setSales((prev) => {
-      const exists = prev.some((s) => s.id === attributedSale.id);
-      if (exists) {
+      const existsInPrev = prev.some((s) => s.id === attributedSale.id);
+      if (existsInPrev) {
         return prev.map((s) => (s.id === attributedSale.id ? attributedSale : s));
       }
       return [attributedSale, ...prev];
@@ -5562,19 +5578,6 @@ export default function App() {
       setFilterPeriod("today");
     }
     setActiveEditingSale(null);
-
-    // 2. Asynchronous remote sync with WAL status update
-    if (currentUser && isSupabaseConfigured()) {
-      dbSaveSale(companyOwnerId, attributedSale)
-        .then((ok) => {
-          if (ok) updateSalesWalEntryStatus(walEntry.id, "synced");
-          else updateSalesWalEntryStatus(walEntry.id, "failed", "dbSaveSale returned false");
-        })
-        .catch((err) => {
-          console.error("Error syncing sale to Supabase via WAL:", err);
-          updateSalesWalEntryStatus(walEntry.id, "failed", err?.message);
-        });
-    }
 
     broadcastRealtime("sales_updated", { sale: attributedSale }, companyOwnerId);
 
@@ -5588,12 +5591,13 @@ export default function App() {
 
     playCashRegisterSound();
     addToast(exists ? "Venda atualizada com sucesso! 📝" : "Nova venda criada com sucesso! 💵", "success");
+    return true;
   };
 
-  // Budget management handlers
-  const handleBudgetSaved = (newBudget: Sale) => {
+  // Budget management handlers (Supabase-first persistence)
+  const handleBudgetSaved = async (newBudget: Sale): Promise<boolean> => {
     if (!requireOpenCashRegister("qualquer orçamento")) {
-      return;
+      return false;
     }
     const operatorRole: "atendente" | "administrador" = 
       (currentUser?.role === "atendente" || currentUser?.role === "seller") ? "atendente" : "administrador";
@@ -5607,26 +5611,38 @@ export default function App() {
       sellerRole: newBudget.sellerRole || operatorRole,
     };
 
+    const companyOwnerId = currentUser?.owner_id || currentUser?.id || "global";
+
+    // 1. Persist to Supabase FIRST
+    if (currentUser && isSupabaseConfigured()) {
+      try {
+        const ok = await dbSaveSale(companyOwnerId, attributedBudget);
+        if (!ok) {
+          addToast("❌ Erro ao salvar orçamento no Supabase. Tente novamente.", "error");
+          return false;
+        }
+      } catch (err) {
+        console.error("Error syncing budget to Supabase:", err);
+        addToast("❌ Falha ao conectar ao banco de dados para salvar orçamento.", "error");
+        return false;
+      }
+    }
+
     const exists = budgets.some((b) => b.id === attributedBudget.id);
     setBudgets((prev) => {
-      const exists = prev.some((b) => b.id === attributedBudget.id);
-      if (exists) {
+      const existsInPrev = prev.some((b) => b.id === attributedBudget.id);
+      if (existsInPrev) {
         return prev.map((b) => (b.id === attributedBudget.id ? attributedBudget : b));
       }
       return [...prev, attributedBudget];
     });
     setActiveEditingSale(null);
 
-    if (currentUser && isSupabaseConfigured()) {
-      const companyOwnerId = currentUser.owner_id || currentUser.id;
-      dbSaveSale(companyOwnerId, attributedBudget)
-        .catch((err) => console.error("Error syncing budget to Supabase:", err));
-    }
-    const companyOwnerId = currentUser?.owner_id || currentUser?.id || "global";
     broadcastRealtime("sales_updated", { sale: attributedBudget }, companyOwnerId);
 
     playAlertSound("success");
     addToast(exists ? "Orçamento atualizado com sucesso! 📝" : "Novo orçamento registrado! 📋", "success");
+    return true;
   };
 
   const handleDeleteBudget = (id: string) => {
@@ -6530,7 +6546,17 @@ export default function App() {
                 <React.Suspense fallback={<LazyLoader />}>
                   <CompanySettings
                     company={company}
-                    onSaveCompany={(updatedCompany) => {
+                    onSaveCompany={async (updatedCompany, skipRemoteSave = false) => {
+                      if (!skipRemoteSave && currentUser) {
+                        const companyOwnerId = currentUser.owner_id || currentUser.id;
+                        companyLoadedForUserId.current = currentUser.id;
+                        const success = await dbSaveCompanyProfile(companyOwnerId, updatedCompany);
+                        if (!success) {
+                          addToast("❌ Erro ao salvar dados da empresa no Supabase.", "error");
+                          return false;
+                        }
+                      }
+
                       setCompany(updatedCompany);
                       try {
                         localStorage.setItem("NUCLEO_COMPANY_PROFILE", JSON.stringify(updatedCompany));
@@ -6539,18 +6565,10 @@ export default function App() {
                         }
                       } catch (e) {}
 
-                      if (currentUser) {
-                        const companyOwnerId = currentUser.owner_id || currentUser.id;
-                        companyLoadedForUserId.current = currentUser.id;
-                        dbSaveCompanyProfile(companyOwnerId, updatedCompany)
-                          .then((success) => {
-                            if (success) {
-                              console.log("Perfil da empresa salvo na nuvem com sucesso.");
-                            }
-                          })
-                          .catch((err) => console.error("Error saving company to Supabase:", err));
+                      if (!skipRemoteSave) {
+                        addToast("Informações da empresa salvas com sucesso! 🏢", "success");
                       }
-                      addToast("Informações da empresa salvas com sucesso! 🏢", "success");
+                      return true;
                     }}
                     soundEnabled={soundEnabled}
                     onToggleSound={handleToggleSound}

@@ -89,30 +89,30 @@ export const FrenteCaixaPDV: React.FC<FrenteCaixaPDVProps> = ({
     setMensagemErro(null);
 
     try {
-      const todayDate = new Date().toISOString().substring(0, 10);
       const { data: statusRow } = await supabase
         .from("caixa_status")
-        .select("id, user_id, date, status, opened_at, valor_abertura")
+        .select("*")
         .eq("user_id", empresaId)
-        .eq("date", todayDate)
-        .order("opened_at", { ascending: false })
+        .order("created_at", { ascending: false })
         .limit(1)
         .maybeSingle();
 
-      if (statusRow?.status) {
-        const st = String(statusRow.status).toUpperCase();
-        if (st === "ABERTO") {
+      if (statusRow?.status || statusRow?.aberto !== undefined) {
+        const st = String(statusRow.status || "").toUpperCase();
+        const isClosed = st === "FECHADO" || statusRow.aberto === false;
+        const isOpen = !isClosed && (st === "ABERTO" || statusRow.aberto === true);
+        if (isOpen) {
           setSessaoAtiva({
             id: statusRow.id,
             empresa_id: statusRow.user_id,
             status: "aberto",
             valor_abertura: Number(statusRow.valor_abertura) || 0,
-            data_abertura: statusRow.opened_at || new Date().toISOString(),
+            data_abertura: statusRow.data_abertura || statusRow.created_at || new Date().toISOString(),
             aberto_por_usuario_id: statusRow.user_id,
             operador_nome: "Operador",
           });
           return;
-        } else if (st === "FECHADO") {
+        } else if (isClosed) {
           setSessaoAtiva(null);
           return;
         }

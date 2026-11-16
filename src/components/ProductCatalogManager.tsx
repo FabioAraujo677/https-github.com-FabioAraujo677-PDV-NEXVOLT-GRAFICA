@@ -205,28 +205,25 @@ export function ProductCatalogManager({
   }, [companyOwnerId]);
 
   // Quick adjust stock columns directly from list
-  const handleQuickAdjustStock = (productId: string, amount: number) => {
-    let updatedProduct: CatalogProduct | null = null;
+  const handleQuickAdjustStock = async (productId: string, amount: number) => {
+    const target = catalogProducts.find(p => p.id === productId);
+    if (!target) return;
+
+    const newStock = Math.max(0, target.currentStock + amount);
+    const updatedProduct: CatalogProduct = { ...target, currentStock: newStock };
+
+    if (companyOwnerId) {
+      const ok = await dbSaveCatalogProduct(updatedProduct, companyOwnerId);
+      if (!ok) {
+        addToast("Erro ao salvar ajuste de estoque no Supabase.", "error");
+        return;
+      }
+      notifyRealtimeSync(companyOwnerId, "products_updated", { id: productId });
+    }
 
     setCatalogProducts(prev =>
-      prev.map(p => {
-        if (p.id === productId) {
-          const newStock = Math.max(0, p.currentStock + amount);
-          updatedProduct = { ...p, currentStock: newStock };
-          return updatedProduct;
-        }
-        return p;
-      })
+      prev.map(p => (p.id === productId ? updatedProduct : p))
     );
-
-    // Save stock update to Supabase
-    if (companyOwnerId) {
-      setTimeout(() => {
-        if (!updatedProduct) return;
-        dbSaveCatalogProduct(updatedProduct, companyOwnerId);
-        notifyRealtimeSync(companyOwnerId, "products_updated", { id: productId });
-      }, 50);
-    }
 
     addToast("Estoque ajustado rapidamente! 📦⚡", "success");
   };
@@ -370,7 +367,7 @@ export function ProductCatalogManager({
     setErrorMessage(null);
   };
 
-  const handleSaveProduct = (e: React.FormEvent) => {
+  const handleSaveProduct = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!description.trim()) {
       setErrorMessage("Por favor, preencha o nome / descrição do produto.");
@@ -399,10 +396,20 @@ export function ProductCatalogManager({
       currentStock: curS
     };
 
+    // 1. Save to Supabase FIRST
+    if (companyOwnerId) {
+      const ok = await dbSaveCatalogProduct(updatedProd, companyOwnerId);
+      if (!ok) {
+        setErrorMessage("Falha ao salvar produto no Supabase. Verifique sua conexão.");
+        return;
+      }
+      notifyRealtimeSync(companyOwnerId, "products_updated", { id: targetId });
+    }
+
+    // 2. Update React state after remote save succeeds
     if (editingId) {
       const wasDeleted = deletedProducts.some(p => p.id === editingId);
       if (wasDeleted) {
-        // Move back to active catalogProducts (and remove from deletedProducts)
         setCatalogProducts(prev => [updatedProd, ...prev]);
         setDeletedProducts(prev => {
           const next = prev.filter(p => p.id !== editingId);
@@ -412,44 +419,37 @@ export function ProductCatalogManager({
         setShowDeletedLog(false);
         addToast("Produto restaurado e atualizado com sucesso! 📦✨", "success");
       } else {
-        // Edit existing product
         setCatalogProducts(prev =>
           prev.map(p => p.id === editingId ? updatedProd : p)
         );
         addToast("Produto atualizado com sucesso! 📦✨", "success");
       }
     } else {
-      // Create new product
       setCatalogProducts(prev => [updatedProd, ...prev]);
       addToast("Novo produto registrado no catálogo! 🚀", "success");
-    }
-
-    // Save to Supabase
-    if (companyOwnerId) {
-      dbSaveCatalogProduct(updatedProd, companyOwnerId);
-      notifyRealtimeSync(companyOwnerId, "products_updated", { id: targetId });
     }
 
     resetForm();
   };
 
-  const handleRestoreProduct = (product: CatalogProduct) => {
-    // Add back to active catalogProducts
-    setCatalogProducts(prev => [product, ...prev]);
-    
-    // Save to Supabase if companyOwnerId
+  const handleRestoreProduct = async (product: CatalogProduct) => {
     if (companyOwnerId) {
-      dbSaveCatalogProduct(product, companyOwnerId);
+      const ok = await dbSaveCatalogProduct(product, companyOwnerId);
+      if (!ok) {
+        addToast("Erro ao restaurar produto no Supabase.", "error");
+        return;
+      }
       notifyRealtimeSync(companyOwnerId, "products_updated", { id: product.id });
     }
-    
-    // Remove from deletedProducts
+
+    setCatalogProducts(prev => [product, ...prev]);
+
     setDeletedProducts(prev => {
       const next = prev.filter(p => p.id !== product.id);
       localStorage.setItem("NUCLEO_DELETED_PRODUCTS", JSON.stringify(next));
       return next;
     });
-    
+
     addToast(`Produto "${product.description}" restaurado com sucesso! 📦`, "success");
   };
 

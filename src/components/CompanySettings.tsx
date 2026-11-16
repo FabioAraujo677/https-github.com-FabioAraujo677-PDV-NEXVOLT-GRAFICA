@@ -76,7 +76,7 @@ const defaultBusinessHours: BusinessHours = {
 
 interface CompanySettingsProps {
   company: CompanyProfile;
-  onSaveCompany: (updated: CompanyProfile) => void;
+  onSaveCompany: (updated: CompanyProfile, skipRemoteSave?: boolean) => void | Promise<boolean | void>;
   soundEnabled?: boolean;
   onToggleSound?: (enabled: boolean) => void;
   currentUser: User | null;
@@ -408,20 +408,6 @@ export function CompanySettings({
         return;
       }
       
-      try {
-        const res = await fetch(`/api/backups?userId=${encodeURIComponent(ownerId)}`);
-        if (res.ok) {
-          const json = await res.json();
-          if (json.success && Array.isArray(json.backups)) {
-            setCloudBackups(json.backups);
-            setLoadingCloudBackups(false);
-            return;
-          }
-        }
-      } catch (apiErr) {
-        console.warn("Fallback API backups:", apiErr);
-      }
-
       const supabase = getSupabase();
       if (!supabase) return;
 
@@ -448,7 +434,9 @@ export function CompanySettings({
   };
 
   useEffect(() => {
-    fetchCloudBackups();
+    if (currentUser?.id) {
+      fetchCloudBackups();
+    }
     loadLocalDailyBackups();
     const handleBackupEvent = () => fetchCloudBackups();
     const handleDailyBackupEvent = () => loadLocalDailyBackups();
@@ -463,7 +451,7 @@ export function CompanySettings({
       window.removeEventListener("backup_restored_sync" as any, handleBackupEvent);
       window.removeEventListener("daily_backup_updated" as any, handleDailyBackupEvent);
     };
-  }, []);
+  }, [currentUser?.id]);
 
   const handleExportBackup = async () => {
     if (!currentUser) {
@@ -509,18 +497,16 @@ export function CompanySettings({
         } catch (e) {}
       }
 
-      try {
-        await fetch("/api/backups", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
+      if (supabase && activeUserId) {
+        try {
+          await supabase.from("meus_dados").insert({
+            user_id: activeUserId,
             titulo: fileName,
             descricao: jsonString,
-            valor: jsonString.length,
-            userId: activeUserId
-          })
-        });
-      } catch (e) {}
+            valor: jsonString.length
+          });
+        } catch (e) {}
+      }
 
       setBackupSuccessMsg("Cópia de segurança consolidada exportada com sucesso em arquivo único .json!");
       if (addToast) addToast("Backup completo baixado com sucesso em arquivo único .json! 💾", "success");
@@ -1117,10 +1103,6 @@ CREATE TABLE IF NOT EXISTS meus_dados (
   const handleDeleteCloudItem = async (itemId: string) => {
     if (!confirm("Tem certeza que deseja apagar este arquivo de backup salvo na nuvem?")) return;
     try {
-      try {
-        await fetch(`/api/backups/${itemId}`, { method: "DELETE" });
-      } catch (e) {}
-
       const supabase = getSupabase();
       if (supabase) {
         await supabase.from("meus_dados").delete().eq("id", itemId);
@@ -1143,19 +1125,28 @@ CREATE TABLE IF NOT EXISTS meus_dados (
 
   useEffect(() => {
     const fetchProfileFromSupabase = async () => {
+      if (!currentUser?.id) return;
       const supabase = getSupabase();
       if (!supabase) return;
 
-      const { data: authData } = await supabase.auth.getUser();
-      const userId = authData?.user?.id || currentUser?.id;
-      if (!userId) return;
+      let authUserId: string | null = null;
+      try {
+        const { data: authData } = await supabase.auth.getUser();
+        authUserId = authData?.user?.id || null;
+      } catch (e) {}
+
+      const candidateIds = Array.from(
+        new Set([currentUser?.owner_id, currentUser?.id, authUserId].filter(Boolean))
+      ) as string[];
+      if (candidateIds.length === 0) return;
 
       setLoadingProfile(true);
       try {
         const { data, error } = await supabase
           .from("company_profile")
           .select("*")
-          .eq("user_id", userId)
+          .in("user_id", candidateIds)
+          .order("created_at", { ascending: false })
           .limit(1)
           .maybeSingle();
 
@@ -1165,17 +1156,28 @@ CREATE TABLE IF NOT EXISTS meus_dados (
 
         if (data) {
           const { cleanBusinessHours, extractedSettings } = extractSettingsFromBusinessHours(data.business_hours);
-          setTradingName(data.trading_name || "");
-          setPhone(data.phone || "");
+          const resolvedTradingName = data.trading_name || data.nome_fantasia || data.name || data.nome || "";
+          const resolvedPhone = data.phone || data.telefone || "";
+          const resolvedAddress = data.address || data.logradouro || "";
+          const resolvedNumber = data.number || data.numero || "";
+          const resolvedNeighborhood = data.neighborhood || data.bairro || "";
+          const resolvedCity = data.city || data.cidade || "";
+          const resolvedState = data.state || data.uf || "";
+          const resolvedCnpj = data.cnpj_cpf || data.cnpj || "";
+          const resolvedLogo = data.logo || data.logo_url || null;
+          const resolvedPix = data.pix_key || "";
+
+          setTradingName(resolvedTradingName);
+          setPhone(resolvedPhone);
           setCep(data.cep || "");
-          setAddress(data.address || "");
-          setNumber(data.number || "");
-          setNeighborhood(data.neighborhood || "");
-          setCity(data.city || "");
-          setState(data.state || "");
-          setCnpjCpf(data.cnpj_cpf || "");
-          setLogo(data.logo || data.logo_url || null);
-          setPixKey(data.pix_key || "");
+          setAddress(resolvedAddress);
+          setNumber(resolvedNumber);
+          setNeighborhood(resolvedNeighborhood);
+          setCity(resolvedCity);
+          setState(resolvedState);
+          setCnpjCpf(resolvedCnpj);
+          setLogo(resolvedLogo);
+          setPixKey(resolvedPix);
           if (cleanBusinessHours) setBusinessHours(cleanBusinessHours);
           if (extractedSettings.dailyAutoBackupEnabled !== undefined) {
             setDailyAutoBackupEnabled(extractedSettings.dailyAutoBackupEnabled);
@@ -1201,20 +1203,20 @@ CREATE TABLE IF NOT EXISTS meus_dados (
 
           onSaveCompany({
             ...company,
-            tradingName: data.trading_name || "",
-            phone: data.phone || "",
+            tradingName: resolvedTradingName,
+            phone: resolvedPhone,
             cep: data.cep || "",
-            address: data.address || "",
-            number: data.number || "",
-            neighborhood: data.neighborhood || "",
-            city: data.city || "",
-            state: data.state || "",
-            cnpjCpf: data.cnpj_cpf || "",
-            logo: data.logo || data.logo_url || null,
-            pixKey: data.pix_key || "",
+            address: resolvedAddress,
+            number: resolvedNumber,
+            neighborhood: resolvedNeighborhood,
+            city: resolvedCity,
+            state: resolvedState,
+            cnpjCpf: resolvedCnpj,
+            logo: resolvedLogo,
+            pixKey: resolvedPix,
             ...extractedSettings,
             businessHours: cleanBusinessHours || defaultBusinessHours
-          });
+          }, true);
         }
       } catch (err: any) {
         console.error("Erro ao carregar perfil do Supabase:", err);
@@ -1223,7 +1225,7 @@ CREATE TABLE IF NOT EXISTS meus_dados (
       }
     };
     fetchProfileFromSupabase();
-  }, [currentUser?.id]);
+  }, [currentUser?.id, currentUser?.owner_id]);
 
   useEffect(() => {
     if (loadingProfile) return;
@@ -1489,13 +1491,16 @@ CREATE TABLE IF NOT EXISTS meus_dados (
         }, { onConflict: "id", ignoreDuplicates: true });
       } catch (e) {}
 
-      // Refresh global state
-      onSaveCompany(updated);
-      
-      // Persistence to Supabase
-      await dbSaveCompanyProfile(userId, updated);
-      
-      // Sync and toast
+      // 1. Persistence to Supabase FIRST before updating local state / storage
+      const savedOk = await dbSaveCompanyProfile(userId, updated);
+      if (!savedOk) {
+        throw new Error("Não foi possível gravar os dados da empresa no Supabase.");
+      }
+
+      // 2. Refresh global state & localStorage after Supabase confirmation
+      await onSaveCompany(updated, true);
+
+      // 3. Sync and toast
       if (onRefreshData) {
         await onRefreshData(currentUser || undefined, true);
       }
@@ -1555,7 +1560,10 @@ CREATE TABLE IF NOT EXISTS meus_dados (
         cashClosingReminderMessage,
         ...overrides,
       };
-      onSaveCompany(updatedProfile);
+      const ok = await onSaveCompany(updatedProfile);
+      if (ok === false) {
+        throw new Error("Falha ao sincronizar configuração de backup no Supabase.");
+      }
       setBackupSuccessMsg("✅ Configuração de Backup Automático Diário salva e sincronizada!");
       setTimeout(() => setBackupSuccessMsg(null), 4500);
     } catch (err: any) {

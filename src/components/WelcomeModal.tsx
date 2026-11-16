@@ -76,7 +76,7 @@ export const WelcomeModal: React.FC<WelcomeModalProps> = ({
 
         const { data, error } = await supabase
           .from("assinaturas")
-          .select("id, user_id, primeiro_acesso")
+          .select("*")
           .or(`user_id.eq.${userId},id.eq.${userId}`)
           .order("updated_at", { ascending: false })
           .limit(1)

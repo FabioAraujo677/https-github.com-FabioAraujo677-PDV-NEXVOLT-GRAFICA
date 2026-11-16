@@ -1,7 +1,7 @@
 import React, { useState, useMemo, useEffect } from "react";
 import { X, Wallet, ShieldAlert, CheckCircle, Info, Calculator, FileText, ArrowRightLeft, Landmark, Users, Printer, Check, Loader2 } from "lucide-react";
 import { CashRegisterState, Sale, CashRegisterSession, Expense, getSaleOperationCost, getSaleOrderDate } from "../types";
-import { getSupabase } from "../supabase";
+import { getSupabase, dbUpsertCaixaStatus } from "../supabase";
 
 interface CashRegisterModalProps {
   isOpen: boolean;
@@ -105,12 +105,12 @@ export function CashRegisterModal({
 
     const todayDate = getLocalDateFromISO(new Date().toISOString());
 
-    // 1. Initial query from caixa_status directly for today's date
+    // 1. Initial query from caixa_status directly
     supabase
       .from("caixa_status")
-      .select("id, status, opened_at, date, closed_at, valor_abertura, valor_fechamento")
+      .select("*")
       .in("user_id", [companyId, currentUser.id].filter(Boolean))
-      .order("opened_at", { ascending: false })
+      .order("created_at", { ascending: false })
       .limit(1)
       .maybeSingle()
       .then(({ data }) => {
@@ -623,48 +623,23 @@ export function CashRegisterModal({
           });
         } catch (err) {}
 
-        // 3. Atualizar caixa_status para FECHADO
+        // 3. Atualizar caixa_status para FECHADO (resiliente ao schema)
         try {
-          const todayDate = getLocalDateFromISO(closingDate || new Date().toISOString());
-          const { data: existingRows } = await supabase
-            .from("caixa_status")
-            .select("id")
-            .eq("user_id", companyId)
-            .eq("date", todayDate)
-            .order("opened_at", { ascending: false })
-            .limit(1);
-
-          const existingRow = existingRows && existingRows.length > 0 ? existingRows[0] : null;
-
-          if (existingRow?.id) {
-            await supabase
-              .from("caixa_status")
-              .update({
-                status: "FECHADO",
-                closed_at: closingDate,
-                valor_fechamento: observed
-              })
-              .eq("id", existingRow.id);
-          } else {
-            const isUUID = typeof activeSession?.id === "string" && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(activeSession.id);
-            const closeUUID = isUUID ? activeSession.id : ((typeof crypto !== "undefined" && typeof crypto.randomUUID === "function") ? crypto.randomUUID() : "xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx".replace(/[xy]/g, (c) => {
-              const r = (Math.random() * 16) | 0;
-              const v = c === "x" ? r : (r & 0x3) | 0x8;
-              return v.toString(16);
-            }));
-
-            await supabase
-              .from("caixa_status")
-              .upsert({
-                id: closeUUID,
-                user_id: companyId,
-                date: todayDate,
-                status: "FECHADO",
-                opened_at: activeSession?.dataAbertura || closingDate,
-                closed_at: closingDate,
-                valor_abertura: Number(activeSession?.valorAbertura) || 0,
-                valor_fechamento: observed
-              });
+          await dbUpsertCaixaStatus(companyId, "fechado", {
+            data_abertura: activeSession?.dataAbertura || closingDate,
+            data_fechamento: closingDate,
+            valor_abertura: Number(activeSession?.valorAbertura) || 0,
+            valor_fechamento: observed,
+            updated_at: closingDate
+          });
+          if (currentUser?.id && currentUser.id !== companyId) {
+            await dbUpsertCaixaStatus(currentUser.id, "fechado", {
+              data_abertura: activeSession?.dataAbertura || closingDate,
+              data_fechamento: closingDate,
+              valor_abertura: Number(activeSession?.valorAbertura) || 0,
+              valor_fechamento: observed,
+              updated_at: closingDate
+            });
           }
         } catch (err) {
           console.warn("Erro ao atualizar caixa_status:", err);

@@ -43,7 +43,7 @@ import {
 
 interface ExpensesManagerProps {
   expenses: Expense[];
-  onAddExpense: (expense: Expense) => void;
+  onAddExpense: (expense: Expense) => void | Promise<boolean | void>;
   onDeleteExpense: (id: string) => void;
   sales: Sale[];
   bills?: MonthlyBill[];
@@ -500,7 +500,7 @@ export function ExpensesManager({ expenses, onAddExpense, onDeleteExpense, sales
   const [showLargeReport, setShowLargeReport] = useState(false);
 
   // Form submit registering
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!cashRegister?.currentSession) {
       alert("⚠️ CAIXA FECHADO!\n\nVocê precisa abrir o caixa antes de registrar qualquer despesa no sistema. Você será redirecionado para a tela de abertura de caixa.");
@@ -536,24 +536,14 @@ export function ExpensesManager({ expenses, onAddExpense, onDeleteExpense, sales
       receiptImage: receiptPreview || undefined,
     };
 
-    onAddExpense(newExpense);
-    
-    const companyOwnerId = currentUser?.owner_id || currentUser?.id;
-    if (companyOwnerId && isSupabaseConfigured()) {
-      dbSaveExpense(companyOwnerId, newExpense).then((res) => {
-        if (!res.success) {
-          setScanError(`⚠️ Sincronização offline: Salvo localmente, mas falhou ao sincronizar com a nuvem: ${res.error || "Erro desconhecido"}`);
-        } else {
-          setSuccessMsg("Despesa cadastrada e sincronizada com sucesso!");
-          setTimeout(() => setSuccessMsg(null), 3000);
-        }
-      }).catch((err: any) => {
-        setScanError(`⚠️ Sincronização offline: Salvo localmente, mas falhou ao sincronizar com a nuvem: ${err.message || "Erro de conexão"}`);
-      });
-    } else {
-      setSuccessMsg("Despesa cadastrada com sucesso!");
-      setTimeout(() => setSuccessMsg(null), 3000);
+    const saveOk = await onAddExpense(newExpense);
+    if (saveOk === false) {
+      setScanError("⚠️ Falha ao sincronizar a despesa com o Supabase. Verifique sua conexão.");
+      return;
     }
+
+    setSuccessMsg("Despesa cadastrada e sincronizada com sucesso!");
+    setTimeout(() => setSuccessMsg(null), 3000);
 
     // Reset form
     setDescription("");
@@ -562,8 +552,6 @@ export function ExpensesManager({ expenses, onAddExpense, onDeleteExpense, sales
     setIsPreRegistered(false);
     setScannedFileName("");
     setReceiptPreview(null);
-    setSuccessMsg("Despesa cadastrada com sucesso!");
-    setTimeout(() => setSuccessMsg(null), 3000);
   };
 
   const formatBRL = (val: number) => {

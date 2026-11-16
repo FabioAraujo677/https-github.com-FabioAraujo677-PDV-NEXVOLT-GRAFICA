@@ -1813,7 +1813,7 @@ export async function dbSaveSale(userId: string, sale: Sale): Promise<boolean> {
   const salePayload: Record<string, any> = {
     id: sale.id,
     user_id: userId,
-    client_name: sale.clientName || "",
+    client_name: sale.clientName?.trim() || "Cliente Consumidor",
     client_phone: clientPhoneWithMeta,
     items: sale.items || [],
     use_motoboy: !!sale.useMotoboy,

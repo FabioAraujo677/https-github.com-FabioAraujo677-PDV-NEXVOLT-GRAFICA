@@ -5552,10 +5552,17 @@ export default function App() {
       }
     }
 
-    // 3. Decrement stock of matched catalog products on a new sale
+    // 3. Decrement stock of matched catalog products OR auto-register new items in 'produtos' on a new sale
     if (!exists) {
+      const processedDescriptions = new Set(
+        catalogProducts.map((p) => String(p.description).trim().toLowerCase())
+      );
+
       for (const item of newSale.items) {
-        const descMatch = String(item.description).trim().toLowerCase();
+        const rawDesc = String(item.description || "").trim();
+        if (!rawDesc) continue;
+        const descMatch = rawDesc.toLowerCase();
+
         const matchedProduct = catalogProducts.find(
           (p) => String(p.description).trim().toLowerCase() === descMatch
         );
@@ -5572,8 +5579,50 @@ export default function App() {
               prev.map((p) => (p.id === matchedProduct.id ? { ...p, currentStock: newStock } : p))
             );
           }
+        } else if (!processedDescriptions.has(descMatch)) {
+          processedDescriptions.add(descMatch);
+          const unitSale = Number(item.unitValue) || 0;
+          const unitCost = Number(item.unitCost) || 0;
+          const newCatalogProduct: CatalogProduct = {
+            id: Math.random().toString(36).substring(2, 10).toUpperCase(),
+            description: rawDesc,
+            costPrice: unitCost,
+            salePrice: unitSale,
+            profit: Number((unitSale - unitCost).toFixed(2)),
+            minStock: 0,
+            currentStock: 0,
+            status: "ativo",
+            is_draft: false
+          };
+
+          if (currentUser && isSupabaseConfigured()) {
+            try {
+              await dbSaveCatalogProduct(companyOwnerId, newCatalogProduct);
+            } catch (err) {
+              console.error(`Error auto-registering product "${rawDesc}" in 'produtos':`, err);
+            }
+          }
+
+          setCatalogProducts((prev) => {
+            const alreadyInPrev = prev.some(
+              (p) => String(p.description).trim().toLowerCase() === descMatch
+            );
+            return alreadyInPrev ? prev : [newCatalogProduct, ...prev];
+          });
         }
       }
+
+      if (currentUser && isSupabaseConfigured()) {
+        try {
+          const freshProducts = await dbGetCatalogProducts(companyOwnerId);
+          if (freshProducts) {
+            setCatalogProducts(freshProducts);
+          }
+        } catch (err) {
+          console.warn("Aviso ao recarregar catálogo após venda:", err);
+        }
+      }
+      window.dispatchEvent(new CustomEvent("products_updated"));
     }
 
     // 4. Update React state & localStorage after Supabase save
@@ -6602,6 +6651,18 @@ export default function App() {
                     onSaleSaved={handleSaleSaved}
                     onBudgetSaved={handleBudgetSaved}
                     onBudgetExecuted={handleBudgetExecuted}
+                    onRefreshCatalog={async () => {
+                      const companyOwnerId = currentUser?.owner_id || currentUser?.id;
+                      if (!companyOwnerId || !isSupabaseConfigured()) return;
+                      try {
+                        const fresh = await dbGetCatalogProducts(companyOwnerId);
+                        if (fresh) {
+                          setCatalogProducts(fresh);
+                        }
+                      } catch (err) {
+                        console.warn("Erro ao recarregar produtos:", err);
+                      }
+                    }}
                     activeEditingSale={activeEditingSale}
                     clearActiveEditing={() => setActiveEditingSale(null)}
                     company={company}

@@ -55,6 +55,7 @@ interface SaleFormProps {
   onSaleSaved: (sale: Sale) => void | Promise<boolean | void>;
   onBudgetSaved: (budget: Sale) => void | Promise<boolean | void>;
   onBudgetExecuted?: (id: string) => void;
+  onRefreshCatalog?: () => void | Promise<void>;
   activeEditingSale: Sale | null;
   clearActiveEditing: () => void;
   company: CompanyProfile;
@@ -75,6 +76,7 @@ export function SaleForm({
   onSaleSaved,
   onBudgetSaved,
   onBudgetExecuted,
+  onRefreshCatalog,
   activeEditingSale,
   clearActiveEditing,
   company,
@@ -1139,7 +1141,7 @@ export function SaleForm({
   const handleResetForm = () => {
     setClientName("");
     setClientPhone("");
-    setItems([{ id: "1", description: "", quantity: "1", unitValue: "0", totalValue: 0 }]);
+    setItems([{ id: `item-${Date.now()}`, description: "", quantity: "1", unitValue: "0", totalValue: 0, unitCost: "0" }]);
     setUseMotoboy(false);
     setMotoboyCostInput("0");
     setDeliveryAddress("");
@@ -1164,6 +1166,9 @@ export function SaleForm({
     setOperationCostInput("0");
     setCostBreakdownItems([]);
     setShowCostBreakdown(false);
+    setCatalogSuccessMessage(null);
+    setClientSearchTerm("");
+    setShowLocateClientModal(false);
     
     // Clear and revoke Object URLs if they start with blob:
     imageItems.forEach((item) => {
@@ -1263,11 +1268,9 @@ export function SaleForm({
     }
     if (!checkRegisterBeforeAction("registrar vendas no sistema")) return;
 
-    const finalClientName = isQuickSale ? "Venda Rápida" : clientName.trim();
-    if (!finalClientName) {
-      alert("Por favor, preencha o nome do cliente.");
-      return;
-    }
+    const finalClientName = isQuickSale
+      ? (clientName.trim() || "Venda Rápida")
+      : (clientName.trim() || "Cliente Consumidor");
     
     const validItems = items.filter(item => item.description.trim() !== "");
     if (validItems.length === 0) {
@@ -1390,19 +1393,21 @@ export function SaleForm({
       setSuccessMessage(null);
     }, 3000);
 
-    // Reset if we were not editing or if we finished
+    // Reset completely after sale concludes
     handleResetForm();
+
+    // Reload catalog products immediately so newly created items appear in the dropdown
+    if (onRefreshCatalog) {
+      await onRefreshCatalog();
+    }
   };
 
   // Save changes as Budget/Estimate
   const handleSaveBudget = async () => {
     if (!checkRegisterBeforeAction("registrar qualquer orçamento no sistema")) return;
 
-    if (!clientName.trim()) {
-      alert("Por favor, preencha o nome do cliente.");
-      return;
-    }
-    
+    const finalClientName = clientName.trim() || "Cliente Consumidor";
+
     const validItems = items.filter(item => item.description.trim() !== "");
     if (validItems.length === 0) {
       alert("Por favor, adicione pelo menos um item com descrição.");
@@ -1413,7 +1418,7 @@ export function SaleForm({
 
     const savedBudget: Sale = {
       id: activeEditingSale?.id || Math.random().toString(36).substring(2, 9).toUpperCase(),
-      clientName: clientName.trim(),
+      clientName: finalClientName,
       clientPhone: clientPhone || "Não informado",
       items: validItems.map(it => ({
         id: it.id,
@@ -1468,11 +1473,8 @@ export function SaleForm({
     }
     if (!checkRegisterBeforeAction("converter orçamento em venda")) return;
 
-    if (!clientName.trim()) {
-      alert("Por favor, preencha o nome do cliente.");
-      return;
-    }
-    
+    const finalClientName = clientName.trim() || "Cliente Consumidor";
+
     const validItems = items.filter(item => item.description.trim() !== "");
     if (validItems.length === 0) {
       alert("Por favor, adicione pelo menos um item com descrição.");
@@ -1483,7 +1485,7 @@ export function SaleForm({
 
     const convertedSale: Sale = {
       id: activeEditingSale?.id || Math.random().toString(36).substring(2, 9).toUpperCase(),
-      clientName: clientName.trim(),
+      clientName: finalClientName,
       clientPhone: clientPhone || "Não informado",
       items: validItems.map(it => ({
         id: it.id,
@@ -1533,6 +1535,10 @@ export function SaleForm({
     }, 3000);
 
     handleResetForm();
+
+    if (onRefreshCatalog) {
+      await onRefreshCatalog();
+    }
   };
 
   // WhatsApp share function direct from the form
@@ -1543,10 +1549,7 @@ export function SaleForm({
       return;
     }
 
-    if (!clientName.trim()) {
-      alert("Por favor, informe o nome do cliente.");
-      return;
-    }
+    const recipientName = clientName.trim() || "Cliente";
 
     const companyName = company?.tradingName || "Sistema de Vendas Núcleo";
     const docId = activeEditingSale?.id || `V-${Math.random().toString(36).substring(2, 6).toUpperCase()}`;
@@ -1559,7 +1562,7 @@ export function SaleForm({
       ? ` Restante a Pagar: ${new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(balanceDueValue)}.`
       : " Pago integralmente!";
 
-    const messageText = `Olá, *${clientName}*!\n\nSegue o resumo de sua compra na *${companyName}*:\n\n📄 *Recibo:* #${docId}\n💰 *Valor Total:* ${formattedTotal}\n📥 *Sinal/Pago:* ${new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(downPayment)}${balanceMessage}\n\nSeu recibo digital em PDF foi gerado e registrado no sistema! Agradecemos a preferência.\n\nAtenciosamente,\n*${companyName}*`;
+    const messageText = `Olá, *${recipientName}*!\n\nSegue o resumo de sua compra na *${companyName}*:\n\n📄 *Recibo:* #${docId}\n💰 *Valor Total:* ${formattedTotal}\n📥 *Sinal/Pago:* ${new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(downPayment)}${balanceMessage}\n\nSeu recibo digital em PDF foi gerado e registrado no sistema! Agradecemos a preferência.\n\nAtenciosamente,\n*${companyName}*`;
     
     const encodedMessage = encodeURIComponent(messageText);
     
@@ -1574,11 +1577,9 @@ export function SaleForm({
 
   // PDF Generation Function
   const generatePDF = async (isBudgetParam?: boolean, isQuickSale = false) => {
-    const finalClient = isQuickSale ? "Venda Rápida" : clientName.trim();
-    if (!finalClient) {
-      alert("Adicione o nome do cliente antes de gerar o PDF.");
-      return;
-    }
+    const finalClient = isQuickSale
+      ? (clientName.trim() || "Venda Rápida")
+      : (clientName.trim() || "Cliente Consumidor");
 
     const isActuallyBudget = typeof isBudgetParam === "boolean" ? isBudgetParam : (activeEditingSale?.isBudget || false);
     const effectiveOrderDate = isQuickSale ? getLocalDateString() : (orderDate || activeEditingSale?.orderDate || getLocalDateString());
@@ -2456,14 +2457,13 @@ export function SaleForm({
               <div>
                 <label className="block text-[10px] font-bold text-slate-400 mb-1 uppercase tracking-wider flex items-center gap-1">
                   <UserIcon className="h-3 w-3 text-slate-500" />
-                  Nome do Cliente <span className="text-brand-magenta">*</span>
+                  Nome do Cliente <span className="text-slate-500 font-normal">(Opcional)</span>
                 </label>
                 <div className="relative">
                   <input
                     type="text"
-                    required
                     disabled={!isRegisterOpen}
-                    placeholder={!isRegisterOpen ? "🔒 Abra o caixa para informar o cliente" : "Ex: João Silva de Souza"}
+                    placeholder={!isRegisterOpen ? "🔒 Abra o caixa para informar o cliente" : "Opcional (padrão: Cliente Consumidor)"}
                     value={clientName}
                     onClick={() => { if (!isRegisterOpen) checkRegisterBeforeAction("informar o nome do cliente"); }}
                     onChange={(e) => setClientName(e.target.value)}

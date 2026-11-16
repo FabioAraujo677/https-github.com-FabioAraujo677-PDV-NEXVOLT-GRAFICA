@@ -1918,6 +1918,19 @@ export async function dbGetExpenses(userId: string): Promise<Expense[] | null> {
 
       if (!error && data) {
         fetchedSuccessfully = true;
+        let localMap = new Map<string, Expense>();
+        try {
+          const localRaw = localStorage.getItem("NUCLEO_EXPENSES");
+          if (localRaw) {
+            const parsedLocal = JSON.parse(localRaw);
+            if (Array.isArray(parsedLocal)) {
+              parsedLocal.forEach((le: Expense) => {
+                if (le?.id) localMap.set(le.id, le);
+              });
+            }
+          }
+        } catch (e) {}
+
         remoteList = data.map((d: any) => {
           const rawDesc = d.description || d.descricao || "";
           let inferredMethod = d.payment_method || d.paymentMethod || "";
@@ -1926,6 +1939,19 @@ export async function dbGetExpenses(userId: string): Promise<Expense[] | null> {
             else if (rawDesc.startsWith("[Cartão]")) inferredMethod = "cartao";
             else inferredMethod = "dinheiro";
           }
+          const localMatch = localMap.get(d.id);
+          let parsedItens: any[] = [];
+          if (Array.isArray(d.itens_detalhados)) {
+            parsedItens = d.itens_detalhados;
+          } else if (typeof d.itens_detalhados === "string" && d.itens_detalhados.trim()) {
+            try {
+              const p = JSON.parse(d.itens_detalhados);
+              if (Array.isArray(p)) parsedItens = p;
+            } catch (e) {}
+          } else if (Array.isArray(localMatch?.itens_detalhados)) {
+            parsedItens = localMatch.itens_detalhados;
+          }
+
           return {
             id: d.id,
             description: rawDesc,
@@ -1933,6 +1959,8 @@ export async function dbGetExpenses(userId: string): Promise<Expense[] | null> {
             date: d.date || "",
             category: d.category || d.categoria || "Outros",
             paymentMethod: inferredMethod,
+            tipo_gasto: d.tipo_gasto || d.tipoGasto || localMatch?.tipo_gasto || "operacional_comprovante",
+            itens_detalhados: parsedItens,
             createdAt: d.created_at || d.createdAt
           };
         });
@@ -2001,7 +2029,9 @@ export async function dbSaveExpense(userId: string, expense: Expense): Promise<{
     finalDesc = `${tag}${finalDesc}`;
   }
 
-  // Exact mapping matching schema.sql public.expenses (no payment_method column)
+  const normalizedTipoGasto = expense.tipo_gasto || expAny.tipoGasto || "operacional_comprovante";
+  const normalizedItens = Array.isArray(expense.itens_detalhados) ? expense.itens_detalhados : [];
+
   const expensePayload: Record<string, any> = {
     id: cleanId,
     user_id: userId,
@@ -2009,6 +2039,8 @@ export async function dbSaveExpense(userId: string, expense: Expense): Promise<{
     value: Number(expense.value) || 0,
     category: expense.category || "Outros",
     date: expense.date || new Date().toISOString(),
+    tipo_gasto: normalizedTipoGasto,
+    itens_detalhados: normalizedItens,
     created_at: expAny.createdAt || expAny.created_at || new Date().toISOString()
   };
 

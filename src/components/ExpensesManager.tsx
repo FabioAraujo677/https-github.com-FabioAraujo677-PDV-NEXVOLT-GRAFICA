@@ -24,7 +24,7 @@ import {
   FileImage,
   CheckCircle2
 } from "lucide-react";
-import { Expense, Sale, getSaleOperationCost, CashRegisterState, User } from "../types";
+import { Expense, ExpenseItemDetail, Sale, getSaleOperationCost, CashRegisterState, User } from "../types";
 import { dbSaveExpense, isSupabaseConfigured } from "../supabase";
 import { MonthlyBill } from "./MonthlyExpensesMeta";
 import {
@@ -195,7 +195,7 @@ export function ExpensesManager({ expenses, onAddExpense, onDeleteExpense, sales
   const [isPreRegistered, setIsPreRegistered] = useState(false);
   const [scannedFileName, setScannedFileName] = useState("");
   const [image, setImage] = useState<string | null>(null);
-  const [extractedItems, setExtractedItems] = useState<string[]>([]);
+  const [extractedItems, setExtractedItems] = useState<ExpenseItemDetail[]>([]);
 
   // Live Camera Viewfinder Modal states
   const [isCameraActive, setIsCameraActive] = useState<boolean>(false);
@@ -364,7 +364,7 @@ export function ExpensesManager({ expenses, onAddExpense, onDeleteExpense, sales
     }
   };
 
-  const compressAndResizeImage = (file: File, maxWidth = 1400, maxHeight = 1400): Promise<{ base64: string, type: string }> => {
+  const compressAndResizeImage = (file: File, maxWidth = 1600, maxHeight = 1600): Promise<{ base64: string, type: string }> => {
     return new Promise((resolve, reject) => {
       const reader = new FileReader();
       reader.readAsDataURL(file);
@@ -411,7 +411,7 @@ export function ExpensesManager({ expenses, onAddExpense, onDeleteExpense, sales
             }
 
             ctx.drawImage(img, 0, 0, width, height);
-            const dataUrl = canvas.toDataURL("image/jpeg", 0.82);
+            const dataUrl = canvas.toDataURL("image/jpeg", 0.88);
             const parts = dataUrl.split(",");
             if (parts.length > 1) {
               resolve({ base64: parts[1], type: "image/jpeg" });
@@ -434,6 +434,17 @@ export function ExpensesManager({ expenses, onAddExpense, onDeleteExpense, sales
     });
   };
 
+  const normalizeScannedDate = (rawDate: unknown): string => {
+    const str = typeof rawDate === "string" ? rawDate.trim() : "";
+    if (!str) return "";
+    if (/^\d{4}-\d{2}-\d{2}$/.test(str)) return str;
+    const brMatch = str.match(/(\d{2})[\/\-](\d{2})[\/\-](\d{4})/);
+    if (brMatch) return `${brMatch[3]}-${brMatch[2]}-${brMatch[1]}`;
+    const isoMatch = str.match(/(\d{4})[\/\-](\d{2})[\/\-](\d{2})/);
+    if (isoMatch) return `${isoMatch[1]}-${isoMatch[2]}-${isoMatch[3]}`;
+    return "";
+  };
+
   const processReceiptImage = async (base64: string, type: string, fileName: string) => {
     setIsScanning(true);
     setScanError(null);
@@ -453,55 +464,82 @@ export function ExpensesManager({ expenses, onAddExpense, onDeleteExpense, sales
         }),
       });
 
-      if (response.ok) {
-        const data = await response.json();
-        const estabelecimento =
-          typeof data.estabelecimento === "string" ? data.estabelecimento.trim() : "";
-        const descricao =
-          typeof data.descricao === "string" ? data.descricao.trim() : "";
-        if (descricao) {
-          setDescription(descricao);
-        } else if (estabelecimento) {
-          setDescription(estabelecimento);
-        }
-        if (data.valor !== undefined && data.valor !== null && Number(data.valor) > 0) {
-          setValue(String(data.valor));
-        }
-        if (data.data) {
-          setDate(data.data);
-        } else {
-          const localDate = new Date();
-          const year = localDate.getFullYear();
-          const month = String(localDate.getMonth() + 1).padStart(2, '0');
-          const day = String(localDate.getDate()).padStart(2, '0');
-          setDate(`${year}-${month}-${day}`);
-        }
-        if (data.categoria && CATEGORIES.includes(data.categoria)) {
-          setCategory(data.categoria);
-        }
-        if (Array.isArray(data.itens)) {
-          const cleanedItems = data.itens
-            .filter((item: unknown): item is string => typeof item === "string" && item.trim().length > 0)
-            .map((item: string) => item.trim());
-          setExtractedItems(cleanedItems);
-        } else {
-          setExtractedItems([]);
-        }
+      const data = await response.json().catch(() => ({}));
 
-        if (data.aviso) {
-          setSuccessMsg(data.aviso);
-        } else {
-          setSuccessMsg("Comprovante lido com sucesso! A foto temporária será removida automaticamente em 5 minutos.");
-        }
-        setTimeout(() => setSuccessMsg(null), 5000);
-      } else {
-        setSuccessMsg("Comprovante anexado temporariamente! Preencha a descrição e valor.");
-        setTimeout(() => setSuccessMsg(null), 5000);
+      if (!response.ok) {
+        const msg = data?.error || "Não foi possível ler o cupom automaticamente. Confira ou preencha os campos manualmente.";
+        setScanError(msg);
+        return;
       }
+
+      const estabelecimento =
+        typeof data.estabelecimento === "string" ? data.estabelecimento.trim() : "";
+      const fallbackDescricao =
+        typeof data.descricao === "string" ? data.descricao.trim() : "";
+
+      if (estabelecimento) {
+        setDescription(estabelecimento);
+      } else if (fallbackDescricao) {
+        setDescription(fallbackDescricao);
+      }
+
+      const rawTotal = data.valor_total ?? data.valor;
+      const parsedTotal = typeof rawTotal === "number"
+        ? rawTotal
+        : Number(String(rawTotal || "0").replace(/R\$/gi, "").replace(/\s+/g, "").replace(",", "."));
+
+      if (Number.isFinite(parsedTotal) && parsedTotal > 0) {
+        setValue(parsedTotal.toFixed(2));
+      }
+
+      const normalizedDate = normalizeScannedDate(data.data);
+      if (normalizedDate) {
+        setDate(normalizedDate);
+      } else {
+        const localDate = new Date();
+        const year = localDate.getFullYear();
+        const month = String(localDate.getMonth() + 1).padStart(2, "0");
+        const day = String(localDate.getDate()).padStart(2, "0");
+        setDate(`${year}-${month}-${day}`);
+      }
+
+      if (data.categoria && CATEGORIES.includes(data.categoria)) {
+        setCategory(data.categoria);
+      }
+
+      if (Array.isArray(data.itens)) {
+        const structuredItems: ExpenseItemDetail[] = data.itens
+          .map((item: any): ExpenseItemDetail | null => {
+            if (typeof item === "string" && item.trim()) {
+              return { produto: item.trim(), qtd: 1, valor: 0 };
+            }
+            if (item && typeof item === "object") {
+              const produto = String(item.produto || item.nome || item.descricao || "").trim();
+              if (!produto) return null;
+              const qtdNum = Number(item.qtd ?? item.quantidade ?? 1);
+              const valorRaw = item.valor ?? item.preco ?? item.total ?? 0;
+              const valorNum = typeof valorRaw === "number"
+                ? valorRaw
+                : Number(String(valorRaw).replace(/R\$/gi, "").replace(",", "."));
+              return {
+                produto,
+                qtd: Number.isFinite(qtdNum) && qtdNum > 0 ? qtdNum : 1,
+                valor: Number.isFinite(valorNum) && valorNum >= 0 ? Number(valorNum.toFixed(2)) : 0,
+              };
+            }
+            return null;
+          })
+          .filter((item: ExpenseItemDetail | null): item is ExpenseItemDetail => Boolean(item));
+        setExtractedItems(structuredItems);
+      } else {
+        setExtractedItems([]);
+      }
+
+      setSuccessMsg("Cupom lido com sucesso! Confira os campos preenchidos (foto temporária expira em 5 min).");
+      setTimeout(() => setSuccessMsg(null), 5000);
     } catch (err: any) {
       console.warn("Aviso na análise com IA:", err);
-      setSuccessMsg("Comprovante anexado temporariamente! Preencha a descrição e valor.");
-      setTimeout(() => setSuccessMsg(null), 5000);
+      setScanError(err?.message || "Erro ao comunicar com o servidor de leitura de comprovantes.");
     } finally {
       setIsScanning(false);
     }
@@ -539,8 +577,9 @@ export function ExpensesManager({ expenses, onAddExpense, onDeleteExpense, sales
     setScanError(null);
   };
   
-  // Custom delete state for iframe safety
+  // Custom delete & detail modal states for iframe safety
   const [expenseToDelete, setExpenseToDelete] = useState<(Expense & { isSaleCost?: boolean }) | null>(null);
+  const [selectedExpenseForDetails, setSelectedExpenseForDetails] = useState<(Expense & { isSaleCost?: boolean; isMonthlyBill?: boolean }) | null>(null);
 
   // Report Period selection State: "day" | "month" | "custom"
   const [reportPeriod, setReportPeriod] = useState<"day" | "month" | "custom">("day");
@@ -579,8 +618,8 @@ export function ExpensesManager({ expenses, onAddExpense, onDeleteExpense, sales
   // Expenses filter options for main list
   const [listPeriod, setListPeriod] = useState<"all" | "today" | "week" | "month">("today");
 
-  // Selection of active dashboard card filter
-  const [activeCardFilter, setActiveCardFilter] = useState<"standalone" | "sales" | "consolidated" | "bills">("consolidated");
+  // Selection of active dashboard card filter (defaults to operational/receipt expenses so sale costs don't pollute the list)
+  const [activeCardFilter, setActiveCardFilter] = useState<"standalone" | "sales" | "consolidated" | "bills">("standalone");
 
   // Show report modal or inline report section
   const [showLargeReport, setShowLargeReport] = useState(false);
@@ -618,6 +657,8 @@ export function ExpensesManager({ expenses, onAddExpense, onDeleteExpense, sales
       date,
       category,
       paymentMethod,
+      tipo_gasto: "operacional_comprovante",
+      itens_detalhados: extractedItems,
     };
 
     const saveOk = await onAddExpense(newExpense);
@@ -678,6 +719,10 @@ export function ExpensesManager({ expenses, onAddExpense, onDeleteExpense, sales
     };
 
     return expenses.filter((exp) => {
+      // Exibe exclusivamente despesas operacionais / comprovantes (exclui custos automáticos de venda)
+      const tipo = exp.tipo_gasto || "operacional_comprovante";
+      if (tipo !== "operacional_comprovante") return false;
+
       const expDate = getLocalDateFromISO(exp.date);
       if (listPeriod === "today") {
         return expDate === todayYMD;
@@ -754,10 +799,11 @@ export function ExpensesManager({ expenses, onAddExpense, onDeleteExpense, sales
         category: b.category || "Outros",
         isSaleCost: false,
         isMonthlyBill: true,
+        itens_detalhados: [] as ExpenseItemDetail[],
       })).sort((a, b) => b.description.localeCompare(a.description));
     }
 
-    // 1. Manually registered (Standalone)
+    // 1. Operational / Receipt expenses (tipo_gasto === 'operacional_comprovante')
     if (activeCardFilter === "standalone") {
       return filteredExpensesByPeriod.map((e) => ({
         id: e.id,
@@ -765,13 +811,31 @@ export function ExpensesManager({ expenses, onAddExpense, onDeleteExpense, sales
         value: e.value,
         date: e.date,
         category: e.category,
+        paymentMethod: e.paymentMethod,
+        tipo_gasto: e.tipo_gasto || "operacional_comprovante",
+        itens_detalhados: Array.isArray(e.itens_detalhados) ? e.itens_detalhados : [],
         isSaleCost: false,
       })).sort((a, b) => b.date.localeCompare(a.date));
     }
 
-    // 2. Direct operational cost from sales
+    // 2. Direct operational cost from sales (includes 'custo_venda' rows if any)
     if (activeCardFilter === "sales") {
-      const list: Array<{ id: string; description: string; value: number; date: string; category: string; isSaleCost: boolean }> = [];
+      const list: Array<Expense & { isSaleCost: boolean }> = [];
+      expenses
+        .filter((e) => e.tipo_gasto === "custo_venda")
+        .forEach((e) => {
+          list.push({
+            id: e.id,
+            description: e.description,
+            value: e.value,
+            date: e.date,
+            category: e.category,
+            paymentMethod: e.paymentMethod,
+            tipo_gasto: e.tipo_gasto,
+            itens_detalhados: Array.isArray(e.itens_detalhados) ? e.itens_detalhados : [],
+            isSaleCost: true,
+          });
+        });
       filteredSalesByPeriod.forEach((sale) => {
         const orderDate = getSaleOrderDate(sale);
         if (getSaleOperationCost(sale) > 0) {
@@ -783,6 +847,8 @@ export function ExpensesManager({ expenses, onAddExpense, onDeleteExpense, sales
                 value: bItem.value,
                 date: orderDate,
                 category: "Materiais/Insumos",
+                tipo_gasto: "custo_venda",
+                itens_detalhados: [],
                 isSaleCost: true,
               });
             });
@@ -793,6 +859,8 @@ export function ExpensesManager({ expenses, onAddExpense, onDeleteExpense, sales
               value: sale.operationCost,
               date: orderDate,
               category: "Materiais/Insumos",
+              tipo_gasto: "custo_venda",
+              itens_detalhados: [],
               isSaleCost: true,
             });
           }
@@ -804,6 +872,8 @@ export function ExpensesManager({ expenses, onAddExpense, onDeleteExpense, sales
             value: sale.motoboyCost,
             date: orderDate,
             category: "Combustível/Viagem",
+            tipo_gasto: "custo_venda",
+            itens_detalhados: [],
             isSaleCost: true,
           });
         }
@@ -811,8 +881,8 @@ export function ExpensesManager({ expenses, onAddExpense, onDeleteExpense, sales
       return list.sort((a, b) => b.date.localeCompare(a.date));
     }
 
-    // 3. Consolidated - Beide combined!
-    const list: Array<{ id: string; description: string; value: number; date: string; category: string; isSaleCost: boolean }> = [];
+    // 3. Consolidated - Both combined
+    const list: Array<Expense & { isSaleCost: boolean }> = [];
     filteredExpensesByPeriod.forEach((e) => {
       list.push({
         id: e.id,
@@ -820,6 +890,9 @@ export function ExpensesManager({ expenses, onAddExpense, onDeleteExpense, sales
         value: e.value,
         date: e.date,
         category: e.category,
+        paymentMethod: e.paymentMethod,
+        tipo_gasto: e.tipo_gasto || "operacional_comprovante",
+        itens_detalhados: Array.isArray(e.itens_detalhados) ? e.itens_detalhados : [],
         isSaleCost: false,
       });
     });
@@ -835,6 +908,8 @@ export function ExpensesManager({ expenses, onAddExpense, onDeleteExpense, sales
               value: bItem.value,
               date: orderDate,
               category: "Materiais/Insumos",
+              tipo_gasto: "custo_venda",
+              itens_detalhados: [],
               isSaleCost: true,
             });
           });
@@ -845,6 +920,8 @@ export function ExpensesManager({ expenses, onAddExpense, onDeleteExpense, sales
             value: sale.operationCost,
             date: orderDate,
             category: "Materiais/Insumos",
+            tipo_gasto: "custo_venda",
+            itens_detalhados: [],
             isSaleCost: true,
           });
         }
@@ -856,13 +933,15 @@ export function ExpensesManager({ expenses, onAddExpense, onDeleteExpense, sales
           value: sale.motoboyCost,
           date: orderDate,
           category: "Combustível/Viagem",
+          tipo_gasto: "custo_venda",
+          itens_detalhados: [],
           isSaleCost: true,
         });
       }
     });
 
     return list.sort((a, b) => b.date.localeCompare(a.date));
-  }, [filteredExpensesByPeriod, filteredSalesByPeriod, activeCardFilter, bills]);
+  }, [filteredExpensesByPeriod, filteredSalesByPeriod, activeCardFilter, bills, expenses]);
 
   // Combine both standalone expenses AND sale-specific costs for absolute accuracy
   const combinedAnalyticsExpenses = useMemo(() => {
@@ -1581,23 +1660,31 @@ export function ExpensesManager({ expenses, onAddExpense, onDeleteExpense, sales
                     Limpar lista
                   </button>
                 </div>
-                <ul className="space-y-1 max-h-36 overflow-y-auto pr-1 text-[11px] text-slate-300">
-                  {extractedItems.map((itemText, idx) => (
+                <ul className="space-y-1 max-h-40 overflow-y-auto pr-1 text-[11px] text-slate-300">
+                  {extractedItems.map((itemObj, idx) => (
                     <li
-                      key={`${idx}-${itemText.slice(0, 16)}`}
-                      className="flex items-start justify-between gap-2 bg-slate-900/70 border border-slate-800/80 rounded-lg px-2.5 py-1.5"
+                      key={`${idx}-${itemObj.produto.slice(0, 16)}`}
+                      className="flex items-center justify-between gap-2 bg-slate-900/70 border border-slate-800/80 rounded-lg px-2.5 py-1.5"
                     >
-                      <span className="leading-snug">{itemText}</span>
-                      <button
-                        type="button"
-                        onClick={() =>
-                          setExtractedItems((prev) => prev.filter((_, itemIndex) => itemIndex !== idx))
-                        }
-                        className="text-slate-500 hover:text-rose-400 transition-colors shrink-0 cursor-pointer"
-                        title="Remover item da discriminação"
-                      >
-                        <X className="h-3 w-3" />
-                      </button>
+                      <div className="min-w-0 flex-1">
+                        <span className="font-mono text-amber-400 font-bold mr-1.5">{itemObj.qtd}x</span>
+                        <span className="leading-snug text-slate-200 font-medium">{itemObj.produto}</span>
+                      </div>
+                      <div className="flex items-center gap-2 shrink-0">
+                        <span className="font-mono text-emerald-400 font-bold">
+                          {formatBRL(itemObj.valor)}
+                        </span>
+                        <button
+                          type="button"
+                          onClick={() =>
+                            setExtractedItems((prev) => prev.filter((_, itemIndex) => itemIndex !== idx))
+                          }
+                          className="text-slate-500 hover:text-rose-400 transition-colors shrink-0 cursor-pointer"
+                          title="Remover item da discriminação"
+                        >
+                          <X className="h-3 w-3" />
+                        </button>
+                      </div>
                     </li>
                   ))}
                 </ul>
@@ -1638,10 +1725,10 @@ export function ExpensesManager({ expenses, onAddExpense, onDeleteExpense, sales
           <div className="flex flex-col md:flex-row md:items-center justify-between gap-2.5 md:gap-3 border-b border-slate-850 pb-3">
             <div className="flex items-center gap-2 flex-wrap">
               <div className="p-1 px-2 rounded bg-slate-800 border border-slate-700 text-slate-300 text-[10px] font-bold font-mono">
-                {activeCardFilter === "standalone" ? "DESPESAS MANUAIS" : activeCardFilter === "sales" ? "CUSTOS DE VENDAS" : activeCardFilter === "bills" ? "GASTOS DA META DIÁRIA" : "CONSOLIDADO"}
+                {activeCardFilter === "standalone" ? "COMPROVANTES / MANUAIS" : activeCardFilter === "sales" ? "CUSTOS DE VENDAS" : activeCardFilter === "bills" ? "GASTOS DA META DIÁRIA" : "CONSOLIDADO"}
               </div>
               <h3 className="text-xs md:text-sm font-bold text-white uppercase tracking-tight">
-                {activeCardFilter === "standalone" ? "Despesas Standalone" : activeCardFilter === "sales" ? "Custos de Vendas" : activeCardFilter === "bills" ? "Gastos Cadastrados de Meta Diária" : "Exibindo Todo o Consolidado"}
+                {activeCardFilter === "standalone" ? "Despesas Operacionais e Comprovantes" : activeCardFilter === "sales" ? "Custos de Vendas" : activeCardFilter === "bills" ? "Gastos Cadastrados de Meta Diária" : "Exibindo Todo o Consolidado"}
               </h3>
             </div>
             
@@ -1684,15 +1771,15 @@ export function ExpensesManager({ expenses, onAddExpense, onDeleteExpense, sales
               <div className="mx-auto h-10 w-10 text-slate-650 flex items-center justify-center rounded-full bg-slate-950 border border-slate-900">
                 <Receipt className="h-5 w-5 text-slate-600" />
               </div>
-              <p className="text-xs">Nenhum gasto ou custo atende a este filtro no período selecionado.</p>
-              <p className="text-[10px] text-slate-650">Escolha outro filtro nos botões acima ou mude o período.</p>
+              <p className="text-xs">Nenhum gasto ou comprovante atende a este filtro no período selecionado.</p>
+              <p className="text-[10px] text-slate-650">Escolha outro filtro nos cards acima ou mude o período.</p>
             </div>
           ) : (
             <div className="overflow-x-auto">
               <table className="w-full text-left text-xs text-slate-300">
                 <thead>
                   <tr className="border-b border-slate-850/60 text-[10px] uppercase font-bold tracking-wider text-slate-500 bg-slate-950/20">
-                    <th className="p-2.5">Descrição</th>
+                    <th className="p-2.5">Descrição / Estabelecimento</th>
                     <th className="p-2.5">Categoria</th>
                     <th className="p-2.5">Data</th>
                     <th className="p-2.5 text-right">Valor</th>
@@ -1702,11 +1789,19 @@ export function ExpensesManager({ expenses, onAddExpense, onDeleteExpense, sales
                 <tbody className="divide-y divide-slate-850/40">
                   {displayedExpenses.map((expense) => {
                     const { cleanDesc, method } = parseExpenseDescription(expense.description);
+                    const detailedItems = Array.isArray((expense as any).itens_detalhados)
+                      ? (expense as any).itens_detalhados
+                      : [];
                     return (
-                      <tr key={expense.id} className="hover:bg-slate-900/40 transition-colors group">
+                      <tr
+                        key={expense.id}
+                        onClick={() => setSelectedExpenseForDetails(expense as any)}
+                        title="Clique para ver detalhes e discriminação dos itens"
+                        className="hover:bg-slate-900/60 transition-colors group cursor-pointer"
+                      >
                         <td className="p-2.5 font-medium text-slate-200">
                           <div className="flex flex-col sm:flex-row sm:items-center gap-1.5 flex-wrap">
-                            <span>{cleanDesc}</span>
+                            <span className="group-hover:text-white transition-colors">{cleanDesc}</span>
                             <span className={`text-[9px] font-bold px-1.5 py-0.5 rounded border uppercase max-w-fit flex items-center gap-1 ${
                               method === "dinheiro" 
                                 ? "bg-emerald-500/10 text-emerald-400 border-emerald-500/15" 
@@ -1716,6 +1811,12 @@ export function ExpensesManager({ expenses, onAddExpense, onDeleteExpense, sales
                             }`}>
                               {method === "dinheiro" ? "💵 Dinheiro" : method === "pix" ? "📱 Pix" : "💳 Cartão"}
                             </span>
+                            {detailedItems.length > 0 && (
+                              <span className="text-[9px] font-mono uppercase bg-amber-500/10 text-amber-400 px-1.5 py-0.5 rounded border border-amber-500/20 font-bold max-w-fit flex items-center gap-1">
+                                <Receipt className="h-2.5 w-2.5" />
+                                {detailedItems.length} {detailedItems.length === 1 ? "item" : "itens"}
+                              </span>
+                            )}
                             {expense.isSaleCost && (
                               <span 
                                 title="Origem: Mapeamento Automático de Pedido / Venda"
@@ -1735,7 +1836,10 @@ export function ExpensesManager({ expenses, onAddExpense, onDeleteExpense, sales
                             {((expense as any).comprovanteUrl || (expense as any).receiptImage) && (
                               <button
                                 type="button"
-                                onClick={() => setActiveViewingReceipt((expense as any).comprovanteUrl || (expense as any).receiptImage)}
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  setActiveViewingReceipt((expense as any).comprovanteUrl || (expense as any).receiptImage);
+                                }}
                                 className="text-[9px] font-mono uppercase bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 px-1.5 py-0.5 rounded border border-rose-500/20 font-bold max-w-fit flex items-center gap-1 cursor-pointer transition-colors"
                                 title="Visualizar comprovante em anexo"
                               >
@@ -1763,18 +1867,34 @@ export function ExpensesManager({ expenses, onAddExpense, onDeleteExpense, sales
                         {(expense as any).isMonthlyBill ? (
                           <span className="text-[10px] text-slate-500 italic block font-sans">Aba Gastos & Meta</span>
                         ) : (
-                          <button
-                            type="button"
-                            onClick={() => setExpenseToDelete(expense as any)}
-                            className={`p-1 rounded transition-all cursor-pointer opacity-80 group-hover:opacity-100 ${
-                              expense.isSaleCost
-                                ? "hover:bg-amber-950/20 text-slate-500 hover:text-amber-500"
-                                : "hover:bg-red-950/20 text-slate-500 hover:text-red-400"
-                            }`}
-                            title={expense.isSaleCost ? "Excluir custo automático vinculado a esta venda" : "Excluir Despesa"}
-                          >
-                            <Trash2 className="h-3.5 w-3.5" />
-                          </button>
+                          <div className="flex items-center justify-end gap-1">
+                            <button
+                              type="button"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setSelectedExpenseForDetails(expense as any);
+                              }}
+                              className="p-1 rounded hover:bg-slate-800 text-slate-400 hover:text-white transition-all cursor-pointer opacity-80 group-hover:opacity-100"
+                              title="Ver detalhes e itens"
+                            >
+                              <Eye className="h-3.5 w-3.5" />
+                            </button>
+                            <button
+                              type="button"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setExpenseToDelete(expense as any);
+                              }}
+                              className={`p-1 rounded transition-all cursor-pointer opacity-80 group-hover:opacity-100 ${
+                                expense.isSaleCost
+                                  ? "hover:bg-amber-950/20 text-slate-500 hover:text-amber-500"
+                                  : "hover:bg-red-950/20 text-slate-500 hover:text-red-400"
+                              }`}
+                              title={expense.isSaleCost ? "Excluir custo automático vinculado a esta venda" : "Excluir Despesa"}
+                            >
+                              <Trash2 className="h-3.5 w-3.5" />
+                            </button>
+                          </div>
                         )}
                       </td>
                     </tr>
@@ -2298,6 +2418,141 @@ export function ExpensesManager({ expenses, onAddExpense, onDeleteExpense, sales
           </div>
         </div>
       )}
+
+      {/* MODAL DE DETALHES DA DESPESA E DISCRIMINAÇÃO DE ITENS */}
+      <AnimatePresence>
+        {selectedExpenseForDetails && (() => {
+          const { cleanDesc, method } = parseExpenseDescription(selectedExpenseForDetails.description);
+          const detailedItems: ExpenseItemDetail[] = Array.isArray(selectedExpenseForDetails.itens_detalhados)
+            ? selectedExpenseForDetails.itens_detalhados
+            : [];
+          return (
+            <div
+              onClick={() => setSelectedExpenseForDetails(null)}
+              className="fixed inset-0 bg-slate-950/85 backdrop-blur-sm flex items-center justify-center z-[105] p-2.5 md:p-4 font-sans"
+            >
+              <motion.div
+                initial={{ opacity: 0, scale: 0.96 }}
+                animate={{ opacity: 1, scale: 1 }}
+                exit={{ opacity: 0, scale: 0.96 }}
+                onClick={(e) => e.stopPropagation()}
+                className="w-full max-w-lg max-h-[92dvh] overflow-y-auto bg-brand-card border border-slate-800 rounded-2xl shadow-2xl flex flex-col"
+              >
+                <div className="p-3.5 md:p-5 border-b border-slate-850 bg-slate-950 flex items-start justify-between gap-3">
+                  <div className="flex items-start gap-2.5 min-w-0">
+                    <div className="p-2 rounded-xl bg-rose-500/10 border border-rose-500/20 text-rose-400 shrink-0">
+                      <Receipt className="h-5 w-5" />
+                    </div>
+                    <div className="min-w-0">
+                      <span className="text-[10px] font-mono uppercase tracking-wider text-slate-400 block">
+                        Detalhes da Despesa / Cupom
+                      </span>
+                      <h3 className="text-sm md:text-base font-bold text-white break-words">
+                        {cleanDesc || "Despesa sem descrição"}
+                      </h3>
+                    </div>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => setSelectedExpenseForDetails(null)}
+                    className="p-1.5 text-slate-400 hover:text-white rounded-lg hover:bg-slate-850 transition-colors shrink-0 cursor-pointer"
+                  >
+                    <X className="h-5 w-5" />
+                  </button>
+                </div>
+
+                <div className="p-3.5 md:p-5 space-y-4">
+                  {/* Resumo: Data, Valor, Categoria, Meio de Pagamento */}
+                  <div className="grid grid-cols-2 gap-2.5 md:gap-3">
+                    <div className="bg-slate-950 border border-slate-850 rounded-xl p-3">
+                      <span className="text-[10px] uppercase font-bold text-slate-500 block">Data do Cupom</span>
+                      <span className="text-xs md:text-sm font-mono font-bold text-slate-200 mt-0.5 block">
+                        {formatDisplayDate(selectedExpenseForDetails.date)}
+                      </span>
+                    </div>
+                    <div className="bg-slate-950 border border-slate-850 rounded-xl p-3 text-right">
+                      <span className="text-[10px] uppercase font-bold text-slate-500 block">Valor Total</span>
+                      <span className="text-sm md:text-base font-mono font-black text-red-400 mt-0.5 block">
+                        {formatBRL(selectedExpenseForDetails.value)}
+                      </span>
+                    </div>
+                    <div className="bg-slate-950 border border-slate-850 rounded-xl p-3">
+                      <span className="text-[10px] uppercase font-bold text-slate-500 block">Categoria</span>
+                      <span
+                        style={{ color: CATEGORY_COLORS[selectedExpenseForDetails.category] || "#cbd5e1" }}
+                        className="text-xs font-bold mt-0.5 block"
+                      >
+                        {selectedExpenseForDetails.category}
+                      </span>
+                    </div>
+                    <div className="bg-slate-950 border border-slate-850 rounded-xl p-3 text-right">
+                      <span className="text-[10px] uppercase font-bold text-slate-500 block">Pagamento</span>
+                      <span className="text-xs font-bold text-slate-200 uppercase mt-0.5 block">
+                        {method === "dinheiro" ? "💵 Dinheiro" : method === "pix" ? "📱 Pix" : "💳 Cartão"}
+                      </span>
+                    </div>
+                  </div>
+
+                  {/* Discriminação dos Produtos */}
+                  <div className="bg-slate-950 border border-slate-850 rounded-xl p-3.5 space-y-2.5">
+                    <div className="flex items-center justify-between border-b border-slate-900 pb-2">
+                      <span className="text-[10px] font-black uppercase tracking-wider text-amber-400">
+                        Discriminação dos Produtos / Itens
+                      </span>
+                      <span className="text-[10px] font-mono text-slate-400">
+                        {detailedItems.length} {detailedItems.length === 1 ? "item" : "itens"}
+                      </span>
+                    </div>
+
+                    {detailedItems.length === 0 ? (
+                      <p className="text-xs text-slate-400 py-3 text-center">
+                        Despesa lançada manualmente sem discriminação detalhada de itens.
+                      </p>
+                    ) : (
+                      <div className="overflow-x-auto">
+                        <table className="w-full text-left text-xs text-slate-300">
+                          <thead>
+                            <tr className="border-b border-slate-850 text-[10px] uppercase font-bold text-slate-500">
+                              <th className="py-1.5 pr-2">Qtd</th>
+                              <th className="py-1.5 px-2">Produto / Item</th>
+                              <th className="py-1.5 pl-2 text-right">Valor</th>
+                            </tr>
+                          </thead>
+                          <tbody className="divide-y divide-slate-900">
+                            {detailedItems.map((it, idx) => (
+                              <tr key={`${idx}-${it.produto}`}>
+                                <td className="py-2 pr-2 font-mono font-bold text-amber-400 whitespace-nowrap">
+                                  {it.qtd}x
+                                </td>
+                                <td className="py-2 px-2 text-slate-200 font-medium">
+                                  {it.produto}
+                                </td>
+                                <td className="py-2 pl-2 text-right font-mono font-bold text-emerald-400 whitespace-nowrap">
+                                  {formatBRL(Number(it.valor) || 0)}
+                                </td>
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                      </div>
+                    )}
+                  </div>
+                </div>
+
+                <div className="p-3.5 md:p-4 border-t border-slate-850 bg-slate-950 flex justify-end">
+                  <button
+                    type="button"
+                    onClick={() => setSelectedExpenseForDetails(null)}
+                    className="w-full md:w-auto px-5 py-2 bg-slate-900 hover:bg-slate-850 border border-slate-800 rounded-xl text-xs font-bold text-slate-200 transition-colors cursor-pointer"
+                  >
+                    Fechar Detalhes
+                  </button>
+                </div>
+              </motion.div>
+            </div>
+          );
+        })()}
+      </AnimatePresence>
 
     </div>
   );

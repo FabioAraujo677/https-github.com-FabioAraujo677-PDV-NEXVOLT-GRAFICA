@@ -832,107 +832,178 @@ function registerApiRoutes(app: express.Express) {
 
       const activeApiKey = process.env.GEMINI_API_KEY;
       if (!activeApiKey) {
-        return res.json({
-          descricao: "",
-          valor: 0,
-          categoria: "Outros",
-          aviso: "Comprovante anexado com sucesso! Preencha a descrição e o valor da despesa."
+        return res.status(500).json({
+          error: "A chave GEMINI_API_KEY não está configurada no servidor. Configure a chave para habilitar a leitura via IA."
         });
       }
+
+      const cleanBase64 = String(imageBase64).includes(",")
+        ? String(imageBase64).split(",")[1]
+        : String(imageBase64);
 
       const ai = getAiInstance();
-      const modelsToTry = ["gemini-4-hydrogen", "gemini-3.1-flash-lite"];
-      let parsedData: any = null;
-      let lastError: any = null;
-
-      for (const modelName of modelsToTry) {
-        try {
-          const response = await ai.models.generateContent({
-            model: modelName,
-            contents: [
-              {
-                inlineData: {
-                  data: imageBase64,
-                  mimeType: mimeType || "image/jpeg",
-                },
-              },
-              {
-                text: "Analise esta imagem que é um comprovante, cupom fiscal, nota fiscal ou recibo de despesa enviada pelo usuário. Faça a análise de visão computacional e extraia os dados realizando obrigatoriamente:\n\n" +
-                      "1. IDENTIFICAÇÃO DO ESTABELECIMENTO (CABEÇALHO): Leia o cabeçalho da imagem para identificar o nome do local/estabelecimento (Ex: Posto Ipiranga, Supermercado Extra, Kalunga, Padaria).\n" +
-                      "2. DESCRIÇÃO DO GASTO: Analise o corpo do comprovante para entender o que foi comprado ou pago (Ex: Combustível, Papel A4, Almoço, Manutenção). A descrição final retornada deve ser a junção do Local + Itens principais (Ex: 'Kalunga - Papel A4 e Canetas').\n" +
-                      "3. VALOR TOTAL: Localize o valor total final pago no comprovante e formate como um número decimal puro (Ex: 25.00).\n" +
-                      "4. CATEGORIA: Classifique automaticamente o gasto com base nos itens lidos em uma destas categorias padrão: 'Materiais/Insumos', 'Alimentação', 'Combustível/Viagem', 'Manutenção' ou 'Outros'.\n" +
-                      "5. DATA: Se houver data no comprovante, extraia no formato YYYY-MM-DD. Se não encontrar, deixe vazio.\n" +
-                      "6. DISCRIMINAÇÃO DOS ITENS: Liste cada item/produto/serviço discriminado no cupom com sua quantidade e valor quando visível (Ex: ['2x Papel A4 500fl - R$ 48,00', '1x Caneta Esferográfica - R$ 4,50']).\n\n" +
-                      "Retorne estritamente um JSON válido.",
-              },
-            ],
-            config: {
-              responseMimeType: "application/json",
-              responseSchema: {
-                type: Type.OBJECT,
-                properties: {
-                  estabelecimento: {
-                    type: Type.STRING,
-                    description: "Name of the store or establishment in the receipt header.",
-                  },
-                  descricao: {
-                    type: Type.STRING,
-                    description: "Establishment name + description of main items (Format: 'Nome do Local - Descrição dos Itens').",
-                  },
-                  valor: {
-                    type: Type.NUMBER,
-                    description: "The grand total value as a pure decimal float/number.",
-                  },
-                  categoria: {
-                    type: Type.STRING,
-                    description: "Classified category. Must be strictly one of: 'Materiais/Insumos', 'Alimentação', 'Combustível/Viagem', 'Manutenção', 'Outros'.",
-                  },
-                  data: {
-                    type: Type.STRING,
-                    description: "Date of expense in YYYY-MM-DD format if detected, or empty string.",
-                  },
-                  itens: {
-                    type: Type.ARRAY,
-                    items: { type: Type.STRING },
-                    description: "Itemized list of products/services extracted from the receipt.",
-                  },
-                },
-                required: ["descricao", "valor", "categoria"],
+      const response = await ai.models.generateContent({
+        model: "gemini-4-hydrogen",
+        contents: {
+          parts: [
+            {
+              inlineData: {
+                data: cleanBase64,
+                mimeType: mimeType || "image/jpeg",
               },
             },
-          });
+            {
+              text:
+                "Você é um leitor especialista de cupons fiscais brasileiros (NFC-e, SAT, Cupom Não-Fiscal, NF-e e recibos comerciais).\n" +
+                "Analise a imagem enviada com máxima atenção ao texto impresso (mesmo em fontes pequenas ou cupom térmico) e extraia EXATAMENTE estes campos:\n\n" +
+                "1. 'estabelecimento': Nome da empresa/loja impresso no cabeçalho do cupom (Ex: 'LARA ACESSORIOS EIRELI ME', 'POSTO IPIRANGA', 'KALUNGA'). NÃO invente texto genérico; leia exatamente o nome do emissor.\n" +
+                "2. 'valor_total': Valor total final pago pelo consumidor no cupom (Ex: procure 'VALOR TOTAL R$', 'TOTAL R$', 'VALOR A PAGAR', 'DINHEIRO', 'CARTÃO'). Retorne número decimal puro (Ex: 6.00 para R$ 6,00).\n" +
+                "3. 'data': Data de emissão do cupom convertida estritamente para o formato YYYY-MM-DD (Ex: se no cupom estiver '10/07/2019', retorne '2019-07-10'). Se não houver data legível, retorne string vazia ''.\n" +
+                "4. 'itens': Lista com cada produto/serviço discriminado no corpo do cupom contendo obrigatoriamente:\n" +
+                "   - 'produto': Nome/descrição limpa do produto (Ex: 'ANEL', 'PAPEL A4 500FL').\n" +
+                "   - 'qtd': Quantidade numérica comprada (Ex: 1, 2). Se não explícito, use 1.\n" +
+                "   - 'valor': Valor numérico do item em Reais (Ex: 6.00 para 1 UN x 6,00).\n" +
+                "5. 'categoria': Classifique em exatamente uma das opções: 'Materiais/Insumos', 'Ferramentas', 'Combustível/Viagem', 'Luz/Água/Aluguel', 'Alimentação', 'Comissões/Mão de Obra', 'Manutenção' ou 'Outros'.\n\n" +
+                "Retorne exclusivamente JSON válido seguindo o schema.",
+            },
+          ],
+        },
+        config: {
+          responseMimeType: "application/json",
+          responseSchema: {
+            type: Type.OBJECT,
+            properties: {
+              estabelecimento: {
+                type: Type.STRING,
+                description: "Exact store or establishment name from the receipt header.",
+              },
+              valor_total: {
+                type: Type.NUMBER,
+                description: "Grand total paid as a decimal number (e.g., 6.00).",
+              },
+              data: {
+                type: Type.STRING,
+                description: "Receipt date strictly in YYYY-MM-DD format (e.g., 2019-07-10) or empty string.",
+              },
+              itens: {
+                type: Type.ARRAY,
+                description: "Structured list of purchased products/items extracted from the receipt.",
+                items: {
+                  type: Type.OBJECT,
+                  properties: {
+                    produto: {
+                      type: Type.STRING,
+                      description: "Clean product or service name.",
+                    },
+                    qtd: {
+                      type: Type.NUMBER,
+                      description: "Quantity purchased (numeric, defaults to 1).",
+                    },
+                    valor: {
+                      type: Type.NUMBER,
+                      description: "Item price/total value in BRL as decimal number.",
+                    },
+                  },
+                  required: ["produto", "qtd", "valor"],
+                },
+              },
+              categoria: {
+                type: Type.STRING,
+                description: "Category classification for the expense.",
+              },
+            },
+            required: ["estabelecimento", "valor_total", "data", "itens"],
+          },
+        },
+      });
 
-          const rawText = (response.text || "").trim();
-          const cleanText = rawText.replace(/^```json\s*/i, "").replace(/^```\s*/i, "").replace(/\s*```$/i, "").trim();
-          parsedData = JSON.parse(cleanText);
-          if (parsedData && typeof parsedData.descricao === "string") {
-            break;
-          }
-        } catch (mErr: any) {
-          console.warn(`[analyze-expense] Modelo ${modelName} falhou, tentando fallback:`, mErr.message);
-          lastError = mErr;
+      const rawText = (response.text || "").trim();
+      if (!rawText) {
+        return res.status(502).json({ error: "A IA não retornou dados legíveis para este comprovante." });
+      }
+
+      const cleanText = rawText
+        .replace(/^```json\s*/i, "")
+        .replace(/^```\s*/i, "")
+        .replace(/\s*```$/i, "")
+        .trim();
+
+      const parsed = JSON.parse(cleanText);
+
+      const parseNum = (val: unknown, fallback = 0): number => {
+        if (typeof val === "number" && Number.isFinite(val)) return val;
+        if (typeof val === "string") {
+          const cleaned = val
+            .replace(/R\$/gi, "")
+            .replace(/\s+/g, "")
+            .replace(/\.(?=\d{3}(?:\D|$))/g, "")
+            .replace(",", ".");
+          const n = Number(cleaned);
+          return Number.isFinite(n) ? n : fallback;
         }
+        return fallback;
+      };
+
+      const normalizeDate = (rawDate: unknown): string => {
+        const s = typeof rawDate === "string" ? rawDate.trim() : "";
+        if (!s) return "";
+        if (/^\d{4}-\d{2}-\d{2}$/.test(s)) return s;
+        const brMatch = s.match(/(\d{2})[\/\-](\d{2})[\/\-](\d{4})/);
+        if (brMatch) {
+          return `${brMatch[3]}-${brMatch[2]}-${brMatch[1]}`;
+        }
+        const isoMatch = s.match(/(\d{4})[\/\-](\d{2})[\/\-](\d{2})/);
+        if (isoMatch) {
+          return `${isoMatch[1]}-${isoMatch[2]}-${isoMatch[3]}`;
+        }
+        return "";
+      };
+
+      const rawItens = Array.isArray(parsed.itens) ? parsed.itens : [];
+      const normalizedItens = rawItens
+        .map((item: any) => {
+          if (typeof item === "string") {
+            return { produto: item.trim(), qtd: 1, valor: 0 };
+          }
+          if (item && typeof item === "object") {
+            const produto = String(item.produto || item.nome || item.descricao || "").trim();
+            if (!produto) return null;
+            const qtd = parseNum(item.qtd ?? item.quantidade, 1);
+            const valor = parseNum(item.valor ?? item.preco ?? item.total, 0);
+            return {
+              produto,
+              qtd: qtd > 0 ? qtd : 1,
+              valor: valor >= 0 ? valor : 0,
+            };
+          }
+          return null;
+        })
+        .filter((x: any): x is { produto: string; qtd: number; valor: number } => Boolean(x && x.produto));
+
+      const estabelecimento = String(
+        parsed.estabelecimento || parsed.descricao || ""
+      ).trim();
+
+      let valorTotal = parseNum(parsed.valor_total ?? parsed.valor ?? parsed.total, 0);
+      if (valorTotal <= 0 && normalizedItens.length > 0) {
+        valorTotal = Number(
+          normalizedItens.reduce((acc, it) => acc + (Number(it.valor) || 0), 0).toFixed(2)
+        );
       }
 
-      if (!parsedData) {
-        console.warn("[analyze-expense] Modelos falharam, gerando preenchimento com anexo.");
-        return res.json({
-          descricao: "",
-          valor: 0,
-          categoria: "Outros",
-          aviso: "Comprovante anexado! Preencha ou confirme os dados da despesa."
-        });
-      }
+      const normalizedResponse = {
+        estabelecimento,
+        valor_total: Number(valorTotal.toFixed(2)),
+        data: normalizeDate(parsed.data),
+        itens: normalizedItens,
+        categoria: typeof parsed.categoria === "string" ? parsed.categoria.trim() : "Outros",
+      };
 
-      return res.json(parsedData);
+      return res.json(normalizedResponse);
     } catch (error: any) {
       console.error("Gemini expense analysis error:", error);
-      return res.json({
-        descricao: "",
-        valor: 0,
-        categoria: "Outros",
-        aviso: "Comprovante anexado! Preencha a descrição e valor abaixo."
+      return res.status(500).json({
+        error: error?.message || "Erro interno ao analisar o comprovante com Gemini Vision.",
       });
     }
   });

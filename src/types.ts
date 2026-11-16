@@ -227,6 +227,12 @@ export interface DashboardStats {
   totalNetProfit: number;
 }
 
+export interface ExpenseItemDetail {
+  produto: string;
+  qtd: number;
+  valor: number;
+}
+
 export interface Expense {
   id: string;
   description: string;
@@ -236,6 +242,8 @@ export interface Expense {
   paymentMethod?: 'dinheiro' | 'cartão' | 'pix';
   comprovanteUrl?: string;
   receiptImage?: string;
+  tipo_gasto?: 'operacional_comprovante' | 'custo_venda' | string;
+  itens_detalhados?: ExpenseItemDetail[];
 }
 
 export interface User {

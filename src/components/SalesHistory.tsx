@@ -1262,12 +1262,12 @@ export function SalesHistory({
   }, [localSales, localBudgets, currentView, activeSelectedDate, activeStartDate, activeEndDate, searchTerm, activeStatusFilter]);
 
   return (
-    <div className="bg-brand-card border border-slate-800 rounded-2xl p-6 space-y-6">
+    <div className="bg-brand-card border border-slate-800 rounded-2xl p-3 md:p-6 space-y-3.5 md:space-y-6 max-w-full overflow-x-hidden">
       {/* ROW 1: Header + Vendas/Orçamentos Section switcher */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-slate-850 pb-5">
-        <div>
-          <h2 className="text-xl font-black text-white flex items-center gap-2">
-            <span className={`h-5 w-1.5 rounded ${currentView === "sales" ? "bg-brand-magenta" : "bg-brand-cyan"}`}></span>
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-3 md:gap-4 border-b border-slate-850 pb-4 md:pb-5">
+        <div className="min-w-0">
+          <h2 className="text-lg md:text-xl font-black text-white flex items-center gap-2">
+            <span className={`h-5 w-1.5 rounded shrink-0 ${currentView === "sales" ? "bg-brand-magenta" : "bg-brand-cyan"}`}></span>
             {currentView === "sales" ? "Histórico e Listagem de Vendas" : "Painel & Relatório de Orçamentos"}
           </h2>
           <p className="text-xs text-slate-400 mt-1">
@@ -1279,11 +1279,11 @@ export function SalesHistory({
         </div>
 
         {/* Tab Switcher between Vendas and Orçamentos */}
-        <div className="flex bg-slate-950 p-1 rounded-xl border border-slate-850 shrink-0 select-none self-start md:self-auto">
+        <div className="flex bg-slate-950 p-1 rounded-xl border border-slate-850 shrink-0 select-none self-start md:self-auto w-full md:w-auto">
           <button
             type="button"
             onClick={() => setCurrentView("sales")}
-            className={`px-4 py-2 text-[10px] sm:text-xs font-bold uppercase rounded-lg transition-all cursor-pointer flex items-center gap-1.5 ${
+            className={`flex-1 md:flex-none justify-center px-4 py-2 text-[11px] md:text-xs font-bold uppercase rounded-lg transition-all cursor-pointer flex items-center gap-1.5 ${
               currentView === "sales"
                 ? "bg-gradient-to-r from-brand-magenta to-pink-650 text-white shadow-md shadow-brand-magenta/30"
                 : "text-slate-400 hover:text-slate-200"
@@ -1297,7 +1297,7 @@ export function SalesHistory({
           <button
             type="button"
             onClick={() => setCurrentView("budgets")}
-            className={`px-4 py-2 text-[10px] sm:text-xs font-bold uppercase rounded-lg transition-all cursor-pointer flex items-center gap-1.5 ${
+            className={`flex-1 md:flex-none justify-center px-4 py-2 text-[11px] md:text-xs font-bold uppercase rounded-lg transition-all cursor-pointer flex items-center gap-1.5 ${
               currentView === "budgets"
                 ? "bg-gradient-to-r from-brand-cyan to-cyan-600 text-slate-950 shadow-md font-bold"
                 : "text-slate-400 hover:text-slate-200"
@@ -1314,7 +1314,7 @@ export function SalesHistory({
       {/* KPI Cards when viewing Budgets */}
       {currentView === "budgets" && (
         <div className="space-y-3">
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-2.5 md:gap-3">
             <div className="bg-slate-950/70 border border-slate-800 p-3.5 rounded-xl flex items-center justify-between">
               <div>
                 <p className="text-[10px] uppercase font-bold text-slate-400">Qtd. Orçamentos</p>
@@ -1375,9 +1375,9 @@ export function SalesHistory({
       )}
 
       {/* ROW 2: CONTROL BAR (ALIGN EVERYTHING PERFECTLY) */}
-      <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 bg-slate-900/20 p-4 rounded-xl border border-slate-850/50">
+      <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-3 md:gap-4 bg-slate-900/20 p-3 md:p-4 rounded-xl border border-slate-850/50">
         {/* Left Span: Filters Group */}
-        <div className="flex flex-col md:flex-row md:items-center gap-3 w-full lg:w-auto flex-wrap">
+        <div className="flex flex-col md:flex-row md:items-center gap-2.5 md:gap-3 w-full lg:w-auto flex-wrap min-w-0">
           {/* Status Filters */}
           {currentView === "sales" && (
             <div className="flex bg-slate-950 p-1 rounded-xl border border-slate-850 shrink-0 w-full md:w-auto overflow-x-auto">
@@ -1386,7 +1386,7 @@ export function SalesHistory({
                   key={status}
                   type="button"
                   onClick={() => activeSetStatusFilter(status)}
-                  className={`flex-1 md:flex-none px-3 py-1.5 text-[10px] sm:text-xs font-bold uppercase rounded-lg transition-all cursor-pointer whitespace-nowrap ${
+                  className={`flex-1 md:flex-none px-3 py-1.5 text-[10px] md:text-xs font-bold uppercase rounded-lg transition-all cursor-pointer whitespace-nowrap ${
                     activeStatusFilter === status
                       ? "bg-brand-magenta/15 text-brand-magenta border border-brand-magenta/35 font-extrabold"
                       : "text-slate-400 hover:text-slate-200"
@@ -1411,7 +1411,7 @@ export function SalesHistory({
                 key={key}
                 type="button"
                 onClick={() => activeSetDateFilter(key)}
-                className={`flex-1 md:flex-none px-2.5 py-1.5 text-[10px] sm:text-xs font-bold uppercase rounded-lg transition-all flex items-center justify-center gap-1.5 shrink-0 whitespace-nowrap ${
+                className={`flex-1 md:flex-none px-2.5 py-1.5 text-[10px] md:text-xs font-bold uppercase rounded-lg transition-all flex items-center justify-center gap-1.5 shrink-0 whitespace-nowrap ${
                   activeDateFilter === key
                     ? currentView === "sales" 
                       ? "bg-brand-magenta/15 text-brand-magenta border border-brand-magenta/30 shadow-sm"
@@ -1453,9 +1453,9 @@ export function SalesHistory({
         </div>
 
         {/* Right Span: Search & Import/Export buttons */}
-        <div className="flex flex-col sm:flex-row items-center gap-3 w-full lg:w-auto justify-end">
+        <div className="flex flex-col md:flex-row items-center gap-3 w-full lg:w-auto justify-end min-w-0">
           {/* Search Bar */}
-          <div className="relative w-full sm:flex-1 lg:w-60 min-w-[200px]">
+          <div className="relative w-full md:flex-1 lg:w-60 min-w-0 md:min-w-[200px]">
             <Search className="absolute left-3 top-2.5 h-4 w-4 text-slate-500 pointer-events-none" />
             <input
               type="text"
@@ -1544,16 +1544,16 @@ export function SalesHistory({
             <table className="w-full text-left border-collapse text-xs">
               <thead>
                 <tr className="bg-slate-950 text-slate-400 font-mono border-b border-slate-850 uppercase text-[10px] tracking-wider">
-                  <th className="p-4 font-bold">Cliente / Contato</th>
-                  <th className="p-4 font-bold text-center">Atendente</th>
-                  <th className="p-4 font-bold">Data</th>
-                  <th className="p-4 font-bold text-center">Itens</th>
-                  <th className="p-4 font-bold text-right">Gasto Operacional</th>
-                  <th className="p-4 font-bold text-right">Valor Venda</th>
-                  <th className="p-4 font-bold text-right">Sinal / Pago</th>
-                  <th className="p-4 font-bold text-right text-brand-cyan">Lucro (Real / Previsto)</th>
-                  <th className="p-4 font-bold text-center">Comprovante</th>
-                  <th className="p-4 font-bold text-right">Ações</th>
+                  <th className="p-2.5 md:p-4 font-bold">Cliente / Contato</th>
+                  <th className="p-2.5 md:p-4 font-bold text-center">Atendente</th>
+                  <th className="p-2.5 md:p-4 font-bold">Data</th>
+                  <th className="p-2.5 md:p-4 font-bold text-center">Itens</th>
+                  <th className="p-2.5 md:p-4 font-bold text-right">Gasto Operacional</th>
+                  <th className="p-2.5 md:p-4 font-bold text-right">Valor Venda</th>
+                  <th className="p-2.5 md:p-4 font-bold text-right">Sinal / Pago</th>
+                  <th className="p-2.5 md:p-4 font-bold text-right text-brand-cyan">Lucro (Real / Previsto)</th>
+                  <th className="p-2.5 md:p-4 font-bold text-center">Comprovante</th>
+                  <th className="p-2.5 md:p-4 font-bold text-right">Ações</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-850/60 bg-slate-950/20 font-medium">
@@ -1834,14 +1834,14 @@ export function SalesHistory({
             <table className="w-full text-left border-collapse text-xs">
               <thead>
                 <tr className="bg-slate-950 text-slate-400 font-mono border-b border-slate-850 uppercase text-[10px] tracking-wider">
-                  <th className="p-4 font-bold">Cliente / Contato</th>
-                  <th className="p-4 font-bold text-center">Atendente</th>
-                  <th className="p-4 font-bold">Data</th>
-                  <th className="p-4 font-bold text-center">Itens</th>
-                  <th className="p-4 font-bold text-right">Valor Orçamento</th>
-                  <th className="p-4 font-bold text-right">Sinal / Entrada</th>
-                  <th className="p-4 font-bold text-center">Comprovante</th>
-                  <th className="p-4 font-bold text-right">Ações</th>
+                  <th className="p-2.5 md:p-4 font-bold">Cliente / Contato</th>
+                  <th className="p-2.5 md:p-4 font-bold text-center">Atendente</th>
+                  <th className="p-2.5 md:p-4 font-bold">Data</th>
+                  <th className="p-2.5 md:p-4 font-bold text-center">Itens</th>
+                  <th className="p-2.5 md:p-4 font-bold text-right">Valor Orçamento</th>
+                  <th className="p-2.5 md:p-4 font-bold text-right">Sinal / Entrada</th>
+                  <th className="p-2.5 md:p-4 font-bold text-center">Comprovante</th>
+                  <th className="p-2.5 md:p-4 font-bold text-right">Ações</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-850/60 bg-slate-950/20 font-medium">
@@ -2004,9 +2004,9 @@ export function SalesHistory({
       {selectedImage && (() => {
         const parsedImgs = parseClientImages(selectedImage);
         return (
-          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-sm animate-fade-in text-slate-100">
-            <div className="relative max-w-3xl w-full bg-slate-900 border border-slate-800 rounded-2xl overflow-hidden shadow-2xl">
-              <div className="p-4 border-b border-slate-800 flex justify-between items-center bg-slate-950">
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-2.5 md:p-4 bg-slate-950/80 backdrop-blur-sm animate-fade-in text-slate-100">
+            <div className="relative max-w-3xl w-full bg-slate-900 border border-slate-800 rounded-2xl overflow-hidden shadow-2xl max-h-[92dvh] flex flex-col">
+              <div className="p-3.5 md:p-4 border-b border-slate-800 flex justify-between items-center bg-slate-950 shrink-0">
                 <h3 className="text-sm font-bold text-white flex items-center gap-2">
                   <Paperclip className="h-4 w-4 text-brand-cyan" />
                   Visualizar Imagens do Serviço ({parsedImgs.length})
@@ -2018,15 +2018,15 @@ export function SalesHistory({
                   <X className="h-5 w-5" />
                 </button>
               </div>
-              <div className="p-6 bg-slate-950 max-h-[75vh] overflow-y-auto space-y-4">
-                <div className={`grid gap-4 ${parsedImgs.length === 1 ? "grid-cols-1" : "grid-cols-1 md:grid-cols-2"}`}>
+              <div className="p-3.5 md:p-6 bg-slate-950 max-h-[75dvh] md:max-h-[75vh] overflow-y-auto space-y-4">
+                <div className={`grid gap-3 md:gap-4 ${parsedImgs.length === 1 ? "grid-cols-1" : "grid-cols-1 md:grid-cols-2"}`}>
                   {parsedImgs.map((imgUrl, idx) => (
-                    <div key={idx} className="relative group border border-slate-800 rounded-xl overflow-hidden bg-slate-900 flex items-center justify-center p-2 min-h-[250px]">
+                    <div key={idx} className="relative group border border-slate-800 rounded-xl overflow-hidden bg-slate-900 flex items-center justify-center p-2 min-h-[200px] md:min-h-[250px]">
                       <img
                         src={imgUrl}
                         alt={`Anexo ${idx + 1}`}
                         referrerPolicy="no-referrer"
-                        className="max-h-[50vh] object-contain rounded"
+                        className="max-h-[50dvh] md:max-h-[50vh] object-contain rounded"
                       />
                       <div className="absolute bottom-2 left-2 bg-slate-950/70 backdrop-blur-sm py-1 px-2.5 rounded-lg text-[10px] font-mono text-slate-300">
                         Imagem #{idx + 1}
@@ -2042,10 +2042,10 @@ export function SalesHistory({
 
       {/* Quick Pay & Settle Outstanding Balance Modal (DAR BAIXA) */}
       {quickPaySale && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/85 backdrop-blur-sm animate-fade-in">
-          <div className="relative max-w-md w-full bg-slate-900 border border-slate-800 rounded-2xl overflow-hidden shadow-2xl">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-2.5 md:p-4 bg-slate-950/85 backdrop-blur-sm animate-fade-in">
+          <div className="relative max-w-md w-full bg-slate-900 border border-slate-800 rounded-2xl overflow-hidden shadow-2xl max-h-[92dvh] overflow-y-auto">
             {/* Modal Header */}
-            <div className="p-4 border-b border-slate-800 flex justify-between items-center bg-slate-950">
+            <div className="p-3.5 md:p-4 border-b border-slate-800 flex justify-between items-center bg-slate-950">
               <h3 className="text-sm font-bold text-white flex items-center gap-2">
                 <Coins className="h-5 w-5 text-emerald-450 animate-bounce" />
                 <span>Registrar Retirada & Dar Baixa</span>
@@ -2060,7 +2060,7 @@ export function SalesHistory({
 
             {paySuccessMsg ? (
               /* Success message block status */
-              <div className="p-6 space-y-6 text-center">
+              <div className="p-4 md:p-6 space-y-5 md:space-y-6 text-center">
                 <div className="mx-auto h-12 w-12 rounded-full bg-emerald-500/10 border border-emerald-500/30 flex items-center justify-center text-emerald-400">
                   <Check className="h-6 w-6" />
                 </div>
@@ -2069,7 +2069,7 @@ export function SalesHistory({
                   <p className="text-xs text-slate-400 leading-relaxed">{paySuccessMsg}</p>
                 </div>
 
-                <div className="flex flex-col sm:flex-row gap-2.5 pt-2 justify-center">
+                <div className="flex flex-col md:flex-row gap-2.5 pt-2 justify-center">
                   <button
                     onClick={() => {
                       if (quickPaySale) {
@@ -2236,12 +2236,12 @@ export function SalesHistory({
       {/* Visual confirmation dialog for deleting a standard sale */}
       <AnimatePresence>
         {saleToDelete && (
-          <div className="fixed inset-0 bg-slate-950/80 backdrop-blur-sm flex items-center justify-center z-[110] p-4 font-sans">
+          <div className="fixed inset-0 bg-slate-950/80 backdrop-blur-sm flex items-center justify-center z-[110] p-2.5 md:p-4 font-sans">
             <motion.div
               initial={{ opacity: 0, scale: 0.95 }}
               animate={{ opacity: 1, scale: 1 }}
               exit={{ opacity: 0, scale: 0.95 }}
-              className="w-full max-w-md bg-brand-card border border-slate-800 p-6 rounded-2xl space-y-6 shadow-2xl text-left"
+              className="w-full max-w-md bg-brand-card border border-slate-800 p-4 md:p-6 rounded-2xl space-y-4 md:space-y-6 shadow-2xl text-left max-h-[90dvh] overflow-y-auto"
             >
               <div className="flex items-start gap-3.5">
                 <div className="p-3 bg-red-950/60 text-red-400 rounded-xl border border-red-900/30">
@@ -2298,12 +2298,12 @@ export function SalesHistory({
       {/* Visual confirmation dialog for deleting a budget */}
       <AnimatePresence>
         {budgetToDelete && (
-          <div className="fixed inset-0 bg-slate-950/80 backdrop-blur-sm flex items-center justify-center z-[110] p-4 font-sans">
+          <div className="fixed inset-0 bg-slate-950/80 backdrop-blur-sm flex items-center justify-center z-[110] p-2.5 md:p-4 font-sans">
             <motion.div
               initial={{ opacity: 0, scale: 0.95 }}
               animate={{ opacity: 1, scale: 1 }}
               exit={{ opacity: 0, scale: 0.95 }}
-              className="w-full max-w-md bg-brand-card border border-slate-800 p-6 rounded-2xl space-y-6 shadow-2xl text-left"
+              className="w-full max-w-md bg-brand-card border border-slate-800 p-4 md:p-6 rounded-2xl space-y-4 md:space-y-6 shadow-2xl text-left max-h-[90dvh] overflow-y-auto"
             >
               <div className="flex items-start gap-3.5">
                 <div className="p-3 bg-red-950/60 text-red-400 rounded-xl border border-red-900/30">
@@ -2356,12 +2356,12 @@ export function SalesHistory({
       {/* Visual confirmation dialog for executing/promoting a budget to a sale */}
       <AnimatePresence>
         {budgetToExecute && (
-          <div className="fixed inset-0 bg-slate-950/80 backdrop-blur-sm flex items-center justify-center z-[110] p-4 font-sans">
+          <div className="fixed inset-0 bg-slate-950/80 backdrop-blur-sm flex items-center justify-center z-[110] p-2.5 md:p-4 font-sans">
             <motion.div
               initial={{ opacity: 0, scale: 0.95 }}
               animate={{ opacity: 1, scale: 1 }}
               exit={{ opacity: 0, scale: 0.95 }}
-              className="w-full max-w-lg bg-brand-card border border-slate-800 p-6 rounded-2xl space-y-5 shadow-2xl text-left"
+              className="w-full max-w-lg bg-brand-card border border-slate-800 p-4 md:p-6 rounded-2xl space-y-4 md:space-y-5 shadow-2xl text-left max-h-[92dvh] overflow-y-auto"
             >
               <div className="flex items-start gap-3.5 border-b border-slate-850 pb-4">
                 <div className="p-3 bg-emerald-950/80 text-emerald-400 rounded-xl border border-emerald-800/40">
@@ -2412,7 +2412,7 @@ export function SalesHistory({
                 )}
 
                 {/* Financial overview */}
-                <div className="grid grid-cols-3 gap-2 pt-2 border-t border-slate-900 font-mono text-xs">
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-2 pt-2 border-t border-slate-900 font-mono text-xs">
                   <div>
                     <span className="text-slate-500 text-[10px] block font-bold">VALOR TOTAL:</span>
                     <span className="text-brand-cyan font-bold text-sm">{formatBRL(budgetToExecute.totalValue)}</span>
@@ -2432,7 +2432,7 @@ export function SalesHistory({
                   <label className="text-slate-400 text-[11px] font-bold block mb-1.5">
                     Data da Venda Oficial:
                   </label>
-                  <div className="grid grid-cols-2 gap-2">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
                     <button
                       type="button"
                       onClick={() => setExecuteSaleDateOption("today")}
@@ -2466,7 +2466,7 @@ export function SalesHistory({
                 </div>
               </div>
 
-              <div className="flex items-center gap-3">
+              <div className="flex flex-col md:flex-row items-stretch md:items-center gap-2.5 md:gap-3">
                 <button
                   type="button"
                   onClick={() => setBudgetToExecute(null)}
@@ -2500,12 +2500,12 @@ export function SalesHistory({
       {/* Custom dialog alert warning for overpaid situations in Quick Pay */}
       <AnimatePresence>
         {overpaidWarningInfo && (
-          <div className="fixed inset-0 bg-slate-950/80 backdrop-blur-sm flex items-center justify-center z-[120] p-4 font-sans">
+          <div className="fixed inset-0 bg-slate-950/80 backdrop-blur-sm flex items-center justify-center z-[120] p-2.5 md:p-4 font-sans">
             <motion.div
               initial={{ opacity: 0, scale: 0.95 }}
               animate={{ opacity: 1, scale: 1 }}
               exit={{ opacity: 0, scale: 0.95 }}
-              className="w-full max-w-md bg-brand-card border border-slate-800 p-6 rounded-2xl space-y-6 shadow-2xl text-left"
+              className="w-full max-w-md bg-brand-card border border-slate-800 p-4 md:p-6 rounded-2xl space-y-4 md:space-y-6 shadow-2xl text-left max-h-[90dvh] overflow-y-auto"
             >
               <div className="flex items-start gap-3.5">
                 <div className="p-3 bg-amber-950/60 text-amber-400 rounded-xl border border-amber-900/30">

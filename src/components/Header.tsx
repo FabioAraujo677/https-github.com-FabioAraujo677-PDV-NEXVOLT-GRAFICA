@@ -52,40 +52,40 @@ function FuturisticHeaderClock() {
   const formattedMonth = now.toLocaleDateString("pt-BR", { month: "long" });
 
   return (
-    <div className="flex flex-wrap items-center gap-2.5 select-none">
+    <div className="flex flex-wrap items-center gap-1.5 md:gap-2.5 select-none">
       {/* Relógio Digital Maior e Futurista */}
       <div className="relative group">
         <div className="absolute -inset-0.5 bg-gradient-to-r from-cyan-500 via-emerald-400 to-brand-magenta rounded-xl blur-[3px] opacity-45 group-hover:opacity-75 transition duration-500" />
         
-        <div className="relative flex items-center gap-2 px-3 py-1.5 bg-slate-950/90 border border-cyan-500/40 rounded-xl shadow-[0_0_15px_rgba(6,182,212,0.2)] backdrop-blur-md">
+        <div className="relative flex items-center gap-1.5 md:gap-2 px-2 py-1 md:px-3 md:py-1.5 bg-slate-950/90 border border-cyan-500/40 rounded-xl shadow-[0_0_15px_rgba(6,182,212,0.2)] backdrop-blur-md">
           <div className="flex items-center font-mono font-black tracking-tight">
             {/* Horas */}
-            <span className="text-lg sm:text-xl md:text-2xl text-cyan-300 drop-shadow-[0_0_10px_rgba(6,182,212,0.85)]">
+            <span className="text-sm md:text-2xl text-cyan-300 drop-shadow-[0_0_10px_rgba(6,182,212,0.85)]">
               {hours}
             </span>
 
             {/* Dois Pontos Neon */}
-            <span className="text-base sm:text-lg md:text-xl text-brand-magenta animate-pulse px-0.5 pb-0.5 drop-shadow-[0_0_8px_rgba(236,72,153,0.9)]">
+            <span className="text-xs md:text-xl text-brand-magenta animate-pulse px-0.5 pb-0.5 drop-shadow-[0_0_8px_rgba(236,72,153,0.9)]">
               :
             </span>
 
             {/* Minutos */}
-            <span className="text-lg sm:text-xl md:text-2xl text-cyan-300 drop-shadow-[0_0_10px_rgba(6,182,212,0.85)]">
+            <span className="text-sm md:text-2xl text-cyan-300 drop-shadow-[0_0_10px_rgba(6,182,212,0.85)]">
               {minutes}
             </span>
 
             {/* Dois Pontos Neon */}
-            <span className="text-sm sm:text-base md:text-lg text-brand-magenta animate-pulse px-0.5 pb-0.5 drop-shadow-[0_0_8px_rgba(236,72,153,0.9)]">
+            <span className="text-xs md:text-lg text-brand-magenta animate-pulse px-0.5 pb-0.5 drop-shadow-[0_0_8px_rgba(236,72,153,0.9)]">
               :
             </span>
 
             {/* Segundos */}
-            <span className="text-base sm:text-lg md:text-xl text-emerald-400 drop-shadow-[0_0_10px_rgba(52,211,153,0.85)] font-bold">
+            <span className="text-xs md:text-xl text-emerald-400 drop-shadow-[0_0_10px_rgba(52,211,153,0.85)] font-bold">
               {seconds}
             </span>
           </div>
 
-          <div className="h-5 w-px bg-slate-800 mx-0.5 hidden sm:block" />
+          <div className="h-5 w-px bg-slate-800 mx-0.5 hidden md:block" />
 
           {/* Indicador Pulsante Futurista */}
           <span className="relative flex h-2 w-2">
@@ -96,8 +96,8 @@ function FuturisticHeaderClock() {
       </div>
 
       {/* Data na Sequência */}
-      <div className="flex items-center gap-2 px-3 py-1.5 bg-slate-950/85 border border-slate-800/80 hover:border-brand-magenta/40 rounded-xl text-slate-200 text-xs shadow-inner transition-colors">
-        <Calendar className="h-4 w-4 text-brand-magenta shrink-0" />
+      <div className="flex items-center gap-1.5 md:gap-2 px-2 py-1 md:px-3 md:py-1.5 bg-slate-950/85 border border-slate-800/80 hover:border-brand-magenta/40 rounded-xl text-slate-200 text-[11px] md:text-xs shadow-inner transition-colors">
+        <Calendar className="h-3.5 w-3.5 md:h-4 md:w-4 text-brand-magenta shrink-0" />
         <span className="px-1.5 py-0.5 rounded bg-brand-magenta/15 text-brand-magenta font-mono font-black text-[9px] uppercase border border-brand-magenta/30">
           {formattedWeekday}
         </span>
@@ -339,20 +339,20 @@ export function Header({
   };
 
   return (
-    <header className="border-b border-slate-800 bg-brand-dark-navy py-3 px-4 sm:px-6 sticky top-0 z-50 backdrop-blur-md bg-opacity-95 shadow-xl font-sans select-none">
-      <div className="max-w-[1700px] 2xl:max-w-[1920px] mx-auto flex flex-col gap-3">
+    <header className="border-b border-slate-800 bg-brand-dark-navy py-2 px-2.5 md:py-3 md:px-6 relative md:sticky top-0 z-50 backdrop-blur-md bg-opacity-95 shadow-xl font-sans select-none max-w-full overflow-x-hidden">
+      <div className="max-w-[1700px] 2xl:max-w-[1920px] mx-auto flex flex-col gap-2 md:gap-3">
         
         {/* ROW 1: Branding Header with Company Name, Futuristic Digital Clock and Date */}
-        <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-3 w-full">
-          <div className="flex flex-wrap items-center gap-3 sm:gap-4 w-full justify-between lg:justify-start">
-            <div className="flex items-center gap-4">
+        <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-2 md:gap-3 w-full">
+          <div className="flex flex-wrap items-center gap-2.5 md:gap-4 w-full justify-between lg:justify-start">
+            <div className="flex items-center gap-2.5 md:gap-4 min-w-0">
               <div className="relative flex items-center justify-center shrink-0 group">
                 {/* Dynamic Neon Glow Ring behind Logo */}
                 <div className="absolute -inset-2 bg-gradient-to-r from-brand-magenta via-brand-cyan to-purple-600 rounded-3xl opacity-30 blur-xl group-hover:opacity-60 transition duration-1000 animate-pulse"></div>
                 
                 {companyLogo ? (
                   <div
-                    className="relative flex h-20 w-20 sm:h-24 sm:w-24 items-center justify-center bg-transparent rounded-2xl border border-white/10 p-1 overflow-hidden"
+                    className="relative flex h-12 w-12 md:h-24 md:w-24 items-center justify-center bg-transparent rounded-xl md:rounded-2xl border border-white/10 p-1 overflow-hidden"
                     style={{ background: "transparent" }}
                   >
                     <img 
@@ -366,18 +366,18 @@ export function Header({
                 ) : (
                   <div className="relative">
                     <div className="absolute -inset-1 rounded-2xl bg-gradient-to-r from-brand-magenta to-brand-cyan opacity-75 blur-md animate-pulse"></div>
-                    <div className="relative flex h-16 w-16 items-center justify-center rounded-2xl bg-slate-950 border border-slate-700/80 overflow-hidden shadow-2xl">
-                      <NexvoltLogo iconSize={54} />
+                    <div className="relative flex h-11 w-11 md:h-16 md:w-16 items-center justify-center rounded-xl md:rounded-2xl bg-slate-950 border border-slate-700/80 overflow-hidden shadow-2xl">
+                      <NexvoltLogo iconSize={44} />
                     </div>
                   </div>
                 )}
               </div>
-              <div className="flex flex-col justify-center">
-                <h1 className="text-2xl sm:text-3xl font-black tracking-tighter text-white flex flex-wrap items-center gap-3 leading-none drop-shadow-sm">
-                  {(companyName || "SISTEMA DE VENDAS").toUpperCase()} 
-                  <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-brand-magenta/25 text-brand-magenta border border-brand-magenta/40 font-black shadow-sm">NÚCLEO</span>
+              <div className="flex flex-col justify-center min-w-0">
+                <h1 className="text-base md:text-3xl font-black tracking-tighter text-white flex flex-wrap items-center gap-1.5 md:gap-3 leading-none drop-shadow-sm">
+                  <span className="truncate max-w-full">{(companyName || "SISTEMA DE VENDAS").toUpperCase()}</span>
+                  <span className="text-[9px] md:text-[10px] font-mono px-1.5 md:px-2 py-0.5 rounded-full bg-brand-magenta/25 text-brand-magenta border border-brand-magenta/40 font-black shadow-sm">NÚCLEO</span>
                 </h1>
-                <p className="text-sm text-slate-400 mt-2 font-medium tracking-wide">Emissão de Recibos, Controle de Gastos e Lucros</p>
+                <p className="text-[11px] md:text-sm text-slate-400 mt-1 md:mt-2 font-medium tracking-wide truncate">Emissão de Recibos, Controle de Gastos e Lucros</p>
               </div>
             </div>
 
@@ -394,9 +394,9 @@ export function Header({
         <div className="border-t border-slate-800/60 w-full my-0.5"></div>
 
         {/* ROW 2: Horizontal Menu Navigation Tabs & User Account Profile */}
-        <div className="flex flex-col lg:flex-row items-center justify-between gap-3 w-full">
+        <div className="flex flex-col lg:flex-row items-center justify-between gap-2 md:gap-3 w-full">
           {/* Menu Navigation container */}
-          <div className="flex flex-wrap bg-slate-900/60 p-1 rounded-xl border border-slate-800 self-stretch sm:self-auto gap-1">
+          <div className="flex flex-wrap bg-slate-900/60 p-1 rounded-xl border border-slate-800 self-stretch md:self-auto gap-1">
             {onOpenStandby && (
               <button
                 type="button"
@@ -775,14 +775,14 @@ export function Header({
         </div>
 
         {/* ROW 3: Real-time Telemetry Widgets (Reminders, Goals, Deliveries, Actions) aligned horizontally */}
-        <div className="flex flex-wrap items-center justify-start lg:justify-end gap-2 bg-slate-950/20 p-2 rounded-2xl border border-slate-850/45 w-full">
+        <div className="flex flex-wrap items-center justify-start lg:justify-end gap-1.5 md:gap-2 bg-slate-950/20 p-1.5 md:p-2 rounded-xl md:rounded-2xl border border-slate-850/45 w-full">
           {/* Real-time "Meus Lembretes" Animated & Clickable Panel - ONLY APPEARS IF CONFIGURED AND LOGGED IN */}
           {currentUser && pendingReminders.length > 0 && (
-            <div className="relative group shrink-0">
+            <div className="relative group shrink-0 max-w-full">
               <button
                 type="button"
                 onClick={() => setIsCalendarOpen(true)}
-                className={`p-1.5 px-3 border rounded-xl flex items-center justify-between gap-3 text-left transition-all duration-300 hover:scale-[1.02] cursor-pointer select-none h-9 max-w-[280px] sm:max-w-[350px] ${
+                className={`p-1.5 px-2.5 md:px-3 border rounded-xl flex items-center justify-between gap-2 md:gap-3 text-left transition-all duration-300 hover:scale-[1.02] cursor-pointer select-none h-8 md:h-9 max-w-full md:max-w-[350px] ${
                   isCalendarOpen
                     ? "border-brand-magenta/80 bg-slate-900/90 shadow-[0_0_15px_rgba(236,72,153,0.25)] text-slate-100"
                     : "border-brand-magenta/30 bg-brand-magenta/5 text-slate-200 hover:border-brand-magenta/60 shadow-[0_0_8px_rgba(236,72,153,0.1)]"

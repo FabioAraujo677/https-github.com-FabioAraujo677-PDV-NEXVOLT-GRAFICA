@@ -2152,21 +2152,21 @@ export function SaleForm({
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-3 md:space-y-6 max-w-full overflow-x-hidden">
       {/* Closed register banner */}
       {!isRegisterOpen && (
-        <div className="p-4 bg-amber-500/10 border-2 border-amber-500/30 rounded-2xl flex flex-col sm:flex-row items-center justify-between gap-3 text-amber-300 animate-fade-in">
-          <div className="flex items-center gap-3">
-            <Lock className="h-6 w-6 text-amber-400 shrink-0" />
+        <div className="p-3 md:p-4 bg-amber-500/10 border-2 border-amber-500/30 rounded-xl md:rounded-2xl flex flex-col md:flex-row items-start md:items-center justify-between gap-2.5 md:gap-3 text-amber-300 animate-fade-in">
+          <div className="flex items-center gap-2.5 md:gap-3">
+            <Lock className="h-5 w-5 md:h-6 md:w-6 text-amber-400 shrink-0" />
             <div>
-              <h3 className="text-sm font-black uppercase tracking-wider text-amber-200">Caixa do Dia Fechado 🔒</h3>
-              <p className="text-xs text-amber-400/80">O registro de vendas está bloqueado. Abra o caixa para autorizar novos lançamentos.</p>
+              <h3 className="text-xs md:text-sm font-black uppercase tracking-wider text-amber-200">Caixa do Dia Fechado 🔒</h3>
+              <p className="text-[11px] md:text-xs text-amber-400/80">O registro de vendas está bloqueado. Abra o caixa para autorizar novos lançamentos.</p>
             </div>
           </div>
           <button
             type="button"
             onClick={onRequestOpenRegister}
-            className="w-full sm:w-auto px-4 py-2 bg-amber-500 hover:bg-amber-400 text-slate-950 font-black text-xs uppercase tracking-wide rounded-xl transition-all shadow-md cursor-pointer shrink-0"
+            className="w-full md:w-auto px-4 py-2 bg-amber-500 hover:bg-amber-400 text-slate-950 font-black text-xs uppercase tracking-wide rounded-xl transition-all shadow-md cursor-pointer shrink-0"
           >
             Abrir Caixa Agora
           </button>
@@ -2175,9 +2175,9 @@ export function SaleForm({
 
       {/* Visual Success Alert */}
       {successMessage && (
-        <div className="flex items-center gap-3 p-4 bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 rounded-xl animate-fade-in">
-          <CheckCircle className="h-5 w-5 shrink-0" />
-          <span className="text-sm font-medium">{successMessage}</span>
+        <div className="flex items-center gap-2.5 md:gap-3 p-3 md:p-4 bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 rounded-xl animate-fade-in">
+          <CheckCircle className="h-4 w-4 md:h-5 md:w-5 shrink-0" />
+          <span className="text-xs md:text-sm font-medium">{successMessage}</span>
         </div>
       )}
 
@@ -2186,11 +2186,11 @@ export function SaleForm({
         <div
           id="saved-sale-summary"
           data-testid="saved-sale-summary"
-          className="p-4 bg-slate-900/90 border-2 border-emerald-500/40 rounded-2xl space-y-3.5 shadow-xl animate-fade-in"
+          className="p-3 md:p-4 bg-slate-900/90 border-2 border-emerald-500/40 rounded-xl md:rounded-2xl space-y-3 md:space-y-3.5 shadow-xl animate-fade-in"
         >
-          <div className="flex items-center justify-between border-b border-slate-800 pb-2.5">
+          <div className="flex flex-wrap items-center justify-between gap-2 border-b border-slate-800 pb-2 md:pb-2.5">
             <div className="flex items-center gap-2 text-emerald-400 font-black text-xs uppercase tracking-wider">
-              <CheckCircle className="h-4 w-4" />
+              <CheckCircle className="h-4 w-4 shrink-0" />
               <span>Resumo do Pedido Salvo com Sucesso</span>
             </div>
             <button
@@ -2202,7 +2202,7 @@ export function SaleForm({
             </button>
           </div>
 
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 text-xs">
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-2 md:gap-3 text-xs">
             <div className="p-2.5 bg-slate-950/60 rounded-xl border border-slate-850">
               <span className="text-slate-400 block text-[10px] uppercase font-bold">Cliente</span>
               <strong className="text-white text-sm block truncate">{savedSaleSummary.clientName}</strong>
@@ -2245,7 +2245,7 @@ export function SaleForm({
               </span>
             </div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5 pt-1 text-[11px]">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-2 md:gap-2.5 pt-1 text-[11px]">
               <div>
                 <span className="text-slate-500 block text-[10px]">Endereço de Entrega:</span>
                 <span
@@ -2310,9 +2310,9 @@ export function SaleForm({
         <div
           id="receipt-modal"
           data-testid="receipt-modal"
-          className="fixed inset-0 z-[9999] bg-black/80 backdrop-blur-sm flex items-center justify-center p-4 animate-fade-in"
+          className="fixed inset-0 z-[9999] bg-black/80 backdrop-blur-sm flex items-center justify-center p-2.5 md:p-4 animate-fade-in"
         >
-          <div className="bg-slate-900 border border-brand-cyan/40 rounded-2xl max-w-lg w-full p-5 space-y-4 shadow-2xl">
+          <div className="bg-slate-900 border border-brand-cyan/40 rounded-xl md:rounded-2xl max-w-lg w-full max-h-[90dvh] md:max-h-[90vh] overflow-y-auto p-3.5 md:p-5 space-y-3 md:space-y-4 shadow-2xl">
             <div className="flex justify-between items-center border-b border-slate-800 pb-3">
               <div className="flex items-center gap-2">
                 <FileText className="h-5 w-5 text-brand-cyan" />
@@ -2387,7 +2387,7 @@ export function SaleForm({
               </div>
             )}
 
-            <div className="flex gap-2 pt-2 border-t border-slate-800">
+            <div className="flex flex-col md:flex-row gap-2 pt-2 border-t border-slate-800">
               <a
                 id="btn-download-receipt-pdf"
                 data-testid="btn-download-receipt-pdf"
@@ -2428,12 +2428,12 @@ export function SaleForm({
       )}
 
       {/* Main card grid layout for sales inputs */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-3.5 md:gap-6">
         {/* Left Columns - Client data and Products Table (2/3 width on large) */}
-        <div className="lg:col-span-2 space-y-6">
+        <div className="lg:col-span-2 space-y-3.5 md:space-y-6 min-w-0">
           
           {/* Section 1: Client Metadata */}
-          <div className="bg-brand-card border border-slate-800 rounded-xl p-4 relative">
+          <div className="bg-brand-card border border-slate-800 rounded-xl p-3 md:p-4 relative">
             <div className="flex items-center justify-between mb-3 flex-wrap gap-2">
               <h2 className="text-xs font-black text-slate-100 uppercase tracking-widest flex items-center gap-1.5">
                 <span className="h-4.5 w-1 rounded bg-brand-magenta"></span>
@@ -2453,7 +2453,7 @@ export function SaleForm({
               </button>
             </div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-2.5 md:gap-3">
               <div>
                 <label className="block text-[10px] font-bold text-slate-400 mb-1 uppercase tracking-wider flex items-center gap-1">
                   <UserIcon className="h-3 w-3 text-slate-500" />
@@ -2489,7 +2489,7 @@ export function SaleForm({
               </div>
             </div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mt-3">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-2.5 md:gap-3 mt-2.5 md:mt-3">
               <div>
                 <label className="block text-[10px] font-bold text-slate-400 mb-1 uppercase tracking-wider flex items-center gap-1">
                   <Calendar className="h-3 w-3 text-slate-500" />
@@ -2595,17 +2595,17 @@ export function SaleForm({
           </div>
 
           {/* Section 2: Products & Line Items Table */}
-          <div className="bg-brand-card border border-slate-800 rounded-2xl p-6 relative">
-            <div className="flex justify-between items-center mb-4">
-              <h2 className="text-lg font-bold text-white flex items-center gap-2">
-                <span className="h-5 w-1.5 rounded bg-brand-cyan"></span>
+          <div className="bg-brand-card border border-slate-800 rounded-xl md:rounded-2xl p-3.5 md:p-6 relative">
+            <div className="flex flex-wrap justify-between items-center gap-2 mb-3 md:mb-4">
+              <h2 className="text-sm md:text-lg font-bold text-white flex items-center gap-2">
+                <span className="h-4 md:h-5 w-1.5 rounded bg-brand-cyan"></span>
                 Itens e Serviços Adicionados
               </h2>
               
               <button
                 type="button"
                 onClick={handleAddItem}
-                className="flex items-center gap-1.5 px-3.5 py-1.5 text-xs font-semibold rounded-xl bg-brand-cyan/10 hover:bg-brand-cyan/20 text-brand-cyan border border-brand-cyan/20 transition-all cursor-pointer"
+                className="flex items-center gap-1.5 px-2.5 py-1.5 md:px-3.5 text-xs font-semibold rounded-xl bg-brand-cyan/10 hover:bg-brand-cyan/20 text-brand-cyan border border-brand-cyan/20 transition-all cursor-pointer"
                 title={isPricingLocked ? "Adicione produtos cadastrados pelo Administrador" : "Adicionar Linha"}
               >
                 <Plus className="h-3.5 w-3.5" />
@@ -2614,11 +2614,11 @@ export function SaleForm({
             </div>
 
             {/* Dynamic Items list */}
-            <div className="space-y-3">
+            <div className="space-y-2.5 md:space-y-3">
               {items.map((item, index) => (
                 <div
                   key={item.id}
-                  className="bg-slate-950/55 p-3 rounded-xl border border-slate-850 grid grid-cols-1 md:grid-cols-12 gap-3 items-center"
+                  className="bg-slate-950/55 p-2.5 md:p-3 rounded-xl border border-slate-850 grid grid-cols-1 md:grid-cols-12 gap-2 md:gap-3 items-center"
                 >
                   {/* Badge + Description field combined */}
                   <div className={`col-span-1 ${isPricingLocked ? "md:col-span-6" : "md:col-span-5"} flex items-center gap-2`}>
@@ -2780,10 +2780,10 @@ export function SaleForm({
           </div>
 
           {/* Section 3: Vendas Rápidas */}
-          <div className="bg-brand-card border border-slate-800 rounded-2xl p-6 relative">
-            <div className="flex items-center justify-between mb-4 flex-wrap gap-2">
-              <h2 className="text-lg font-bold text-white flex items-center gap-2">
-                <span className="h-5 w-1.5 rounded bg-brand-magenta"></span>
+          <div className="bg-brand-card border border-slate-800 rounded-xl md:rounded-2xl p-3.5 md:p-6 relative">
+            <div className="flex items-center justify-between mb-3 md:mb-4 flex-wrap gap-2">
+              <h2 className="text-sm md:text-lg font-bold text-white flex items-center gap-2">
+                <span className="h-4 md:h-5 w-1.5 rounded bg-brand-magenta"></span>
                 Vendas Rápidas
               </h2>
               {(!isAttendant || adminUnlocked) && (
@@ -2825,7 +2825,7 @@ export function SaleForm({
                     )}
                   </h3>
                   
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-2.5 md:gap-3">
                     <div>
                       <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">Descrição / Nome do Item</label>
                       <input
@@ -2838,7 +2838,7 @@ export function SaleForm({
                       />
                     </div>
                     
-                    <div className="grid grid-cols-2 gap-2">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
                       <div>
                         <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">Preço Venda (R$)</label>
                         <input
@@ -2865,7 +2865,7 @@ export function SaleForm({
 
                   <div>
                     <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-2">Selecione uma Cor Gradiente (Mais Opções)</label>
-                    <div className="grid grid-cols-4 sm:grid-cols-8 gap-2">
+                    <div className="grid grid-cols-4 md:grid-cols-8 gap-1.5 md:gap-2">
                       {[
                         { name: "Cobalto", grad: "from-purple-600 via-fuchsia-600 to-pink-500" },
                         { name: "Oceano", grad: "from-cyan-500 to-blue-600" },
@@ -2931,7 +2931,7 @@ export function SaleForm({
                       <div className="text-center py-4 text-slate-500 text-xs">Nenhum botão cadastrado ainda.</div>
                     ) : (
                       quickSales.map((qs) => (
-                        <div key={qs.id} className="flex items-center justify-between p-2 bg-slate-900 border border-slate-850 rounded-lg">
+                        <div key={qs.id} className="flex flex-wrap items-center justify-between gap-2 p-2 bg-slate-900 border border-slate-850 rounded-lg">
                           <div className="flex items-center gap-2">
                             <span className={`h-3 w-3 rounded bg-gradient-to-r ${qs.gradient} shrink-0`}></span>
                             <span className="text-xs font-semibold text-slate-200">{qs.description}</span>
@@ -2976,7 +2976,7 @@ export function SaleForm({
                     Nenhum botão de venda rápida configurado. Clique em &quot;Personalizar Botões&quot; para adicionar.
                   </div>
                 ) : (
-                  <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-2">
                     {quickSales.map((qs) => (
                       <button
                         key={qs.id}
@@ -3007,7 +3007,7 @@ export function SaleForm({
                     </span>
                   </div>
 
-                  <div className="grid grid-cols-2 gap-3 pt-1">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-2 md:gap-3 pt-1">
                     <button
                       type="button"
                       onClick={async () => {
@@ -3067,8 +3067,8 @@ export function SaleForm({
 
           {/* Quick Sale Quantity Chosen modal popup overlay */}
           {activeQuickSaleItem && (
-            <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/80 backdrop-blur-md animate-fade-in p-4">
-              <div className="bg-brand-card border border-slate-800 rounded-2xl w-full max-w-sm p-6 text-slate-100 shadow-2xl relative animate-scale-up">
+            <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/80 backdrop-blur-md animate-fade-in p-2.5 md:p-4">
+              <div className="bg-brand-card border border-slate-800 rounded-2xl w-full max-w-sm max-h-[90dvh] overflow-y-auto p-4 md:p-6 text-slate-100 shadow-2xl relative animate-scale-up">
                 <button
                   type="button"
                   onClick={() => setActiveQuickSaleItem(null)}
@@ -3172,11 +3172,11 @@ export function SaleForm({
         </div>
 
         {/* Right Financial Dashboard Column (1/3 width on large) */}
-        <div className="space-y-6">
+        <div className="space-y-3.5 md:space-y-6 min-w-0">
           {/* Motoboy Service Frame */}
-          <div className="bg-brand-card border border-slate-800 rounded-2xl p-6 relative">
-            <h2 className="text-lg font-bold text-white mb-4 flex items-center gap-2">
-              <span className="h-5 w-1.5 rounded bg-brand-cyan"></span>
+          <div className="bg-brand-card border border-slate-800 rounded-xl md:rounded-2xl p-3.5 md:p-6 relative">
+            <h2 className="text-sm md:text-lg font-bold text-white mb-3 md:mb-4 flex items-center gap-2">
+              <span className="h-4 md:h-5 w-1.5 rounded bg-brand-cyan"></span>
               Serviço de Motoboy
             </h2>
 
@@ -3268,7 +3268,7 @@ export function SaleForm({
 
                         {/* Rua e Número */}
                         <div className="grid grid-cols-12 gap-2">
-                          <div className="col-span-8 space-y-1">
+                          <div className="col-span-12 md:col-span-8 space-y-1 min-w-0">
                             <label className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider">
                               Rua / Logradouro
                             </label>
@@ -3277,10 +3277,10 @@ export function SaleForm({
                               placeholder="Rua, Avenida, etc."
                               value={deliveryStreet}
                               onChange={(e) => updateDeliveryFields({ street: e.target.value })}
-                              className="w-full bg-slate-950 border border-slate-800 rounded-lg h-8 px-2.5 text-xs text-slate-100 placeholder-slate-600 focus:outline-none focus:border-brand-cyan"
+                              className="w-full min-w-0 bg-slate-950 border border-slate-800 rounded-lg h-8 px-2.5 text-xs text-slate-100 placeholder-slate-600 focus:outline-none focus:border-brand-cyan"
                             />
                           </div>
-                          <div className="col-span-4 space-y-1">
+                          <div className="col-span-12 md:col-span-4 space-y-1 min-w-0">
                             <label className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider">
                               Número
                             </label>
@@ -3289,14 +3289,14 @@ export function SaleForm({
                               placeholder="Nº ou S/N"
                               value={deliveryNumber}
                               onChange={(e) => updateDeliveryFields({ number: e.target.value })}
-                              className="w-full bg-slate-950 border border-slate-800 rounded-lg h-8 px-2.5 text-xs text-slate-100 placeholder-slate-600 focus:outline-none focus:border-brand-cyan"
+                              className="w-full min-w-0 bg-slate-950 border border-slate-800 rounded-lg h-8 px-2.5 text-xs text-slate-100 placeholder-slate-600 focus:outline-none focus:border-brand-cyan"
                             />
                           </div>
                         </div>
 
                         {/* Bairro e Complemento */}
                         <div className="grid grid-cols-12 gap-2">
-                          <div className="col-span-6 space-y-1">
+                          <div className="col-span-12 md:col-span-6 space-y-1 min-w-0">
                             <label className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider">
                               Bairro
                             </label>
@@ -3305,10 +3305,10 @@ export function SaleForm({
                               placeholder="Bairro"
                               value={deliveryNeighborhood}
                               onChange={(e) => updateDeliveryFields({ neighborhood: e.target.value })}
-                              className="w-full bg-slate-950 border border-slate-800 rounded-lg h-8 px-2.5 text-xs text-slate-100 placeholder-slate-600 focus:outline-none focus:border-brand-cyan"
+                              className="w-full min-w-0 bg-slate-950 border border-slate-800 rounded-lg h-8 px-2.5 text-xs text-slate-100 placeholder-slate-600 focus:outline-none focus:border-brand-cyan"
                             />
                           </div>
-                          <div className="col-span-6 space-y-1">
+                          <div className="col-span-12 md:col-span-6 space-y-1 min-w-0">
                             <label className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider">
                               Complemento
                             </label>
@@ -3317,14 +3317,14 @@ export function SaleForm({
                               placeholder="Apto, Bloco..."
                               value={deliveryComplement}
                               onChange={(e) => updateDeliveryFields({ complement: e.target.value })}
-                              className="w-full bg-slate-950 border border-slate-800 rounded-lg h-8 px-2.5 text-xs text-slate-100 placeholder-slate-600 focus:outline-none focus:border-brand-cyan"
+                              className="w-full min-w-0 bg-slate-950 border border-slate-800 rounded-lg h-8 px-2.5 text-xs text-slate-100 placeholder-slate-600 focus:outline-none focus:border-brand-cyan"
                             />
                           </div>
                         </div>
 
                         {/* Cidade e UF */}
                         <div className="grid grid-cols-12 gap-2">
-                          <div className="col-span-9 space-y-1">
+                          <div className="col-span-12 md:col-span-9 space-y-1 min-w-0">
                             <label className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider">
                               Cidade
                             </label>
@@ -3333,10 +3333,10 @@ export function SaleForm({
                               placeholder="Cidade"
                               value={deliveryCity}
                               onChange={(e) => updateDeliveryFields({ city: e.target.value })}
-                              className="w-full bg-slate-950 border border-slate-800 rounded-lg h-8 px-2.5 text-xs text-slate-100 placeholder-slate-600 focus:outline-none focus:border-brand-cyan"
+                              className="w-full min-w-0 bg-slate-950 border border-slate-800 rounded-lg h-8 px-2.5 text-xs text-slate-100 placeholder-slate-600 focus:outline-none focus:border-brand-cyan"
                             />
                           </div>
-                          <div className="col-span-3 space-y-1">
+                          <div className="col-span-12 md:col-span-3 space-y-1 min-w-0">
                             <label className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider">
                               UF
                             </label>
@@ -3346,7 +3346,7 @@ export function SaleForm({
                               value={deliveryState}
                               maxLength={4}
                               onChange={(e) => updateDeliveryFields({ state: e.target.value.toUpperCase() })}
-                              className="w-full bg-slate-950 border border-slate-800 rounded-lg h-8 px-2.5 text-xs text-slate-100 placeholder-slate-600 focus:outline-none focus:border-brand-cyan uppercase"
+                              className="w-full min-w-0 bg-slate-950 border border-slate-800 rounded-lg h-8 px-2.5 text-xs text-slate-100 placeholder-slate-600 focus:outline-none focus:border-brand-cyan uppercase"
                             />
                           </div>
                         </div>
@@ -3421,7 +3421,7 @@ export function SaleForm({
                       </div>
 
                       {/* Botões de Ação de Trajeto */}
-                      <div className="grid grid-cols-2 gap-2 pt-1">
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-2 pt-1">
                         <button
                           type="button"
                           onClick={() => window.open(googleMapsDirectionsUrl, "_blank")}
@@ -3457,10 +3457,10 @@ export function SaleForm({
           </div>
 
           {/* Section 4: Checkout & Ledger (Gasto da Venda, Sinal, Desconto, Totais) */}
-          <div className="bg-brand-card border-2 border-slate-800 rounded-2xl p-6 relative">
-            <h2 className="text-lg font-bold text-white mb-4 flex items-center justify-between w-full">
+          <div className="bg-brand-card border-2 border-slate-800 rounded-xl md:rounded-2xl p-3.5 md:p-6 relative">
+            <h2 className="text-sm md:text-lg font-bold text-white mb-3 md:mb-4 flex flex-wrap items-center justify-between gap-2 w-full">
               <span className="flex items-center gap-2">
-                <span className="h-5 w-1.5 rounded bg-brand-magenta"></span>
+                <span className="h-4 md:h-5 w-1.5 rounded bg-brand-magenta"></span>
                 Ajustes Financeiros
               </span>
               {!isAttendant && (
@@ -3868,12 +3868,12 @@ export function SaleForm({
                   )
                 ) : (
                   /* Standard creation mode - Can choose to Save as definitive Sale or Orçamento */
-                  <div className="grid grid-cols-2 gap-3">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-2.5 md:gap-3">
                     <button
                       type="button"
                       disabled={isUploading || !isRegisterOpen}
                       onClick={() => handleSaveSale(false)}
-                      className="flex-1 flex items-center justify-center gap-1.5 py-3 px-2 rounded-xl font-bold text-white bg-gradient-to-r from-brand-magenta to-pink-600 hover:from-pink-600 hover:to-brand-magenta shadow-lg shadow-pink-900/30 transition-all cursor-pointer transform hover:-translate-y-0.5 text-xs sm:text-sm disabled:opacity-50 disabled:pointer-events-none"
+                      className="flex-1 flex items-center justify-center gap-1.5 py-2.5 md:py-3 px-3 rounded-xl font-bold text-white bg-gradient-to-r from-brand-magenta to-pink-600 hover:from-pink-600 hover:to-brand-magenta shadow-lg shadow-pink-900/30 transition-all cursor-pointer transform hover:-translate-y-0.5 text-xs md:text-sm disabled:opacity-50 disabled:pointer-events-none"
                     >
                       {isUploading ? (
                         <RefreshCw className="h-4 w-4 shrink-0 animate-spin" />
@@ -3887,7 +3887,7 @@ export function SaleForm({
                       type="button"
                       disabled={isUploading || !isRegisterOpen}
                       onClick={handleSaveBudget}
-                      className="flex-1 flex items-center justify-center gap-1.5 py-3 px-2 rounded-xl font-bold text-slate-950 bg-gradient-to-r from-brand-cyan to-cyan-500 shadow-lg shadow-brand-cyan/20 cursor-pointer transform hover:-translate-y-0.5 transition-all text-xs sm:text-sm disabled:opacity-50 disabled:pointer-events-none"
+                      className="flex-1 flex items-center justify-center gap-1.5 py-2.5 md:py-3 px-3 rounded-xl font-bold text-slate-950 bg-gradient-to-r from-brand-cyan to-cyan-500 shadow-lg shadow-brand-cyan/20 cursor-pointer transform hover:-translate-y-0.5 transition-all text-xs md:text-sm disabled:opacity-50 disabled:pointer-events-none"
                     >
                       {isUploading ? (
                         <RefreshCw className="h-4 w-4 shrink-0 animate-spin" />
@@ -3899,7 +3899,7 @@ export function SaleForm({
                   </div>
                 )}
 
-                <div className="grid grid-cols-2 sm:grid-cols-4 gap-1.5">
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-1.5">
                   <button
                     type="button"
                     onClick={() => generatePDF()}
@@ -3955,11 +3955,11 @@ export function SaleForm({
         =========================================
       */}
       {showLocateClientModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-sm animate-fade-in text-slate-100">
-          <div className="relative max-w-lg w-full bg-slate-900 border border-slate-800 rounded-2xl overflow-hidden shadow-2xl flex flex-col max-h-[85vh]">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-2.5 md:p-4 bg-slate-950/80 backdrop-blur-sm animate-fade-in text-slate-100">
+          <div className="relative max-w-lg w-full bg-slate-900 border border-slate-800 rounded-2xl overflow-hidden shadow-2xl flex flex-col max-h-[90dvh] md:max-h-[85vh]">
             
             {/* Header */}
-            <div className="p-4 border-b border-slate-800 flex justify-between items-center bg-slate-950">
+            <div className="p-3 md:p-4 border-b border-slate-800 flex justify-between items-center bg-slate-950">
               <h3 className="text-sm font-bold text-white flex items-center gap-2">
                 <Search className="h-4 w-4 text-brand-magenta" />
                 Localizar Cliente Registrado
@@ -3974,7 +3974,7 @@ export function SaleForm({
             </div>
 
             {/* Search Input Bar */}
-            <div className="p-4 border-b border-slate-850 bg-slate-900/50">
+            <div className="p-3 md:p-4 border-b border-slate-850 bg-slate-900/50">
               <div className="relative">
                 <input
                   type="text"
@@ -3992,7 +3992,7 @@ export function SaleForm({
             </div>
 
             {/* Client Lists Container */}
-            <div className="flex-1 overflow-y-auto p-4 space-y-2 bg-slate-950/20 max-h-[50vh]">
+            <div className="flex-1 overflow-y-auto p-3 md:p-4 space-y-2 bg-slate-950/20 max-h-[55dvh] md:max-h-[50vh]">
               {previousClients.length === 0 ? (
                 <div className="text-center py-8 text-slate-500 space-y-2">
                   <UserIcon className="h-8 w-8 mx-auto text-slate-700 stroke-[1.5]" />

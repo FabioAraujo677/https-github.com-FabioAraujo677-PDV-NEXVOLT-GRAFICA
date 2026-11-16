@@ -728,27 +728,27 @@ export function WeeklyGoalModal({
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-[100] flex items-center justify-center p-2 sm:p-4 bg-slate-950/85 backdrop-blur-sm animate-fade-in font-sans">
+    <div className="fixed inset-0 z-[100] flex items-center justify-center p-2 md:p-4 bg-slate-950/85 backdrop-blur-sm animate-fade-in font-sans">
       <div 
         id="weekly-goal-modal-container"
-        className="relative w-full max-w-4xl bg-slate-900 border border-slate-850 rounded-2xl shadow-2xl flex flex-col max-h-[92vh] sm:max-h-[90vh] md:max-h-[86vh] overflow-hidden"
+        className="relative w-full max-w-4xl bg-slate-900 border border-slate-850 rounded-2xl shadow-2xl flex flex-col max-h-[92dvh] md:max-h-[86vh] overflow-hidden"
       >
         {/* Header */}
-        <div className="flex items-center justify-between py-3 px-4 border-b border-slate-805 bg-slate-955 shrink-0">
-          <div className="flex items-center gap-2.5">
-            <div className="p-2 rounded-xl bg-gradient-to-br from-emerald-500/20 to-teal-500/10 text-emerald-400 shadow-inner">
+        <div className="flex items-center justify-between py-2.5 md:py-3 px-3 md:px-4 border-b border-slate-805 bg-slate-955 shrink-0">
+          <div className="flex items-center gap-2.5 min-w-0">
+            <div className="p-2 rounded-xl bg-gradient-to-br from-emerald-500/20 to-teal-500/10 text-emerald-400 shadow-inner shrink-0">
               <Trophy className="h-5 w-5" />
             </div>
-            <div>
-              <h3 className="text-xs sm:text-sm font-black text-slate-100 uppercase tracking-widest flex items-center gap-2">
+            <div className="min-w-0">
+              <h3 className="text-xs md:text-sm font-black text-slate-100 uppercase tracking-widest flex items-center gap-2 truncate">
                 ACOMPANHAMENTO DE METAS DE LUCRO
               </h3>
-              <p className="text-[9.5px] text-slate-450 font-mono uppercase tracking-wider font-semibold">Análise de Desempenho e Conciliação Histórica</p>
+              <p className="text-[9.5px] text-slate-450 font-mono uppercase tracking-wider font-semibold truncate">Análise de Desempenho e Conciliação Histórica</p>
             </div>
           </div>
           <button
             onClick={onClose}
-            className="p-2 rounded-xl text-slate-450 hover:text-white hover:bg-slate-850 transition-all cursor-pointer border border-transparent hover:border-slate-800"
+            className="p-2 rounded-xl text-slate-450 hover:text-white hover:bg-slate-850 transition-all cursor-pointer border border-transparent hover:border-slate-800 shrink-0"
             title="Fechar"
           >
             <X className="h-5 w-5" />
@@ -756,9 +756,9 @@ export function WeeklyGoalModal({
         </div>
 
         {/* Filters Panel & Filter Tabs */}
-        <div className="p-4 border-b border-slate-850 bg-slate-955/90 flex flex-col gap-3 shrink-0">
+        <div className="p-2.5 md:p-4 border-b border-slate-850 bg-slate-955/90 flex flex-col gap-2.5 md:gap-3 shrink-0">
           {/* Main Scope selectors */}
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-850 pb-3">
+          <div className="flex flex-col md:flex-row md:items-center justify-between gap-2.5 md:gap-3 border-b border-slate-850 pb-2.5 md:pb-3">
             <span className="text-[10px] font-black uppercase text-slate-400 tracking-wider font-mono">Filtrar Intervalo de Análise:</span>
             
             <div className="flex flex-wrap gap-2">
@@ -801,21 +801,21 @@ export function WeeklyGoalModal({
           </div>
 
           {/* Navigation/Input Block depending on rangeMode */}
-          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 bg-slate-950 p-2 sm:p-2.5 rounded-xl border border-slate-850/80">
+          <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-2.5 md:gap-3 bg-slate-950 p-2 md:p-2.5 rounded-xl border border-slate-850/80">
             
             {/* Range controls */}
             {rangeMode === "semana" && (
-              <div className="flex items-center justify-between w-full gap-2">
+              <div className="flex flex-wrap items-center justify-between w-full gap-2">
                 <button
                   onClick={() => setWeekOffset(prev => prev - 1)}
-                  className="flex items-center gap-1.5 py-1.5 px-3.5 bg-slate-900 hover:bg-slate-850 border border-slate-800 text-[11px] font-bold text-slate-300 hover:text-white rounded-lg transition-all cursor-pointer select-none"
+                  className="flex items-center gap-1 md:gap-1.5 py-1.5 px-2.5 md:px-3.5 bg-slate-900 hover:bg-slate-850 border border-slate-800 text-[11px] font-bold text-slate-300 hover:text-white rounded-lg transition-all cursor-pointer select-none"
                 >
                   <ChevronLeft className="h-4 w-4" />
                   <span>Anterior</span>
                 </button>
                 
-                <div className="text-xs font-mono font-black text-brand-cyan bg-brand-cyan/5 border border-brand-cyan/15 rounded-xl px-4 py-1.5 text-center flex items-center justify-center gap-2">
-                  <Calendar className="h-4 w-4 text-brand-cyan" />
+                <div className="text-[11px] md:text-xs font-mono font-black text-brand-cyan bg-brand-cyan/5 border border-brand-cyan/15 rounded-xl px-2.5 md:px-4 py-1.5 text-center flex items-center justify-center gap-1.5 md:gap-2">
+                  <Calendar className="h-3.5 w-3.5 md:h-4 md:w-4 text-brand-cyan shrink-0" />
                   <span>{formattedPeriodRange}</span>
                   {weekOffset === 0 && (
                     <span className="text-[8px] bg-emerald-500/20 text-emerald-400 border border-emerald-990/20 px-1 py-0.2 rounded font-black font-sans uppercase">
@@ -826,7 +826,7 @@ export function WeeklyGoalModal({
 
                 <button
                   onClick={() => setWeekOffset(prev => prev + 1)}
-                  className="flex items-center gap-1.5 py-1.5 px-3.5 bg-slate-900 hover:bg-slate-850 border border-slate-800 text-[11px] font-bold text-slate-300 hover:text-white rounded-lg transition-all cursor-pointer select-none"
+                  className="flex items-center gap-1 md:gap-1.5 py-1.5 px-2.5 md:px-3.5 bg-slate-900 hover:bg-slate-850 border border-slate-800 text-[11px] font-bold text-slate-300 hover:text-white rounded-lg transition-all cursor-pointer select-none"
                 >
                   <span>Próxima</span>
                   <ChevronRight className="h-4 w-4" />
@@ -835,17 +835,17 @@ export function WeeklyGoalModal({
             )}
 
             {rangeMode === "mes" && (
-              <div className="flex items-center justify-between w-full gap-2">
+              <div className="flex flex-wrap items-center justify-between w-full gap-2">
                 <button
                   onClick={() => setMonthOffset(prev => prev - 1)}
-                  className="flex items-center gap-1.5 py-1.5 px-3.5 bg-slate-900 hover:bg-slate-850 border border-slate-800 text-[11px] font-bold text-slate-300 hover:text-white rounded-lg transition-all cursor-pointer select-none"
+                  className="flex items-center gap-1 md:gap-1.5 py-1.5 px-2.5 md:px-3.5 bg-slate-900 hover:bg-slate-850 border border-slate-800 text-[11px] font-bold text-slate-300 hover:text-white rounded-lg transition-all cursor-pointer select-none"
                 >
                   <ChevronLeft className="h-4 w-4" />
                   <span>Mês Anterior</span>
                 </button>
                 
-                <div className="text-xs font-mono font-black text-brand-cyan bg-brand-cyan/5 border border-brand-cyan/15 rounded-xl px-4 py-1.5 text-center flex items-center justify-center gap-2">
-                  <Calendar className="h-4 w-4 text-brand-cyan" />
+                <div className="text-[11px] md:text-xs font-mono font-black text-brand-cyan bg-brand-cyan/5 border border-brand-cyan/15 rounded-xl px-2.5 md:px-4 py-1.5 text-center flex items-center justify-center gap-1.5 md:gap-2">
+                  <Calendar className="h-3.5 w-3.5 md:h-4 md:w-4 text-brand-cyan shrink-0" />
                   <span>{formattedPeriodRange}</span>
                   {monthOffset === 0 && (
                     <span className="text-[8px] bg-emerald-500/20 text-emerald-400 border border-emerald-990/20 px-1 py-0.2 rounded font-black font-sans uppercase animate-pulse">
@@ -856,7 +856,7 @@ export function WeeklyGoalModal({
 
                 <button
                   onClick={() => setMonthOffset(prev => prev + 1)}
-                  className="flex items-center gap-1.5 py-1.5 px-3.5 bg-slate-900 hover:bg-slate-850 border border-slate-800 text-[11px] font-bold text-slate-300 hover:text-white rounded-lg transition-all cursor-pointer select-none"
+                  className="flex items-center gap-1 md:gap-1.5 py-1.5 px-2.5 md:px-3.5 bg-slate-900 hover:bg-slate-850 border border-slate-800 text-[11px] font-bold text-slate-300 hover:text-white rounded-lg transition-all cursor-pointer select-none"
                 >
                   <span>Próximo Mês</span>
                   <ChevronRight className="h-4 w-4" />
@@ -865,30 +865,30 @@ export function WeeklyGoalModal({
             )}
 
             {rangeMode === "personalizado" && (
-              <div className="flex flex-col sm:flex-row items-center gap-3 w-full justify-between">
-                <span className="text-xs font-bold text-slate-300 flex items-center gap-1.5 self-start sm:self-auto shrink-0 select-none">
-                  <Calendar className="h-4.5 w-4.5 text-brand-cyan" />
+              <div className="flex flex-col md:flex-row items-center gap-2.5 md:gap-3 w-full justify-between">
+                <span className="text-xs font-bold text-slate-300 flex items-center gap-1.5 self-start md:self-auto shrink-0 select-none">
+                  <Calendar className="h-4 w-4 text-brand-cyan" />
                   <span>Escolha as datas limite:</span>
                 </span>
                 
-                <div className="flex items-center gap-2.5 w-full sm:w-auto">
-                  <div className="relative flex-1 sm:flex-initial">
+                <div className="flex items-center gap-2 w-full md:w-auto">
+                  <div className="relative flex-1 md:flex-initial min-w-0">
                     <input
                       type="date"
                       value={customStart}
                       onChange={(e) => setCustomStart(e.target.value)}
-                      className="bg-slate-900 border border-slate-800 hover:border-slate-700 focus:border-brand-cyan text-slate-200 text-xs rounded-xl py-1.5 px-3 focus:outline-none transition-all font-mono"
+                      className="w-full md:w-auto min-w-0 bg-slate-900 border border-slate-800 hover:border-slate-700 focus:border-brand-cyan text-slate-200 text-xs rounded-xl py-1.5 px-2 md:px-3 focus:outline-none transition-all font-mono"
                     />
                   </div>
                   
                   <ArrowRight className="h-4 w-4 text-slate-500 shrink-0" />
                   
-                  <div className="relative flex-1 sm:flex-initial">
+                  <div className="relative flex-1 md:flex-initial min-w-0">
                     <input
                       type="date"
                       value={customEnd}
                       onChange={(e) => setCustomEnd(e.target.value)}
-                      className="bg-slate-900 border border-slate-800 hover:border-slate-700 focus:border-brand-cyan text-slate-200 text-xs rounded-xl py-1.5 px-3 focus:outline-none transition-all font-mono"
+                      className="w-full md:w-auto min-w-0 bg-slate-900 border border-slate-800 hover:border-slate-700 focus:border-brand-cyan text-slate-200 text-xs rounded-xl py-1.5 px-2 md:px-3 focus:outline-none transition-all font-mono"
                     />
                   </div>
                 </div>
@@ -924,14 +924,14 @@ export function WeeklyGoalModal({
         </div>
 
         {/* Modal Scroll Content Body */}
-        <div className="p-3 sm:p-4 overflow-y-auto flex flex-col space-y-4 flex-grow w-full bg-slate-905 custom-scrollbar">
+        <div className="p-2.5 md:p-4 overflow-y-auto flex flex-col space-y-3 md:space-y-4 flex-grow w-full bg-slate-905 custom-scrollbar">
           {/* BLOCO DE MÉTRICAS RESUMIDAS (Cards Estilo Dashboard) */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-2.5 md:gap-4">
             {/* CARD 1: META BATIDA 🏆 */}
             <button
               type="button"
               onClick={() => setFilterStatus(prev => prev === "met" ? "all" : "met")}
-              className={`p-4 bg-slate-950/45 border rounded-2xl text-left transition-all duration-300 hover:translate-y-[-2px] hover:shadow-lg cursor-pointer block select-none group relative ${
+              className={`p-3 md:p-4 bg-slate-950/45 border rounded-2xl text-left transition-all duration-300 hover:translate-y-[-2px] hover:shadow-lg cursor-pointer block select-none group relative ${
                 filterStatus === "met" 
                   ? "border-emerald-500/80 bg-emerald-505/10 ring-1 ring-emerald-500/30" 
                   : "border-slate-850 hover:border-slate-700 hover:bg-slate-900/60"
@@ -944,8 +944,8 @@ export function WeeklyGoalModal({
                   <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
                 </span>
               </div>
-              <div className="mt-2.5 flex items-baseline gap-1">
-                <span className="text-2xl sm:text-3xl font-black font-mono text-emerald-405">{stats.daysMet}</span>
+              <div className="mt-2 md:mt-2.5 flex items-baseline gap-1">
+                <span className="text-2xl md:text-3xl font-black font-mono text-emerald-405">{stats.daysMet}</span>
                 <span className="text-xs text-slate-450 font-bold">dias</span>
               </div>
               <div className="mt-1.5 flex items-center justify-between text-[9px] text-slate-500">
@@ -958,7 +958,7 @@ export function WeeklyGoalModal({
             <button
               type="button"
               onClick={() => setFilterStatus(prev => prev === "missed" ? "all" : "missed")}
-              className={`p-4 bg-slate-950/45 border rounded-2xl text-left transition-all duration-300 hover:translate-y-[-2px] hover:shadow-lg cursor-pointer block select-none group relative ${
+              className={`p-3 md:p-4 bg-slate-950/45 border rounded-2xl text-left transition-all duration-300 hover:translate-y-[-2px] hover:shadow-lg cursor-pointer block select-none group relative ${
                 filterStatus === "missed" 
                   ? "border-rose-500/80 bg-rose-505/10 ring-1 ring-rose-500/30" 
                   : "border-slate-850 hover:border-slate-700 hover:bg-slate-900/60"
@@ -971,8 +971,8 @@ export function WeeklyGoalModal({
                   <span className="relative inline-flex rounded-full h-2 w-2 bg-rose-500"></span>
                 </span>
               </div>
-              <div className="mt-2.5 flex items-baseline gap-1">
-                <span className="text-2xl sm:text-3xl font-black font-mono text-rose-405">{stats.daysMissed}</span>
+              <div className="mt-2 md:mt-2.5 flex items-baseline gap-1">
+                <span className="text-2xl md:text-3xl font-black font-mono text-rose-405">{stats.daysMissed}</span>
                 <span className="text-xs text-slate-450 font-bold">dias</span>
               </div>
               <div className="mt-1.5 flex items-center justify-between text-[9px] text-slate-500">
@@ -985,7 +985,7 @@ export function WeeklyGoalModal({
             <button
               type="button"
               onClick={() => setFilterStatus("all")}
-              className={`p-4 bg-slate-950/45 border rounded-2xl text-left transition-all duration-300 hover:translate-y-[-2px] hover:shadow-lg cursor-pointer block select-none group relative ${
+              className={`p-3 md:p-4 bg-slate-950/45 border rounded-2xl text-left transition-all duration-300 hover:translate-y-[-2px] hover:shadow-lg cursor-pointer block select-none group relative ${
                 filterStatus === "all" ? "border-brand-cyan/60 bg-brand-cyan/5" : "border-slate-850 hover:border-slate-700 hover:bg-slate-900/60"
               }`}
               title="Clique para resetar filtros"
@@ -994,8 +994,8 @@ export function WeeklyGoalModal({
                 <span className="text-[10px] uppercase font-black tracking-wider text-slate-400 font-mono">Lucro Líquido</span>
                 <TrendingUp className="h-4 w-4 text-brand-cyan" />
               </div>
-              <div className="mt-2.5">
-                <span className={`text-xl sm:text-2xl font-black font-mono tracking-tight block truncate ${stats.totalProfit >= 0 ? "text-emerald-400" : "text-rose-500"}`}>
+              <div className="mt-2 md:mt-2.5">
+                <span className={`text-xl md:text-2xl font-black font-mono tracking-tight block truncate ${stats.totalProfit >= 0 ? "text-emerald-400" : "text-rose-500"}`}>
                   R$ {stats.totalProfit.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}
                 </span>
               </div>
@@ -1009,14 +1009,14 @@ export function WeeklyGoalModal({
             <button
               type="button"
               onClick={() => setFilterStatus("all")}
-              className="p-4 bg-slate-950/45 border border-slate-850 rounded-2xl text-left transition-all duration-300 hover:translate-y-[-2px] hover:shadow-lg cursor-pointer block select-none group relative"
+              className="p-3 md:p-4 bg-slate-950/45 border border-slate-850 rounded-2xl text-left transition-all duration-300 hover:translate-y-[-2px] hover:shadow-lg cursor-pointer block select-none group relative"
               title="Clique para resetar filtros"
             >
               <div className="flex items-center justify-between">
                 <span className="text-[10px] uppercase font-black tracking-wider text-slate-400 font-mono">Melhor Dia</span>
                 <Trophy className="h-4 w-4 text-amber-400" />
               </div>
-              <div className="mt-2.5">
+              <div className="mt-2 md:mt-2.5">
                 <span className="text-xs font-black text-slate-100 block truncate leading-tight">
                   {stats.bestDay}
                 </span>
@@ -1031,8 +1031,8 @@ export function WeeklyGoalModal({
           </div>
 
           {/* CALENDÁRIO SEMANAL DE METAS (Segunda a Sábado) */}
-          <div className="bg-slate-950/45 border border-slate-850/60 rounded-2xl p-4 space-y-3">
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1">
+          <div className="bg-slate-950/45 border border-slate-850/60 rounded-2xl p-3 md:p-4 space-y-3">
+            <div className="flex flex-col md:flex-row md:items-center justify-between gap-1">
               <div>
                 <h4 className="text-xs font-black text-slate-100 uppercase tracking-wider flex items-center gap-1.5">
                   <Calendar className="h-4 w-4 text-brand-cyan" />
@@ -1040,12 +1040,12 @@ export function WeeklyGoalModal({
                 </h4>
                 <p className="text-[9px] text-slate-450 mt-0.5 leading-tight">Acompanhamento de metas de Segunda a Sábado no período correspondente</p>
               </div>
-              <span className="text-[9px] font-mono font-bold text-slate-400 bg-slate-900 border border-slate-800 px-2 py-0.5 rounded w-fit self-start sm:self-auto">
+              <span className="text-[9px] font-mono font-bold text-slate-400 bg-slate-900 border border-slate-800 px-2 py-0.5 rounded w-fit self-start md:self-auto">
                 Segunda a Sábado
               </span>
             </div>
             
-            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-6 gap-3">
+            <div className="grid grid-cols-2 md:grid-cols-6 gap-2.5 md:gap-3">
               {weeklyPerformanceDays.map((day) => {
                 const isToday = new Date().toISOString().split("T")[0] === day.dateStr;
                 return (
@@ -1098,7 +1098,7 @@ export function WeeklyGoalModal({
           {/* WEEKDAY GOALS SETUP & MINI STATS COMPACT ROW */}
           <div className="flex flex-col lg:flex-row gap-4 w-full">
             {/* Left Panel: Weekday Goals Editor */}
-            <div className="flex-1 w-full min-w-[300px] bg-slate-950/45 border border-slate-850/60 rounded-2xl p-4 flex flex-col justify-between gap-3">
+            <div className="flex-1 w-full min-w-0 md:min-w-[300px] bg-slate-950/45 border border-slate-850/60 rounded-2xl p-3 md:p-4 flex flex-col justify-between gap-3">
               <div className="flex flex-col gap-1.5 border-b border-slate-850/50 pb-2">
                 <div className="flex items-center gap-1.5">
                   <Target className="h-4 w-4 text-brand-cyan animate-pulse" />
@@ -1112,7 +1112,7 @@ export function WeeklyGoalModal({
               </div>
 
               {/* Grid of weekday buttons ordered Seg -> Dom with Dia 1 -> Dia 7 labels */}
-              <div className="grid grid-cols-4 sm:grid-cols-7 gap-1.5">
+              <div className="grid grid-cols-4 md:grid-cols-7 gap-1.5">
                 {[
                   { dayNum: 1, label: "Seg", sub: "Dia 1" },
                   { dayNum: 2, label: "Ter", sub: "Dia 2" },
@@ -1159,7 +1159,7 @@ export function WeeklyGoalModal({
                   </div>
 
                   {/* Input field and action buttons always below the labels */}
-                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 pt-2 border-t border-slate-850/40 w-full">
+                  <div className="flex flex-col md:flex-row md:items-center justify-between gap-2.5 pt-2 border-t border-slate-850/40 w-full">
                     <div className="flex items-center gap-2">
                       <span className="text-[10px] font-mono text-slate-400 font-bold uppercase">Meta:</span>
                       <div className="flex items-center gap-1 bg-slate-950 border border-slate-800 rounded-lg px-2 py-0.5">
@@ -1178,7 +1178,7 @@ export function WeeklyGoalModal({
                       </div>
                     </div>
 
-                    <div className="flex items-center gap-2 flex-wrap sm:flex-nowrap">
+                    <div className="flex items-center gap-2 flex-wrap md:flex-nowrap">
                       <div className="flex gap-1">
                         <button
                           type="button"
@@ -1307,10 +1307,10 @@ export function WeeklyGoalModal({
               {viewTab === "chart" ? (
                 /* VIEW 1: SUPER BEAUTIFUL AND STYLISH HIGH-DEF GRAPHICS CARD */
                 <div className="space-y-4 animate-fade-in">
-                  <div className="p-4 bg-slate-950/80 rounded-2xl border border-slate-850 space-y-4 relative">
+                  <div className="p-3 md:p-4 bg-slate-950/80 rounded-2xl border border-slate-850 space-y-3 md:space-y-4 relative">
                     
                     {/* Floating dynamic design indicators */}
-                    <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2">
+                    <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-2">
                       <div>
                         <h4 className="text-xs font-bold text-slate-100 uppercase tracking-wide flex items-center gap-1.5">
                           <Activity className="h-3.5 w-3.5 text-brand-cyan animate-pulse" />
@@ -1319,7 +1319,7 @@ export function WeeklyGoalModal({
                         <p className="text-[9px] text-slate-450 mt-0.5 leading-tight">Linha do tempo diária registrando faturamentos e lucros vs meta diária de R$ {dailyMetaGoal.toLocaleString("pt-BR")}</p>
                       </div>
                       
-                      <div className="flex items-center gap-3 text-[9.5px] font-mono">
+                      <div className="flex flex-wrap items-center gap-3 text-[9.5px] font-mono">
                         <span className="flex items-center gap-1.5 text-emerald-450 font-bold">
                           <span className="w-2.5 h-2.5 rounded bg-emerald-400/80 block shrink-0" /> Lucro Líquido
                         </span>
@@ -1330,7 +1330,7 @@ export function WeeklyGoalModal({
                     </div>
 
                     {/* Chart layout wrapper */}
-                    <div className="h-60 sm:h-68 w-full select-none">
+                    <div className="h-56 md:h-68 w-full select-none">
                       <ResponsiveContainer width="100%" height="100%">
                         <AreaChart
                           data={reportData}
@@ -1429,7 +1429,7 @@ export function WeeklyGoalModal({
                           key={d.dateStr}
                           type="button"
                           onClick={() => handleDayClick(d.dateStr)}
-                          className={`w-full p-3 rounded-2xl border flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3.5 text-left transition-all cursor-pointer hover:scale-[1.015] hover:bg-slate-950/80 active:scale-[0.985] group ${
+                          className={`w-full p-3 rounded-2xl border flex flex-col md:flex-row md:items-center md:justify-between gap-2.5 md:gap-3.5 text-left transition-all cursor-pointer hover:scale-[1.015] hover:bg-slate-950/80 active:scale-[0.985] group ${
                             isToday 
                               ? "bg-slate-950 border-brand-cyan/40 shadow-[0_0_12.5px_rgba(34,211,238,0.08)]" 
                               : "bg-slate-950/40 border-slate-850 hover:bg-slate-950/70"
@@ -1474,15 +1474,15 @@ export function WeeklyGoalModal({
                           </div>
 
                           {/* Right dynamic statuses */}
-                          <div className="flex items-center justify-between sm:justify-end gap-4 border-t sm:border-t-0 border-slate-850/60 pt-2 sm:pt-0">
-                            <div className="text-left sm:text-right">
+                          <div className="flex items-center justify-between md:justify-end gap-3 md:gap-4 border-t md:border-t-0 border-slate-850/60 pt-2 md:pt-0">
+                            <div className="text-left md:text-right">
                               <p className="text-[9px] font-medium text-slate-500 uppercase tracking-wider font-sans">Lucro Líquido</p>
-                              <strong className={`text-xs sm:text-sm font-black font-mono tracking-tight ${d.netProfit >= d.dailyMetaGoal && d.dailyMetaGoal > 0 ? "text-emerald-400" : d.netProfit < 0 ? "text-rose-500" : "text-slate-200"}`}>
+                              <strong className={`text-xs md:text-sm font-black font-mono tracking-tight ${d.netProfit >= d.dailyMetaGoal && d.dailyMetaGoal > 0 ? "text-emerald-400" : d.netProfit < 0 ? "text-rose-500" : "text-slate-200"}`}>
                                 R$ {d.netProfit.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}
                               </strong>
                             </div>
 
-                            <div className="min-w-[125px] flex justify-end shrink-0">
+                            <div className="min-w-0 md:min-w-[125px] flex justify-end shrink-0">
                               {d.dailyMetaGoal === 0 ? (
                                 <span className="text-[9px] font-bold text-slate-400 bg-slate-900 border border-slate-800 px-2.5 py-1 rounded-lg flex items-center gap-1 uppercase font-sans">
                                   <Target className="h-3 w-3 text-slate-400" />
@@ -1522,7 +1522,7 @@ export function WeeklyGoalModal({
         </div>
 
         {/* Legend Dynamic Footer */}
-        <div className="p-3 bg-slate-950 border-t border-slate-805 flex flex-col sm:flex-row items-center justify-between gap-3 shrink-0 font-sans">
+        <div className="p-3 bg-slate-950 border-t border-slate-805 flex flex-col md:flex-row items-center justify-between gap-2.5 md:gap-3 shrink-0 font-sans">
           <div className="flex items-center gap-1.5 text-left text-[9px] text-slate-450 max-w-xl">
             <TrendingUp className="h-3.5 w-3.5 text-brand-cyan shrink-0" />
             <span>Fórmula: Lucros líquidos calculados deduzindo-se custo operacional, fretes de motoboys e gastos excepcionais do dia correspondente.</span>
@@ -1530,7 +1530,7 @@ export function WeeklyGoalModal({
           <button
             type="button"
             onClick={onClose}
-            className="w-full sm:w-auto px-5 py-2 rounded-xl bg-slate-900 border border-slate-800 hover:bg-slate-850 hover:border-slate-750 text-slate-200 text-xs font-bold transition-all cursor-pointer shadow-md select-none hover:text-white"
+            className="w-full md:w-auto px-5 py-2 rounded-xl bg-slate-900 border border-slate-800 hover:bg-slate-850 hover:border-slate-750 text-slate-200 text-xs font-bold transition-all cursor-pointer shadow-md select-none hover:text-white"
           >
             Fechar Janela
           </button>
@@ -1538,12 +1538,12 @@ export function WeeklyGoalModal({
 
         {/* Day Details Report Modal Overlay */}
         {selectedDayDetails && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/85 backdrop-blur-md p-4 animate-fade-in">
-            <div className="bg-slate-900 border border-slate-800 rounded-3xl w-full max-w-2xl overflow-hidden shadow-2xl flex flex-col max-h-[85vh]">
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/85 backdrop-blur-md p-2.5 md:p-4 animate-fade-in">
+            <div className="bg-slate-900 border border-slate-800 rounded-2xl md:rounded-3xl w-full max-w-2xl overflow-hidden shadow-2xl flex flex-col max-h-[90dvh] md:max-h-[85vh]">
               {/* Header */}
-              <div className="p-4 border-b border-slate-800 flex items-center justify-between bg-slate-950/50">
+              <div className="p-3.5 md:p-4 border-b border-slate-800 flex items-center justify-between bg-slate-950/50">
                 <div>
-                  <h3 className="text-sm font-black text-slate-100 uppercase tracking-wider font-mono">
+                  <h3 className="text-xs md:text-sm font-black text-slate-100 uppercase tracking-wider font-mono">
                     Relatório de Vendas e Caixa Diário
                   </h3>
                   <p className="text-xs text-brand-cyan font-mono font-bold mt-0.5">
@@ -1560,30 +1560,30 @@ export function WeeklyGoalModal({
               </div>
 
               {/* Content - Scrollable */}
-              <div className="p-5 overflow-y-auto space-y-5">
+              <div className="p-3.5 md:p-5 overflow-y-auto space-y-4 md:space-y-5">
                 {/* Stats Grid */}
-                <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
-                  <div className="p-3 bg-slate-950/40 rounded-xl border border-slate-850">
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-2 md:gap-2.5">
+                  <div className="p-2.5 md:p-3 bg-slate-950/40 rounded-xl border border-slate-850">
                     <span className="text-[8px] uppercase font-bold text-slate-500 font-mono">Entradas (Caixa)</span>
-                    <p className="text-sm font-extrabold font-mono text-emerald-450 mt-0.5">
+                    <p className="text-xs md:text-sm font-extrabold font-mono text-emerald-450 mt-0.5">
                       R$ {selectedDayDetails.realPaymentsReceived.toLocaleString("pt-BR", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                     </p>
                   </div>
-                  <div className="p-3 bg-slate-950/40 rounded-xl border border-slate-850">
+                  <div className="p-2.5 md:p-3 bg-slate-950/40 rounded-xl border border-slate-850">
                     <span className="text-[8px] uppercase font-bold text-slate-500 font-mono">Custos Venda</span>
-                    <p className="text-sm font-extrabold font-mono text-slate-350 mt-0.5">
+                    <p className="text-xs md:text-sm font-extrabold font-mono text-slate-350 mt-0.5">
                       R$ {(selectedDayDetails.daySaleOperationCost + selectedDayDetails.dayMotoboyCost).toLocaleString("pt-BR", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                     </p>
                   </div>
-                  <div className="p-3 bg-slate-950/40 rounded-xl border border-slate-850">
+                  <div className="p-2.5 md:p-3 bg-slate-950/40 rounded-xl border border-slate-850">
                     <span className="text-[8px] uppercase font-bold text-slate-500 font-mono">Despesas</span>
-                    <p className="text-sm font-extrabold font-mono text-rose-450 mt-0.5">
+                    <p className="text-xs md:text-sm font-extrabold font-mono text-rose-450 mt-0.5">
                       R$ {selectedDayDetails.dayExpenses.toLocaleString("pt-BR", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                     </p>
                   </div>
-                  <div className="p-3 bg-slate-950/40 rounded-xl border border-slate-850">
+                  <div className="p-2.5 md:p-3 bg-slate-950/40 rounded-xl border border-slate-850">
                     <span className="text-[8px] uppercase font-bold text-slate-500 font-mono">Lucro Líquido</span>
-                    <p className={`text-sm font-extrabold font-mono mt-0.5 ${selectedDayDetails.netProfit >= 0 ? "text-emerald-450" : "text-rose-455"}`}>
+                    <p className={`text-xs md:text-sm font-extrabold font-mono mt-0.5 ${selectedDayDetails.netProfit >= 0 ? "text-emerald-450" : "text-rose-455"}`}>
                       R$ {selectedDayDetails.netProfit.toLocaleString("pt-BR", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                     </p>
                   </div>
@@ -1596,20 +1596,20 @@ export function WeeklyGoalModal({
                     <span>Pedidos e Recebimentos do Dia ({selectedDayDetails.salesList.length})</span>
                   </h4>
                   {selectedDayDetails.salesList.length > 0 ? (
-                    <div className="border border-slate-850 rounded-xl overflow-hidden bg-slate-950/15 max-h-48 overflow-y-auto">
+                    <div className="border border-slate-850 rounded-xl overflow-x-auto bg-slate-950/15 max-h-48 overflow-y-auto">
                       <table className="w-full text-left text-[11px]">
                         <thead className="bg-slate-950/70 text-slate-400 uppercase font-mono text-[8px] border-b border-slate-850 sticky top-0">
                           <tr>
-                            <th className="p-2.5 font-bold">Cliente</th>
-                            <th className="p-2.5 font-bold text-right">Total Pedido</th>
-                            <th className="p-2.5 font-bold text-right text-emerald-450">Valor Pago (Hoje)</th>
-                            <th className="p-2.5 font-bold text-right">Custos</th>
+                            <th className="p-2 md:p-2.5 font-bold">Cliente</th>
+                            <th className="p-2 md:p-2.5 font-bold text-right">Total Pedido</th>
+                            <th className="p-2 md:p-2.5 font-bold text-right text-emerald-450">Valor Pago (Hoje)</th>
+                            <th className="p-2 md:p-2.5 font-bold text-right">Custos</th>
                           </tr>
                         </thead>
                         <tbody className="divide-y divide-slate-850/50">
                           {selectedDayDetails.salesList.map((s: any, idx: number) => (
                             <tr key={idx} className="hover:bg-slate-900/30">
-                              <td className="p-2.5 font-bold text-slate-200">
+                              <td className="p-2 md:p-2.5 font-bold text-slate-200">
                                 {s.clientName}
                                 {!s.isOrderToday && (
                                   <span className="ml-1 text-[7px] bg-slate-800 text-slate-400 px-1 py-[0.5px] rounded font-mono font-normal">
@@ -1617,13 +1617,13 @@ export function WeeklyGoalModal({
                                   </span>
                                 )}
                               </td>
-                              <td className="p-2.5 font-mono text-right text-slate-400">
+                              <td className="p-2 md:p-2.5 font-mono text-right text-slate-400">
                                 R$ {s.totalValue.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}
                               </td>
-                              <td className="p-2.5 font-mono text-right font-bold text-emerald-450">
+                              <td className="p-2 md:p-2.5 font-mono text-right font-bold text-emerald-450">
                                 R$ {s.paidAmount.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}
                               </td>
-                              <td className="p-2.5 font-mono text-right text-slate-455">
+                              <td className="p-2 md:p-2.5 font-mono text-right text-slate-455">
                                 R$ {s.cost.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}
                               </td>
                             </tr>
@@ -1645,21 +1645,21 @@ export function WeeklyGoalModal({
                     <span>Despesas Gerais ({selectedDayDetails.expensesList.length})</span>
                   </h4>
                   {selectedDayDetails.expensesList.length > 0 ? (
-                    <div className="border border-slate-850 rounded-xl overflow-hidden bg-slate-950/15 max-h-40 overflow-y-auto">
+                    <div className="border border-slate-850 rounded-xl overflow-x-auto bg-slate-950/15 max-h-40 overflow-y-auto">
                       <table className="w-full text-left text-[11px]">
                         <thead className="bg-slate-950/70 text-slate-400 uppercase font-mono text-[8px] border-b border-slate-850 sticky top-0">
                           <tr>
-                            <th className="p-2.5 font-bold">Descrição</th>
-                            <th className="p-2.5 font-bold">Categoria</th>
-                            <th className="p-2.5 font-bold text-right">Valor</th>
+                            <th className="p-2 md:p-2.5 font-bold">Descrição</th>
+                            <th className="p-2 md:p-2.5 font-bold">Categoria</th>
+                            <th className="p-2 md:p-2.5 font-bold text-right">Valor</th>
                           </tr>
                         </thead>
                         <tbody className="divide-y divide-slate-850/50">
                           {selectedDayDetails.expensesList.map((e: any, idx: number) => (
                             <tr key={idx} className="hover:bg-slate-900/30">
-                              <td className="p-2.5 text-slate-200 font-medium">{e.description}</td>
-                              <td className="p-2.5 text-slate-400">{e.category || "Geral"}</td>
-                              <td className="p-2.5 font-mono text-right text-rose-400 font-bold">
+                              <td className="p-2 md:p-2.5 text-slate-200 font-medium">{e.description}</td>
+                              <td className="p-2 md:p-2.5 text-slate-400">{e.category || "Geral"}</td>
+                              <td className="p-2 md:p-2.5 font-mono text-right text-rose-400 font-bold">
                                 - R$ {e.value.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}
                               </td>
                             </tr>
@@ -1676,7 +1676,7 @@ export function WeeklyGoalModal({
               </div>
 
               {/* Footer Controls */}
-              <div className="p-4 border-t border-slate-800 flex items-center justify-between bg-slate-950/50">
+              <div className="p-3 md:p-4 border-t border-slate-800 flex flex-col-reverse md:flex-row items-stretch md:items-center justify-between gap-2 bg-slate-950/50">
                 <button
                   type="button"
                   onClick={() => setSelectedDayDetails(null)}
@@ -1687,7 +1687,7 @@ export function WeeklyGoalModal({
                 <button
                   type="button"
                   onClick={() => printReport(selectedDayDetails.dateStr, selectedDayDetails)}
-                  className="px-4 py-2 bg-brand-cyan hover:bg-cyan-400 text-slate-950 rounded-xl text-[11px] font-black flex items-center gap-1.5 cursor-pointer shadow-[0_0_15px_rgba(34,211,238,0.25)] transition-all"
+                  className="px-4 py-2 bg-brand-cyan hover:bg-cyan-400 text-slate-950 rounded-xl text-[11px] font-black flex items-center justify-center gap-1.5 cursor-pointer shadow-[0_0_15px_rgba(34,211,238,0.25)] transition-all"
                 >
                   <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"></path>

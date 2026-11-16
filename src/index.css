@@ -209,4 +209,28 @@ body.light .recharts-legend-item-text {
   }
 }
 
+/* ========================================================= */
+/* TELA CHEIA ADAPTÁVEL (VIEWPORT SCALING) - EXCLUSIVO MOBILE */
+/* Mantém o layout de PC (>= 768px) 100% intocado             */
+/* ========================================================= */
+@media (max-width: 767px) {
+  html {
+    font-size: 14px;
+    max-width: 100vw;
+    overflow-x: hidden;
+  }
 
+  body,
+  #root {
+    max-width: 100vw;
+    min-height: 100dvh;
+    overflow-x: hidden;
+  }
+
+  input,
+  select,
+  textarea {
+    max-width: 100%;
+    min-width: 0;
+  }
+}

@@ -63,7 +63,7 @@ export const TrialCountdown: React.FC<TrialCountdownProps> = ({ currentUser }) =
   return (
     <div
       id="trial-countdown-indicator"
-      className="fixed bottom-3 right-3 z-50 pointer-events-auto select-none"
+      className="fixed bottom-3 right-3 z-50 pointer-events-auto select-none max-w-[calc(100vw-1.5rem)]"
     >
       {trialInfo.type === "normal" ? (
         <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-slate-900/90 border border-emerald-500/40 text-emerald-400 text-xs font-semibold shadow-lg backdrop-blur-sm transition-all">

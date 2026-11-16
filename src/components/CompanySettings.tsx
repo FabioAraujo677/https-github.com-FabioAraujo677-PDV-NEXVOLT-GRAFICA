@@ -1678,12 +1678,12 @@ CREATE TABLE IF NOT EXISTS meus_dados (
   };
 
   return (
-    <div className="bg-brand-card border border-slate-800 rounded-2xl p-4 sm:p-6 space-y-6 relative w-full max-w-none">
+    <div className="bg-brand-card border border-slate-800 rounded-2xl p-3 md:p-6 space-y-4 md:space-y-6 relative w-full max-w-none overflow-x-hidden">
       {/* 📋 HEADER DE TÍTULO */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 border-b border-slate-800 pb-4">
-        <div>
-          <h2 className="text-lg sm:text-xl font-black text-white flex items-center gap-2.5">
-            <Building2 className="h-5 w-5 text-brand-magenta" />
+      <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-2.5 md:gap-3 border-b border-slate-800 pb-3.5 md:pb-4">
+        <div className="min-w-0">
+          <h2 className="text-base md:text-xl font-black text-white flex items-center gap-2 md:gap-2.5">
+            <Building2 className="h-5 w-5 text-brand-magenta shrink-0" />
             Configurações e Gestão da Empresa
           </h2>
           <p className="text-xs text-slate-400 mt-0.5">
@@ -1700,23 +1700,23 @@ CREATE TABLE IF NOT EXISTS meus_dados (
       </div>
 
       {/* 🏢 SEÇÃO 1: DADOS CADASTRAIS E PERFIL DA EMPRESA */}
-      <div className="space-y-4 bg-slate-950/40 border border-slate-850 rounded-xl p-4 sm:p-5">
+      <div className="space-y-3.5 md:space-y-4 bg-slate-950/40 border border-slate-850 rounded-xl p-3 md:p-5">
         <div className="flex items-center gap-2.5">
-          <div className="p-1.5 rounded-lg bg-brand-magenta/10 border border-brand-magenta/30 text-brand-magenta">
+          <div className="p-1.5 rounded-lg bg-brand-magenta/10 border border-brand-magenta/30 text-brand-magenta shrink-0">
             <Building2 className="h-4 w-4" />
           </div>
-          <div>
-            <h3 className="text-sm font-bold text-white uppercase tracking-wider">1. Dados Cadastrais & Perfil da Empresa</h3>
+          <div className="min-w-0">
+            <h3 className="text-xs md:text-sm font-bold text-white uppercase tracking-wider">1. Dados Cadastrais & Perfil da Empresa</h3>
             <p className="text-[11px] text-slate-400">Informações principais e logotipo usados nos relatórios e documentos.</p>
           </div>
         </div>
 
-        <div className="grid grid-cols-1 xl:grid-cols-12 gap-4 items-start">
+        <div className="grid grid-cols-1 xl:grid-cols-12 gap-3.5 md:gap-4 items-start">
           {/* Inputs em Grid Compacto de 4 Linhas */}
-          <div className="xl:col-span-8">
-            <div className="grid grid-cols-12 gap-2.5 sm:gap-3">
+          <div className="xl:col-span-8 min-w-0">
+            <div className="grid grid-cols-12 gap-2.5 md:gap-3">
               {/* Linha 1: Nome Fantasia (7 colunas) + CNPJ/CPF (5 colunas) */}
-              <div className="col-span-12 sm:col-span-7 space-y-1">
+              <div className="col-span-12 md:col-span-7 space-y-1 min-w-0">
                 <label className="text-[10px] font-semibold text-slate-300 uppercase tracking-wider flex items-center gap-1">
                   Nome Fantasia <span className="text-brand-magenta">*</span>
                 </label>
@@ -1725,11 +1725,11 @@ CREATE TABLE IF NOT EXISTS meus_dados (
                   placeholder="Ex: Ar e Clima Assistência Técnica"
                   value={tradingName}
                   onChange={(e) => setTradingName(e.target.value)}
-                  className="w-full bg-slate-950 border border-slate-800 rounded-lg h-9 px-3 text-xs sm:text-sm text-slate-100 placeholder-slate-600 focus:outline-none focus:border-brand-magenta transition-all"
+                  className="w-full bg-slate-950 border border-slate-800 rounded-lg h-9 px-3 text-xs md:text-sm text-slate-100 placeholder-slate-600 focus:outline-none focus:border-brand-magenta transition-all"
                 />
               </div>
 
-              <div className="col-span-12 sm:col-span-5 space-y-1">
+              <div className="col-span-12 md:col-span-5 space-y-1 min-w-0">
                 <label className="text-[10px] font-semibold text-slate-300 uppercase tracking-wider">
                   CNPJ ou CPF <span className="text-slate-500 font-normal">(Opcional)</span>
                 </label>
@@ -1738,12 +1738,12 @@ CREATE TABLE IF NOT EXISTS meus_dados (
                   placeholder="Ex: 00.000.000/0001-00"
                   value={cnpjCpf}
                   onChange={(e) => setCnpjCpf(e.target.value)}
-                  className="w-full bg-slate-950 border border-slate-800 rounded-lg h-9 px-3 text-xs sm:text-sm text-slate-100 placeholder-slate-600 focus:outline-none focus:border-brand-magenta transition-all"
+                  className="w-full bg-slate-950 border border-slate-800 rounded-lg h-9 px-3 text-xs md:text-sm text-slate-100 placeholder-slate-600 focus:outline-none focus:border-brand-magenta transition-all"
                 />
               </div>
 
               {/* Linha 2: Telefone (4 colunas) + CEP (3 colunas) + Chave PIX (5 colunas) */}
-              <div className="col-span-12 sm:col-span-4 space-y-1">
+              <div className="col-span-12 md:col-span-4 space-y-1 min-w-0">
                 <label className="text-[10px] font-semibold text-slate-300 uppercase tracking-wider">
                   Telefone de Contato
                 </label>
@@ -1752,11 +1752,11 @@ CREATE TABLE IF NOT EXISTS meus_dados (
                   placeholder="Ex: (11) 98888-7777"
                   value={phone}
                   onChange={(e) => handlePhoneChange(e.target.value)}
-                  className="w-full bg-slate-950 border border-slate-800 rounded-lg h-9 px-3 text-xs sm:text-sm text-slate-100 placeholder-slate-600 focus:outline-none focus:border-brand-magenta transition-all"
+                  className="w-full bg-slate-950 border border-slate-800 rounded-lg h-9 px-3 text-xs md:text-sm text-slate-100 placeholder-slate-600 focus:outline-none focus:border-brand-magenta transition-all"
                 />
               </div>
 
-              <div className="col-span-12 sm:col-span-3 space-y-1">
+              <div className="col-span-12 md:col-span-3 space-y-1 min-w-0">
                 <label className="text-[10px] font-semibold text-slate-300 uppercase tracking-wider flex items-center gap-1">
                   CEP <span className="text-slate-500 font-normal">(Busca)</span>
                 </label>
@@ -1766,7 +1766,7 @@ CREATE TABLE IF NOT EXISTS meus_dados (
                     placeholder="01311-200"
                     value={cep}
                     onChange={(e) => handleCepChange(e.target.value)}
-                    className="w-full bg-slate-950 border border-slate-800 rounded-lg h-9 pl-3 pr-8 text-xs sm:text-sm text-slate-100 placeholder-slate-600 focus:outline-none focus:border-brand-magenta transition-all font-mono"
+                    className="w-full bg-slate-950 border border-slate-800 rounded-lg h-9 pl-3 pr-8 text-xs md:text-sm text-slate-100 placeholder-slate-600 focus:outline-none focus:border-brand-magenta transition-all font-mono"
                   />
                   <button
                     type="button"
@@ -1780,7 +1780,7 @@ CREATE TABLE IF NOT EXISTS meus_dados (
                 </div>
               </div>
 
-              <div className="col-span-12 sm:col-span-5 space-y-1">
+              <div className="col-span-12 md:col-span-5 space-y-1 min-w-0">
                 <label className="text-[10px] font-semibold text-slate-300 uppercase tracking-wider">
                   Chave PIX da Empresa
                 </label>
@@ -1789,12 +1789,12 @@ CREATE TABLE IF NOT EXISTS meus_dados (
                   placeholder="Ex: CNPJ, E-mail, Celular ou Chave"
                   value={pixKey}
                   onChange={(e) => setPixKey(e.target.value)}
-                  className="w-full bg-slate-950 border border-slate-800 rounded-lg h-9 px-3 text-xs sm:text-sm text-slate-100 placeholder-slate-600 focus:outline-none focus:border-brand-magenta transition-all"
+                  className="w-full bg-slate-950 border border-slate-800 rounded-lg h-9 px-3 text-xs md:text-sm text-slate-100 placeholder-slate-600 focus:outline-none focus:border-brand-magenta transition-all"
                 />
               </div>
 
               {/* Linha 3: Logradouro / Rua (7 colunas) + Número (2 colunas) + Bairro (3 colunas) */}
-              <div className="col-span-12 sm:col-span-7 space-y-1">
+              <div className="col-span-12 md:col-span-7 space-y-1 min-w-0">
                 <label className="text-[10px] font-semibold text-slate-300 uppercase tracking-wider">
                   Logradouro / Rua
                 </label>
@@ -1803,11 +1803,11 @@ CREATE TABLE IF NOT EXISTS meus_dados (
                   placeholder="Rua, Avenida, etc."
                   value={address}
                   onChange={(e) => setAddress(e.target.value)}
-                  className="w-full bg-slate-950 border border-slate-800 rounded-lg h-9 px-3 text-xs sm:text-sm text-slate-100 placeholder-slate-600 focus:outline-none focus:border-brand-magenta transition-all"
+                  className="w-full bg-slate-950 border border-slate-800 rounded-lg h-9 px-3 text-xs md:text-sm text-slate-100 placeholder-slate-600 focus:outline-none focus:border-brand-magenta transition-all"
                 />
               </div>
 
-              <div className="col-span-12 sm:col-span-2 space-y-1">
+              <div className="col-span-12 md:col-span-2 space-y-1 min-w-0">
                 <label className="text-[10px] font-semibold text-slate-300 uppercase tracking-wider">
                   Número
                 </label>
@@ -1816,11 +1816,11 @@ CREATE TABLE IF NOT EXISTS meus_dados (
                   placeholder="Nº ou S/N"
                   value={number}
                   onChange={(e) => setNumber(e.target.value)}
-                  className="w-full bg-slate-950 border border-slate-800 rounded-lg h-9 px-3 text-xs sm:text-sm text-slate-100 placeholder-slate-600 focus:outline-none focus:border-brand-magenta transition-all"
+                  className="w-full bg-slate-950 border border-slate-800 rounded-lg h-9 px-3 text-xs md:text-sm text-slate-100 placeholder-slate-600 focus:outline-none focus:border-brand-magenta transition-all"
                 />
               </div>
 
-              <div className="col-span-12 sm:col-span-3 space-y-1">
+              <div className="col-span-12 md:col-span-3 space-y-1 min-w-0">
                 <label className="text-[10px] font-semibold text-slate-300 uppercase tracking-wider">
                   Bairro
                 </label>
@@ -1829,12 +1829,12 @@ CREATE TABLE IF NOT EXISTS meus_dados (
                   placeholder="Bairro"
                   value={neighborhood}
                   onChange={(e) => setNeighborhood(e.target.value)}
-                  className="w-full bg-slate-950 border border-slate-800 rounded-lg h-9 px-3 text-xs sm:text-sm text-slate-100 placeholder-slate-600 focus:outline-none focus:border-brand-magenta transition-all"
+                  className="w-full bg-slate-950 border border-slate-800 rounded-lg h-9 px-3 text-xs md:text-sm text-slate-100 placeholder-slate-600 focus:outline-none focus:border-brand-magenta transition-all"
                 />
               </div>
 
               {/* Linha 4: Cidade (9 colunas) + UF / Estado (3 colunas) */}
-              <div className="col-span-12 sm:col-span-9 space-y-1">
+              <div className="col-span-12 md:col-span-9 space-y-1 min-w-0">
                 <label className="text-[10px] font-semibold text-slate-300 uppercase tracking-wider">
                   Cidade
                 </label>
@@ -1843,11 +1843,11 @@ CREATE TABLE IF NOT EXISTS meus_dados (
                   placeholder="Cidade"
                   value={city}
                   onChange={(e) => setCity(e.target.value)}
-                  className="w-full bg-slate-950 border border-slate-800 rounded-lg h-9 px-3 text-xs sm:text-sm text-slate-100 placeholder-slate-600 focus:outline-none focus:border-brand-magenta transition-all"
+                  className="w-full bg-slate-950 border border-slate-800 rounded-lg h-9 px-3 text-xs md:text-sm text-slate-100 placeholder-slate-600 focus:outline-none focus:border-brand-magenta transition-all"
                 />
               </div>
 
-              <div className="col-span-12 sm:col-span-3 space-y-1">
+              <div className="col-span-12 md:col-span-3 space-y-1 min-w-0">
                 <label className="text-[10px] font-semibold text-slate-300 uppercase tracking-wider">
                   UF / Estado
                 </label>
@@ -1857,7 +1857,7 @@ CREATE TABLE IF NOT EXISTS meus_dados (
                   value={state}
                   maxLength={4}
                   onChange={(e) => setState(e.target.value)}
-                  className="w-full bg-slate-950 border border-slate-800 rounded-lg h-9 px-3 text-xs sm:text-sm text-slate-100 placeholder-slate-600 focus:outline-none focus:border-brand-magenta transition-all uppercase"
+                  className="w-full bg-slate-950 border border-slate-800 rounded-lg h-9 px-3 text-xs md:text-sm text-slate-100 placeholder-slate-600 focus:outline-none focus:border-brand-magenta transition-all uppercase"
                 />
               </div>
             </div>
@@ -1918,7 +1918,7 @@ CREATE TABLE IF NOT EXISTS meus_dados (
         </div>
 
         {/* 💾 Botão de Salvar da Seção 1 (Direto e Imediato) */}
-        <div className="pt-3 border-t border-slate-800/80 flex flex-col sm:flex-row items-center justify-between gap-2.5">
+        <div className="pt-3 border-t border-slate-800/80 flex flex-col md:flex-row items-center justify-between gap-2.5">
           <p className="text-[11px] text-slate-400">
             {statusMessage ? (
               <span className="text-emerald-400 font-medium flex items-center gap-1.5">
@@ -1932,7 +1932,7 @@ CREATE TABLE IF NOT EXISTS meus_dados (
             type="button"
             onClick={handleSave}
             disabled={savingProfile}
-            className="w-full sm:w-auto flex items-center justify-center gap-2 py-2 px-5 rounded-lg font-bold text-white bg-gradient-to-r from-brand-magenta to-brand-magenta/80 shadow-md shadow-brand-magenta/20 cursor-pointer hover:brightness-110 active:scale-95 transition-all text-xs shrink-0 disabled:opacity-50"
+            className="w-full md:w-auto flex items-center justify-center gap-2 py-2 px-5 rounded-lg font-bold text-white bg-gradient-to-r from-brand-magenta to-brand-magenta/80 shadow-md shadow-brand-magenta/20 cursor-pointer hover:brightness-110 active:scale-95 transition-all text-xs shrink-0 disabled:opacity-50"
           >
             {savingProfile ? (
               <RefreshCw className="h-3.5 w-3.5 animate-spin" />
@@ -1945,13 +1945,13 @@ CREATE TABLE IF NOT EXISTS meus_dados (
       </div>
 
       {/* ⏰ SEÇÃO 2: HORÁRIOS DE FUNCIONAMENTO & EXPEDIENTE */}
-      <div className="space-y-6 bg-slate-950/40 border border-slate-850 rounded-2xl p-6 sm:p-8">
+      <div className="space-y-4 md:space-y-6 bg-slate-950/40 border border-slate-850 rounded-2xl p-3.5 md:p-8">
         <div className="flex items-center gap-2.5">
-          <div className="p-2 rounded-xl bg-brand-cyan/10 border border-brand-cyan/30 text-brand-cyan">
+          <div className="p-2 rounded-xl bg-brand-cyan/10 border border-brand-cyan/30 text-brand-cyan shrink-0">
             <Clock className="h-5 w-5" />
           </div>
-          <div>
-            <h3 className="text-base font-bold text-white uppercase tracking-wider">2. Horários de Funcionamento & Expediente</h3>
+          <div className="min-w-0">
+            <h3 className="text-sm md:text-base font-bold text-white uppercase tracking-wider">2. Horários de Funcionamento & Expediente</h3>
             <p className="text-xs text-slate-400">Configure os horários de atendimento da sua empresa por dia da semana e o lembrete de encerramento.</p>
           </div>
         </div>
@@ -1998,8 +1998,8 @@ CREATE TABLE IF NOT EXISTS meus_dados (
             {WEEKDAYS.map((day) => {
               const hoursForDay = businessHours[day.key] || { isOpen: false, openTime: "09:00", closeTime: "18:00" };
               return (
-                <div key={day.key} className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-3 bg-slate-950 rounded-xl border border-slate-900">
-                  <div className="flex items-center gap-3 min-w-[140px]">
+                <div key={day.key} className="flex flex-col md:flex-row md:items-center justify-between gap-2.5 md:gap-3 p-2.5 md:p-3 bg-slate-950 rounded-xl border border-slate-900">
+                  <div className="flex items-center gap-3 min-w-0 md:min-w-[140px]">
                     <input
                       type="checkbox"
                       id={`day-${day.key}`}
@@ -2020,7 +2020,7 @@ CREATE TABLE IF NOT EXISTS meus_dados (
                     )}
                   </div>
 
-                  <div className="flex items-center gap-3">
+                  <div className="flex flex-wrap items-center gap-2.5 md:gap-3">
                     <div className="flex items-center gap-1.5">
                       <span className="text-[11px] text-slate-400">Início:</span>
                       <input
@@ -2048,8 +2048,8 @@ CREATE TABLE IF NOT EXISTS meus_dados (
           </div>
 
           {/* Lembrete Agradável de Fechamento */}
-          <div className="p-5 bg-gradient-to-br from-slate-950 via-slate-900 to-amber-950/20 rounded-xl border border-amber-500/30 space-y-4">
-            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 pb-3 border-b border-slate-850">
+          <div className="p-3.5 md:p-5 bg-gradient-to-br from-slate-950 via-slate-900 to-amber-950/20 rounded-xl border border-amber-500/30 space-y-3.5 md:space-y-4">
+            <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-2.5 md:gap-3 pb-3 border-b border-slate-850">
               <div className="flex items-center gap-3">
                 <div className="p-2.5 rounded-xl bg-amber-500/10 border border-amber-500/30 text-amber-400 shrink-0">
                   <Sunset className="h-5 w-5" />
@@ -2106,24 +2106,24 @@ CREATE TABLE IF NOT EXISTS meus_dados (
       </div>
 
       {/* 💵 SEÇÃO 3: CONTROLE E ABERTURA DO CAIXA */}
-      <div className="space-y-6 bg-slate-950/40 border border-slate-850 rounded-2xl p-6 sm:p-8">
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+      <div className="space-y-4 md:space-y-6 bg-slate-950/40 border border-slate-850 rounded-2xl p-3.5 md:p-8">
+        <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-2.5 md:gap-3">
           <div className="flex items-center gap-2.5">
-            <div className="p-2 rounded-xl bg-brand-magenta/10 border border-brand-magenta/30 text-brand-magenta">
+            <div className="p-2 rounded-xl bg-brand-magenta/10 border border-brand-magenta/30 text-brand-magenta shrink-0">
               <Wallet className="h-5 w-5" />
             </div>
-            <div>
-              <h3 className="text-base font-bold text-white uppercase tracking-wider">3. Controle e Abertura do Caixa (Equipe)</h3>
+            <div className="min-w-0">
+              <h3 className="text-sm md:text-base font-bold text-white uppercase tracking-wider">3. Controle e Abertura do Caixa (Equipe)</h3>
               <p className="text-xs text-slate-400">Gerencie o status atual do caixa compartilhado para todos os operadores.</p>
             </div>
           </div>
-          <span className="px-3 py-1 rounded-full text-xs font-mono font-bold bg-cyan-500/15 text-cyan-300 border border-cyan-500/25">
+          <span className="self-start md:self-auto px-3 py-1 rounded-full text-xs font-mono font-bold bg-cyan-500/15 text-cyan-300 border border-cyan-500/25">
             Caixa Compartilhado
           </span>
         </div>
 
         {cashRegister?.currentSession ? (
-          <div className="p-5 bg-emerald-500/10 border border-emerald-500/20 rounded-xl flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+          <div className="p-3.5 md:p-5 bg-emerald-500/10 border border-emerald-500/20 rounded-xl flex flex-col md:flex-row md:items-center md:justify-between gap-3 md:gap-4">
             <div className="space-y-1">
               <span className="text-xs font-bold text-emerald-400 flex items-center gap-2 uppercase tracking-wider">
                 <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-ping" />
@@ -2152,15 +2152,15 @@ CREATE TABLE IF NOT EXISTS meus_dados (
                   }
                 }
               }}
-              className="py-2.5 px-5 bg-red-600 hover:bg-red-700 text-white font-bold text-xs uppercase rounded-xl shadow-lg cursor-pointer transition-all"
+              className="w-full md:w-auto py-2.5 px-5 bg-red-600 hover:bg-red-700 text-white font-bold text-xs uppercase rounded-xl shadow-lg cursor-pointer transition-all"
             >
               Encerrar Caixa 🔒
             </button>
           </div>
         ) : (
-          <div className="p-5 bg-slate-950 rounded-xl border border-slate-850 space-y-4">
+          <div className="p-3.5 md:p-5 bg-slate-950 rounded-xl border border-slate-850 space-y-3.5 md:space-y-4">
             <p className="text-xs text-slate-300">O caixa está atualmente <strong className="text-rose-400">FECHADO</strong>. Insira os dados para iniciar o expediente.</p>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-3 md:gap-4">
               <div className="space-y-1.5">
                 <label className="text-xs font-semibold text-slate-300 uppercase tracking-wider">Responsável pela Abertura</label>
                 <input
@@ -2202,14 +2202,14 @@ CREATE TABLE IF NOT EXISTS meus_dados (
       </div>
 
       {/* 👥 SEÇÃO 4: EQUIPE & ATENDENTES */}
-      <div className="space-y-4 bg-slate-950/40 border border-slate-850 rounded-2xl p-6 sm:p-8">
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+      <div className="space-y-3.5 md:space-y-4 bg-slate-950/40 border border-slate-850 rounded-2xl p-3.5 md:p-8">
+        <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3 md:gap-4">
           <div className="flex items-center gap-3">
-            <div className="p-2.5 rounded-xl bg-cyan-500/10 border border-cyan-500/30 text-cyan-400">
+            <div className="p-2.5 rounded-xl bg-cyan-500/10 border border-cyan-500/30 text-cyan-400 shrink-0">
               <UserCheck className="h-6 w-6" />
             </div>
-            <div>
-              <h3 className="text-base font-bold text-white flex items-center gap-2">
+            <div className="min-w-0">
+              <h3 className="text-sm md:text-base font-bold text-white flex flex-wrap items-center gap-2">
                 4. Atendentes Cadastrados & Auditoria de Exclusões
                 <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-cyan-500/20 text-cyan-300 border border-cyan-500/30">Admin</span>
               </h3>
@@ -2222,7 +2222,7 @@ CREATE TABLE IF NOT EXISTS meus_dados (
             <button
               type="button"
               onClick={onNavigateToAtendentes}
-              className="px-5 py-3 rounded-xl bg-gradient-to-r from-cyan-600 to-blue-600 hover:from-cyan-500 hover:to-blue-500 text-white text-xs font-bold shadow-lg shadow-cyan-600/20 border border-cyan-400/30 flex items-center justify-center gap-2 cursor-pointer whitespace-nowrap transition-all"
+              className="w-full md:w-auto px-5 py-3 rounded-xl bg-gradient-to-r from-cyan-600 to-blue-600 hover:from-cyan-500 hover:to-blue-500 text-white text-xs font-bold shadow-lg shadow-cyan-600/20 border border-cyan-400/30 flex items-center justify-center gap-2 cursor-pointer whitespace-nowrap transition-all"
             >
               <UserCheck className="h-4 w-4" />
               <span>Ver Relatório de Atendentes</span>
@@ -2232,21 +2232,21 @@ CREATE TABLE IF NOT EXISTS meus_dados (
       </div>
 
       {/* 🔔 SEÇÃO 5: NOTIFICAÇÕES, ALERTAS & LEMBRETES */}
-      <div className="space-y-6 bg-slate-950/40 border border-slate-850 rounded-2xl p-6 sm:p-8">
+      <div className="space-y-4 md:space-y-6 bg-slate-950/40 border border-slate-850 rounded-2xl p-3.5 md:p-8">
         <div className="flex items-center gap-2.5">
-          <div className="p-2 rounded-xl bg-brand-cyan/10 border border-brand-cyan/30 text-brand-cyan">
+          <div className="p-2 rounded-xl bg-brand-cyan/10 border border-brand-cyan/30 text-brand-cyan shrink-0">
             <Bell className="h-5 w-5" />
           </div>
-          <div>
-            <h3 className="text-base font-bold text-white uppercase tracking-wider">5. Preferências de Notificação & Lembretes</h3>
+          <div className="min-w-0">
+            <h3 className="text-sm md:text-base font-bold text-white uppercase tracking-wider">5. Preferências de Notificação & Lembretes</h3>
             <p className="text-xs text-slate-400">Ative sons de alerta, metas diárias e gerencie seus lembretes personalizados.</p>
           </div>
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 md:gap-6">
           {/* Sounds & Goals */}
-          <div className="space-y-4">
-            <div className="bg-slate-950 border border-slate-850 rounded-xl p-4 flex items-center justify-between gap-4">
+          <div className="space-y-3 md:space-y-4">
+            <div className="bg-slate-950 border border-slate-850 rounded-xl p-3.5 md:p-4 flex flex-wrap items-center justify-between gap-3 md:gap-4">
               <div className="space-y-1">
                 <span className="text-xs font-bold text-white block">Sons de Alerta e Caixa</span>
                 <span className="text-[11px] text-slate-400 block">Toque de sino para novas vendas e metas.</span>
@@ -2368,15 +2368,15 @@ CREATE TABLE IF NOT EXISTS meus_dados (
       </div>
 
       {/* 🛡️ SEÇÃO 6: CONTROLE DE BACKUP DO SISTEMA (CENTRAL DE SEGURANÇA) */}
-      <div className="space-y-6 bg-slate-950/70 border border-slate-850 rounded-2xl p-6 sm:p-8 shadow-2xl">
+      <div className="space-y-4 md:space-y-6 bg-slate-950/70 border border-slate-850 rounded-2xl p-3.5 md:p-8 shadow-2xl">
         {/* Header Bar */}
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-850 pb-5">
-          <div className="flex items-start sm:items-center gap-3">
-            <div className="p-2.5 rounded-xl bg-gradient-to-br from-brand-cyan/20 via-slate-900 to-brand-magenta/20 border border-brand-cyan/40 text-brand-cyan shadow-lg shadow-cyan-950/50">
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-3 md:gap-4 border-b border-slate-850 pb-4 md:pb-5">
+          <div className="flex items-start md:items-center gap-3">
+            <div className="p-2.5 rounded-xl bg-gradient-to-br from-brand-cyan/20 via-slate-900 to-brand-magenta/20 border border-brand-cyan/40 text-brand-cyan shadow-lg shadow-cyan-950/50 shrink-0">
               <ShieldAlert className="h-6 w-6" />
             </div>
-            <div>
-              <h3 className="text-base font-extrabold text-white uppercase tracking-wider flex items-center gap-2">
+            <div className="min-w-0">
+              <h3 className="text-sm md:text-base font-extrabold text-white uppercase tracking-wider flex items-center gap-2">
                 CONTROLE DE BACKUP DO SISTEMA (CENTRAL DE SEGURANÇA)
               </h3>
               <p className="text-xs text-slate-400 mt-0.5">
@@ -2385,7 +2385,7 @@ CREATE TABLE IF NOT EXISTS meus_dados (
             </div>
           </div>
 
-          <div className="flex items-center gap-2.5 shrink-0">
+          <div className="flex flex-wrap items-center gap-2 md:gap-2.5 shrink-0">
             <button
               type="button"
               onClick={() => setShowSqlScriptModal(true)}
@@ -2444,7 +2444,7 @@ CREATE TABLE IF NOT EXISTS meus_dados (
           });
 
           return (
-            <div className="rounded-3xl bg-gradient-to-br from-slate-950 via-slate-900 to-emerald-950/20 border-2 border-emerald-500/30 p-5 sm:p-7 space-y-5 shadow-2xl">
+            <div className="rounded-2xl md:rounded-3xl bg-gradient-to-br from-slate-950 via-slate-900 to-emerald-950/20 border-2 border-emerald-500/30 p-3.5 md:p-7 space-y-4 md:space-y-5 shadow-2xl">
               <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 border-b border-slate-800/80 pb-4">
                 <div className="flex items-start gap-3">
                   <div className="p-2.5 rounded-xl bg-emerald-500/15 border border-emerald-500/30 text-emerald-400 shrink-0">
@@ -2646,7 +2646,7 @@ CREATE TABLE IF NOT EXISTS meus_dados (
                     Nenhuma cópia diária salva localmente ainda. Ative acima ou clique em "Executar Agora".
                   </div>
                 ) : (
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 max-h-[180px] overflow-y-auto pr-1">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-2.5 max-h-[180px] overflow-y-auto pr-1">
                     {dailyBackupHistory.map((snap) => (
                       <div
                         key={snap.id}
@@ -2684,7 +2684,7 @@ CREATE TABLE IF NOT EXISTS meus_dados (
         })()}
 
         {/* 1. SEÇÃO PRINCIPAL: ARQUIVO ÚNICO CONSOLIDADO (.JSON) */}
-        <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950 border-2 border-slate-800 hover:border-brand-magenta/40 transition-all p-6 sm:p-8 shadow-2xl space-y-6">
+        <div className="relative overflow-hidden rounded-2xl md:rounded-3xl bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950 border-2 border-slate-800 hover:border-brand-magenta/40 transition-all p-3.5 md:p-8 shadow-2xl space-y-4 md:space-y-6">
           <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6 border-b border-slate-850 pb-6">
             <div className="space-y-2 max-w-2xl">
               <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-brand-magenta/15 border border-brand-magenta/30 text-brand-magenta text-[11px] font-black uppercase tracking-widest">
@@ -2785,8 +2785,8 @@ CREATE TABLE IF NOT EXISTS meus_dados (
         </div>
 
         {/* 2. HISTÓRICO DE BACKUPS SALVOS NA NUVEM (SUPABASE) */}
-        <div className="bg-slate-950/80 border border-slate-850 rounded-2xl p-5 sm:p-6 space-y-4 shadow-xl">
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-850 pb-3">
+        <div className="bg-slate-950/80 border border-slate-850 rounded-2xl p-3.5 md:p-6 space-y-3.5 md:space-y-4 shadow-xl">
+          <div className="flex flex-col md:flex-row md:items-center justify-between gap-2.5 md:gap-3 border-b border-slate-850 pb-3">
             <div className="flex items-center gap-2.5">
               <div className="p-2 rounded-lg bg-pink-500/15 border border-pink-500/30 text-pink-400">
                 <Database className="h-4 w-4" />
@@ -2889,7 +2889,7 @@ CREATE TABLE IF NOT EXISTS meus_dados (
           </div>
         </div>
 
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-3 md:gap-4">
           <div className="space-y-1">
             <h4 className="text-sm font-bold text-white">Zerar / Resetar Todos os Dados</h4>
             <p className="text-xs text-slate-400 max-w-xl leading-relaxed">
@@ -2903,7 +2903,7 @@ CREATE TABLE IF NOT EXISTS meus_dados (
               setResetConfirmText("");
               setShowResetModal(true);
             }}
-            className="px-5 py-3 bg-red-600 hover:bg-red-500 text-white rounded-xl text-xs font-black uppercase tracking-wider transition-all duration-200 cursor-pointer shadow-lg shadow-red-950/60 shrink-0 flex items-center gap-2"
+            className="w-full md:w-auto justify-center px-5 py-3 bg-red-600 hover:bg-red-500 text-white rounded-xl text-xs font-black uppercase tracking-wider transition-all duration-200 cursor-pointer shadow-lg shadow-red-950/60 shrink-0 flex items-center gap-2"
           >
             <ServerCrash className="h-4 w-4" />
             <span>Zerar / Resetar Todos os Dados</span>
@@ -2912,12 +2912,12 @@ CREATE TABLE IF NOT EXISTS meus_dados (
       </div>
 
       {/* 💾 FOOTER SAVE BUTTON */}
-      <div className="pt-6 border-t border-slate-800 flex justify-end">
+      <div className="pt-4 md:pt-6 border-t border-slate-800 flex justify-end">
         <button
           type="button"
           onClick={handleSave}
           disabled={savingProfile}
-          className="flex items-center gap-2 py-3 px-8 rounded-xl font-bold text-white bg-gradient-to-r from-brand-magenta to-brand-magenta/80 shadow-lg shadow-brand-magenta/20 cursor-pointer hover:brightness-110 active:scale-95 transition-all text-sm font-sans disabled:opacity-50"
+          className="w-full md:w-auto justify-center flex items-center gap-2 py-3 px-8 rounded-xl font-bold text-white bg-gradient-to-r from-brand-magenta to-brand-magenta/80 shadow-lg shadow-brand-magenta/20 cursor-pointer hover:brightness-110 active:scale-95 transition-all text-sm font-sans disabled:opacity-50"
         >
           {savingProfile ? <RefreshCw className="h-4 w-4 animate-spin" /> : <Sparkles className="h-4 w-4" />}
           <span>{savingProfile ? "Salvando..." : "Salvar Registro de Empresa"}</span>
@@ -2926,8 +2926,8 @@ CREATE TABLE IF NOT EXISTS meus_dados (
 
       {/* 📋 MODAL DE CONFIRMAÇÃO DE RESTAURAÇÃO DE BACKUP */}
       {backupPreview && (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/80 backdrop-blur-md animate-fadeIn">
-          <div className="bg-slate-900 border border-slate-750 rounded-2xl max-w-2xl w-full p-6 sm:p-7 shadow-2xl space-y-6 max-h-[92vh] overflow-y-auto">
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-2.5 md:p-4 bg-black/80 backdrop-blur-md animate-fadeIn">
+          <div className="bg-slate-900 border border-slate-750 rounded-2xl max-w-2xl w-full p-4 md:p-7 shadow-2xl space-y-4 md:space-y-6 max-h-[92dvh] md:max-h-[92vh] overflow-y-auto">
             {/* Modal Header */}
             <div className="flex items-center justify-between border-b border-slate-800 pb-4">
               <div className="flex items-center gap-3">
@@ -3022,7 +3022,7 @@ CREATE TABLE IF NOT EXISTS meus_dados (
               <span className="text-xs font-bold uppercase tracking-wider text-slate-400 block">
                 Resumo dos Dados que Serão Restaurados
               </span>
-              <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-2.5 md:gap-3">
                 <div className="p-3 bg-slate-950/70 border border-slate-850 rounded-xl">
                   <div className="flex items-center gap-2 text-cyan-400 text-xs font-semibold">
                     <Package className="h-4 w-4" />
@@ -3180,8 +3180,8 @@ CREATE TABLE IF NOT EXISTS meus_dados (
 
       {/* 📄 MODAL SCRIPT SQL NUVEM */}
       {showSqlScriptModal && (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/80 backdrop-blur-md animate-fadeIn">
-          <div className="bg-slate-900 border border-slate-750 rounded-2xl max-w-2xl w-full p-6 shadow-2xl space-y-5 max-h-[90vh] overflow-y-auto">
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-2.5 md:p-4 bg-black/80 backdrop-blur-md animate-fadeIn">
+          <div className="bg-slate-900 border border-slate-750 rounded-2xl max-w-2xl w-full p-4 md:p-6 shadow-2xl space-y-4 md:space-y-5 max-h-[92dvh] md:max-h-[90vh] overflow-y-auto">
             <div className="flex items-center justify-between border-b border-slate-800 pb-3">
               <div className="flex items-center gap-3">
                 <div className="p-2.5 rounded-xl bg-brand-cyan/15 border border-brand-cyan/30 text-brand-cyan">
@@ -3244,8 +3244,8 @@ CREATE TABLE IF NOT EXISTS meus_dados (
 
       {/* 🛑 MODAL DE CONFIRMAÇÃO SEGURA DE RESET (ZERAR DADOS) */}
       {showResetModal && (
-        <div className="fixed inset-0 z-[110] flex items-center justify-center p-4 bg-black/85 backdrop-blur-md animate-fadeIn">
-          <div className="bg-slate-900 border border-red-900/60 rounded-2xl max-w-lg w-full p-6 shadow-2xl space-y-5">
+        <div className="fixed inset-0 z-[110] flex items-center justify-center p-2.5 md:p-4 bg-black/85 backdrop-blur-md animate-fadeIn">
+          <div className="bg-slate-900 border border-red-900/60 rounded-2xl max-w-lg w-full p-4 md:p-6 shadow-2xl space-y-4 md:space-y-5 max-h-[92dvh] overflow-y-auto">
             <div className="flex items-center justify-between border-b border-slate-800 pb-3">
               <div className="flex items-center gap-3">
                 <div className="p-2.5 rounded-xl bg-red-500/20 border border-red-500/40 text-red-400">

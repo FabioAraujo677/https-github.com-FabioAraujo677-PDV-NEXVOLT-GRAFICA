@@ -467,9 +467,9 @@ export function AttendantAuditReport({ sales, company }: AttendantAuditReportPro
   };
 
   return (
-    <div id="attendant-audit-panel" className="space-y-6 font-sans">
+    <div id="attendant-audit-panel" className="space-y-4 md:space-y-6 font-sans max-w-full overflow-x-hidden">
       {/* Header Banner */}
-      <div className="bg-gradient-to-r from-slate-900 via-slate-950 to-slate-900 border border-slate-800 rounded-2xl p-5 shadow-xl relative overflow-hidden">
+      <div className="bg-gradient-to-r from-slate-900 via-slate-950 to-slate-900 border border-slate-800 rounded-2xl p-3.5 md:p-5 shadow-xl relative overflow-hidden">
         <div className="absolute -top-12 -right-12 w-48 h-48 bg-emerald-500/10 rounded-full blur-3xl pointer-events-none"></div>
         <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 relative z-10">
           <div className="space-y-1">
@@ -479,7 +479,7 @@ export function AttendantAuditReport({ sales, company }: AttendantAuditReportPro
               </span>
               <span className="text-xs text-slate-400 font-mono">Auditoria & Prestação de Contas em Tempo Real</span>
             </div>
-            <h2 className="text-xl font-extrabold text-white tracking-tight flex items-center gap-2">
+            <h2 className="text-lg md:text-xl font-extrabold text-white tracking-tight flex items-center gap-2">
               Auditoria Diária de Atendentes & Vendas
             </h2>
             <p className="text-xs text-slate-400 max-w-2xl leading-relaxed">
@@ -580,13 +580,13 @@ export function AttendantAuditReport({ sales, company }: AttendantAuditReportPro
       </div>
 
       {/* Role Notice Card: Administrador vs Atendente */}
-      <div className="bg-slate-950/60 border border-slate-800/80 rounded-xl p-3.5 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 text-xs">
+      <div className="bg-slate-950/60 border border-slate-800/80 rounded-xl p-3 md:p-3.5 flex flex-col md:flex-row items-start md:items-center justify-between gap-3 text-xs">
         <div className="flex items-center gap-3">
           <div className="h-9 w-9 rounded-lg bg-emerald-500/10 border border-emerald-500/25 flex items-center justify-center text-emerald-400 shrink-0">
             <ShieldCheck className="h-5 w-5" />
           </div>
           <div>
-            <div className="text-white font-bold flex items-center gap-2">
+            <div className="text-white font-bold flex flex-wrap items-center gap-2">
               <span>Distinção de Papéis & Proteção Anti-Fraude Ativa</span>
               <span className="px-1.5 py-0.5 rounded text-[9px] font-black bg-emerald-500/20 text-emerald-400 border border-emerald-500/30">ATIVO</span>
             </div>
@@ -613,7 +613,7 @@ export function AttendantAuditReport({ sales, company }: AttendantAuditReportPro
       </div>
 
       {/* RECONCILIATION KPI CARDS (Prestação de Contas Diária) */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3.5">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3 md:gap-3.5">
         {/* CASH GAVETA (Highlight) */}
         <div className="bg-gradient-to-br from-emerald-950/40 via-slate-900 to-slate-900 border-2 border-emerald-500/40 rounded-xl p-4 shadow-lg relative overflow-hidden">
           <div className="flex items-center justify-between text-xs">
@@ -689,7 +689,7 @@ export function AttendantAuditReport({ sales, company }: AttendantAuditReportPro
       </div>
 
       {/* DISCOUNTS & DELIVERIES BAR */}
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 text-xs">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-2.5 md:gap-3 text-xs">
         <div className="bg-slate-950/50 border border-slate-800/80 rounded-xl p-3 flex items-center justify-between">
           <div className="flex items-center gap-2">
             <div className="h-8 w-8 rounded-lg bg-yellow-500/15 border border-yellow-500/30 flex items-center justify-center text-yellow-400">
@@ -739,7 +739,7 @@ export function AttendantAuditReport({ sales, company }: AttendantAuditReportPro
       {/* SEARCH & AUDIT LOG TABLE */}
       <div className="bg-slate-900 border border-slate-800 rounded-2xl overflow-hidden shadow-xl">
         {/* Table Controls */}
-        <div className="p-4 border-b border-slate-800 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 bg-slate-950/40">
+        <div className="p-3.5 md:p-4 border-b border-slate-800 flex flex-col md:flex-row items-start md:items-center justify-between gap-3 bg-slate-950/40">
           <div className="space-y-0.5">
             <h3 className="text-sm font-extrabold text-white uppercase tracking-wider flex items-center gap-2">
               <Clock className="h-4 w-4 text-brand-cyan" />
@@ -750,7 +750,7 @@ export function AttendantAuditReport({ sales, company }: AttendantAuditReportPro
             </p>
           </div>
 
-          <div className="w-full sm:w-72 relative">
+          <div className="w-full md:w-72 relative">
             <Search className="h-3.5 w-3.5 text-slate-500 absolute left-3 top-1/2 -translate-y-1/2" />
             <input
               type="text"
@@ -899,8 +899,8 @@ export function AttendantAuditReport({ sales, company }: AttendantAuditReportPro
 
       {/* QUICK RECEIPT MODAL */}
       {viewingReceiptSale && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-3 bg-slate-950/80 backdrop-blur-sm overflow-y-auto">
-          <div className="bg-slate-900 border border-slate-800 rounded-2xl w-full max-w-lg overflow-hidden shadow-2xl p-5 space-y-4">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-2.5 md:p-3 bg-slate-950/80 backdrop-blur-sm overflow-y-auto">
+          <div className="bg-slate-900 border border-slate-800 rounded-2xl w-full max-w-lg max-h-[92dvh] overflow-y-auto shadow-2xl p-4 md:p-5 space-y-4">
             <div className="flex items-center justify-between border-b border-slate-800 pb-3">
               <div className="flex items-center gap-2">
                 <Receipt className="h-5 w-5 text-brand-cyan" />
@@ -918,7 +918,7 @@ export function AttendantAuditReport({ sales, company }: AttendantAuditReportPro
             </div>
 
             <div className="space-y-3 text-xs">
-              <div className="grid grid-cols-2 gap-2 bg-slate-950 p-3 rounded-xl border border-slate-850">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-2.5 md:gap-2 bg-slate-950 p-3 rounded-xl border border-slate-850">
                 <div>
                   <span className="text-[10px] text-slate-500 uppercase font-bold">Cliente</span>
                   <div className="font-bold text-white text-sm">{viewingReceiptSale.clientName}</div>
@@ -939,11 +939,11 @@ export function AttendantAuditReport({ sales, company }: AttendantAuditReportPro
               <div className="bg-slate-950 p-3 rounded-xl border border-slate-850 space-y-1.5">
                 <span className="text-[10px] text-slate-500 uppercase font-bold block">Itens Vendidos</span>
                 {(viewingReceiptSale.items || []).map((it, idx) => (
-                  <div key={idx} className="flex justify-between items-center text-slate-300 font-mono text-[11px]">
+                  <div key={idx} className="flex justify-between items-center text-slate-300 font-mono text-[11px] gap-2">
                     <span>
                       {it.quantity}x {it.description}
                     </span>
-                    <span className="font-bold text-white">{formatBRL(it.totalValue)}</span>
+                    <span className="font-bold text-white shrink-0">{formatBRL(it.totalValue)}</span>
                   </div>
                 ))}
               </div>
@@ -973,7 +973,7 @@ export function AttendantAuditReport({ sales, company }: AttendantAuditReportPro
               </div>
 
               {/* Delivery info */}
-              <div className="bg-slate-950 p-3 rounded-xl border border-slate-850 text-xs flex justify-between items-center">
+              <div className="bg-slate-950 p-3 rounded-xl border border-slate-850 text-xs flex flex-col md:flex-row justify-between items-start md:items-center gap-2">
                 <div>
                   <span className="text-[10px] text-slate-500 uppercase font-bold block">Status da Entrega</span>
                   <span className={viewingReceiptSale.materialEntregue ? "text-emerald-400 font-bold" : "text-yellow-400 font-bold"}>
@@ -981,7 +981,7 @@ export function AttendantAuditReport({ sales, company }: AttendantAuditReportPro
                   </span>
                 </div>
                 {viewingReceiptSale.deliveredBy && (
-                  <div className="text-right">
+                  <div className="md:text-right">
                     <span className="text-[10px] text-slate-500 uppercase font-bold block">Entregue Por</span>
                     <span className="text-slate-200 font-bold">{viewingReceiptSale.deliveredBy}</span>
                   </div>

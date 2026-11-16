@@ -152,12 +152,12 @@ export function AdminUnlockModal({
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 bg-slate-950/85 backdrop-blur-md flex items-center justify-center z-[200] p-4 animate-fade-in">
+    <div className="fixed inset-0 bg-slate-950/85 backdrop-blur-md flex items-center justify-center z-[200] p-2.5 md:p-4 animate-fade-in">
       <motion.div
         initial={{ opacity: 0, scale: 0.95 }}
         animate={{ opacity: 1, scale: 1 }}
         exit={{ opacity: 0, scale: 0.95 }}
-        className="w-full max-w-md bg-brand-card border border-slate-800 p-6 rounded-2xl space-y-5 shadow-2xl relative select-none"
+        className="w-full max-w-md bg-brand-card border border-slate-800 p-4 md:p-6 rounded-2xl space-y-4 md:space-y-5 shadow-2xl relative select-none max-h-[92dvh] overflow-y-auto"
       >
         <button
           type="button"
@@ -230,7 +230,7 @@ export function AdminUnlockModal({
             </div>
           </div>
 
-          <div className="flex gap-3 pt-2">
+          <div className="flex flex-col-reverse md:flex-row gap-2.5 md:gap-3 pt-2">
             <button
               type="button"
               onClick={onClose}

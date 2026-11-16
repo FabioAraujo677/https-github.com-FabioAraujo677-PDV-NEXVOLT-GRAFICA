@@ -1251,13 +1251,13 @@ export function FinancialReports({ sales, expenses, company, cashRegister }: Fin
   };
 
   return (
-    <div id="financial-reports-panel" className="space-y-6">
+    <div id="financial-reports-panel" className="space-y-4 md:space-y-6 max-w-full overflow-x-hidden">
       {/* Tab selection */}
       <div className="flex flex-wrap gap-2 border-b border-slate-800 pb-1.5 font-sans">
         <button
           type="button"
           onClick={() => setActiveReportTab("financeiro")}
-          className={`py-2 px-4 text-xs font-bold uppercase tracking-wider rounded-lg transition-all cursor-pointer ${
+          className={`py-2 px-3 md:px-4 text-xs font-bold uppercase tracking-wider rounded-lg transition-all cursor-pointer ${
             activeReportTab === "financeiro"
               ? "bg-brand-magenta text-white shadow-md shadow-brand-magenta/15"
               : "bg-slate-900 text-slate-400 hover:bg-slate-850 hover:text-slate-200"
@@ -1268,7 +1268,7 @@ export function FinancialReports({ sales, expenses, company, cashRegister }: Fin
         <button
           type="button"
           onClick={() => setActiveReportTab("auditoria_atendente")}
-          className={`py-2 px-4 text-xs font-bold uppercase tracking-wider rounded-lg transition-all cursor-pointer flex items-center gap-1.5 ${
+          className={`py-2 px-3 md:px-4 text-xs font-bold uppercase tracking-wider rounded-lg transition-all cursor-pointer flex items-center gap-1.5 ${
             activeReportTab === "auditoria_atendente"
               ? "bg-emerald-600 text-white shadow-md shadow-emerald-600/20 font-black"
               : "bg-slate-900 text-emerald-400/90 hover:bg-slate-850 hover:text-emerald-300 border border-emerald-950"
@@ -1279,7 +1279,7 @@ export function FinancialReports({ sales, expenses, company, cashRegister }: Fin
         <button
           type="button"
           onClick={() => setActiveReportTab("acessos")}
-          className={`py-2 px-4 text-xs font-bold uppercase tracking-wider rounded-lg transition-all cursor-pointer ${
+          className={`py-2 px-3 md:px-4 text-xs font-bold uppercase tracking-wider rounded-lg transition-all cursor-pointer ${
             activeReportTab === "acessos"
               ? "bg-brand-magenta text-white shadow-md shadow-brand-magenta/15"
               : "bg-slate-900 text-slate-400 hover:bg-slate-850 hover:text-slate-200"
@@ -1292,7 +1292,7 @@ export function FinancialReports({ sales, expenses, company, cashRegister }: Fin
       {activeReportTab === "financeiro" ? (
         <>
           {/* Title Header with download button */}
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3.5 bg-slate-950/45 p-4 rounded-xl border border-slate-850 font-sans">
+      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-3 md:gap-3.5 bg-slate-950/45 p-3.5 md:p-4 rounded-xl border border-slate-850 font-sans">
         <div className="text-left">
           <h2 className="text-sm font-extrabold uppercase text-white tracking-widest flex items-center gap-2">
             📊 Relatórios Financeiros Consolidados
@@ -1303,7 +1303,7 @@ export function FinancialReports({ sales, expenses, company, cashRegister }: Fin
         <button
           type="button"
           onClick={() => handleDownLoadPdfReport()}
-          className="w-full sm:w-auto py-2 px-4 bg-violet-650 hover:bg-violet-700 text-white font-bold text-[11px] uppercase rounded-xl border border-violet-550 transition-all duration-200 flex items-center justify-center gap-2 shadow-lg shadow-violet-950/40 shrink-0 cursor-pointer"
+          className="w-full md:w-auto py-2 px-4 bg-violet-650 hover:bg-violet-700 text-white font-bold text-[11px] uppercase rounded-xl border border-violet-550 transition-all duration-200 flex items-center justify-center gap-2 shadow-lg shadow-violet-950/40 shrink-0 cursor-pointer"
         >
           <FileDown className="h-4 w-4 text-violet-200" />
           <span>Exportar PDF Completo</span>
@@ -1311,7 +1311,7 @@ export function FinancialReports({ sales, expenses, company, cashRegister }: Fin
       </div>
 
       {/* Date filter component & preset selection */}
-      <div className="bg-slate-950/60 p-5 rounded-xl border border-slate-850 font-sans space-y-4">
+      <div className="bg-slate-950/60 p-3.5 md:p-5 rounded-xl border border-slate-850 font-sans space-y-3.5 md:space-y-4">
         <div className="flex flex-col xl:flex-row justify-between items-start xl:items-center gap-4">
           <div className="space-y-1 text-left">
             <span className="text-[10px] font-extrabold uppercase tracking-widest text-brand-magenta">Filtros Rápidos e Busca</span>
@@ -1408,13 +1408,13 @@ export function FinancialReports({ sales, expenses, company, cashRegister }: Fin
           {/* Slices of dates */}
           <div className="space-y-1 w-full xl:w-auto text-left">
             <span className="text-[10px] font-extrabold uppercase tracking-widest text-brand-cyan">Seletor de Período Personalizado & Modo de Exibição</span>
-            <div className="flex flex-wrap items-center gap-2.5 w-full xl:w-auto">
-              <div className={`flex items-center gap-1.5 p-1.5 px-2.5 rounded-lg border transition-all ${
+            <div className="flex flex-wrap items-center gap-2 md:gap-2.5 w-full xl:w-auto">
+              <div className={`flex items-center gap-1.5 p-1.5 px-2.5 rounded-lg border transition-all min-w-0 max-w-full ${
                 activePreset === "custom" 
                   ? "bg-brand-cyan/10 border-brand-cyan text-brand-cyan shadow-sm" 
                   : "bg-slate-950 border-slate-850"
               }`}>
-                <span className="text-[10px] font-mono text-slate-500 uppercase font-bold">De:</span>
+                <span className="text-[10px] font-mono text-slate-500 uppercase font-bold shrink-0">De:</span>
                 <input
                   type="date"
                   value={startDate}
@@ -1422,18 +1422,18 @@ export function FinancialReports({ sales, expenses, company, cashRegister }: Fin
                     setStartDate(e.target.value);
                     setActivePreset("custom"); // Custom transition
                   }}
-                  className="bg-transparent border-none text-xs font-mono text-slate-200 outline-none p-0 cursor-pointer focus:ring-0"
+                  className="bg-transparent border-none text-xs font-mono text-slate-200 outline-none p-0 cursor-pointer focus:ring-0 min-w-0 max-w-full"
                 />
               </div>
               
-              <ArrowRight className="h-3 w-3 text-slate-600 shrink-0 hidden sm:block" />
+              <ArrowRight className="h-3 w-3 text-slate-600 shrink-0 hidden md:block" />
 
-              <div className={`flex items-center gap-1.5 p-1.5 px-2.5 rounded-lg border transition-all ${
+              <div className={`flex items-center gap-1.5 p-1.5 px-2.5 rounded-lg border transition-all min-w-0 max-w-full ${
                 activePreset === "custom" 
                   ? "bg-brand-cyan/10 border-brand-cyan text-brand-cyan shadow-sm" 
                   : "bg-slate-950 border-slate-850"
               }`}>
-                <span className="text-[10px] font-mono text-slate-500 uppercase font-bold">Até:</span>
+                <span className="text-[10px] font-mono text-slate-500 uppercase font-bold shrink-0">Até:</span>
                 <input
                   type="date"
                   value={endDate}
@@ -1441,7 +1441,7 @@ export function FinancialReports({ sales, expenses, company, cashRegister }: Fin
                     setEndDate(e.target.value);
                     setActivePreset("custom"); // Custom transition
                   }}
-                  className="bg-transparent border-none text-xs font-mono text-slate-200 outline-none p-0 cursor-pointer focus:ring-0"
+                  className="bg-transparent border-none text-xs font-mono text-slate-200 outline-none p-0 cursor-pointer focus:ring-0 min-w-0 max-w-full"
                 />
               </div>
 
@@ -1533,7 +1533,7 @@ export function FinancialReports({ sales, expenses, company, cashRegister }: Fin
       {displayMode === "geral" && (
         <>
           {/* DIAGNÓSTICO DE SAÚDE FINANCEIRA E TICKET MÉDIO */}
-          <div className={`p-5 rounded-xl border font-sans space-y-4 transition-all duration-300 ${healthMode.color}`}>
+          <div className={`p-3.5 md:p-5 rounded-xl border font-sans space-y-3 md:space-y-4 transition-all duration-300 ${healthMode.color}`}>
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-3">
               <div className="flex flex-wrap items-center gap-2.5">
                 <span className={`text-[10px] font-black uppercase px-2.5 py-1 rounded-full border tracking-widest ${healthMode.badgeColor}`}>
@@ -1552,7 +1552,7 @@ export function FinancialReports({ sales, expenses, company, cashRegister }: Fin
               </div>
             </div>
 
-            <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-4 gap-3 pt-2 border-t border-slate-800/60 font-mono text-left">
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-2.5 md:gap-3 pt-2 border-t border-slate-800/60 font-mono text-left">
               <div className="bg-slate-950/70 p-3 rounded-xl border border-slate-850">
                 <span className="text-[9px] text-slate-400 block uppercase font-sans">Total de Vendas</span>
                 <span className="text-sm font-black text-slate-100">{totalVendasCount} <span className="text-[10px] text-slate-400 font-normal">pedidos</span></span>
@@ -1580,9 +1580,9 @@ export function FinancialReports({ sales, expenses, company, cashRegister }: Fin
           </div>
 
           {/* KPI Display Metrics overview */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-3.5 md:gap-5">
             {/* RELATÓRIO DE ENTRADA */}
-            <div className="bg-slate-950/60 rounded-xl border border-slate-850 p-5 font-sans flex flex-col justify-between hover:border-slate-800 transition-all">
+            <div className="bg-slate-950/60 rounded-xl border border-slate-850 p-3.5 md:p-5 font-sans flex flex-col justify-between hover:border-slate-800 transition-all">
               <div className="space-y-1.5">
                 <div className="flex items-center justify-between">
                   <span className="text-xs font-black text-brand-cyan uppercase tracking-widest block font-sans">
@@ -1593,9 +1593,9 @@ export function FinancialReports({ sales, expenses, company, cashRegister }: Fin
                 <p className="text-[10px] font-semibold text-slate-400 text-left">Faturamento bruto das vendas e vendas rápidas</p>
               </div>
               
-              <div className="my-5 text-left font-sans">
+              <div className="my-3.5 md:my-5 text-left font-sans">
                 <div className="space-y-1">
-                  <span className="text-3xl font-black text-slate-100 font-mono tracking-tight block">
+                  <span className="text-2xl md:text-3xl font-black text-slate-100 font-mono tracking-tight block">
                     {formatBRL(faturamentoTotal)}
                   </span>
                   <span className="text-[10px] font-semibold text-slate-400 block uppercase tracking-wider">Total de Entradas Brutas</span>
@@ -1623,7 +1623,7 @@ export function FinancialReports({ sales, expenses, company, cashRegister }: Fin
             </div>
 
             {/* RELATÓRIO DE GASTO */}
-            <div className="bg-slate-950/60 rounded-xl border border-slate-850 p-5 font-sans flex flex-col justify-between hover:border-slate-800 transition-all">
+            <div className="bg-slate-950/60 rounded-xl border border-slate-850 p-3.5 md:p-5 font-sans flex flex-col justify-between hover:border-slate-800 transition-all">
               <div className="space-y-1.5">
                 <div className="flex items-center justify-between">
                   <span className="text-xs font-black text-rose-500 uppercase tracking-widest block font-sans">
@@ -1634,9 +1634,9 @@ export function FinancialReports({ sales, expenses, company, cashRegister }: Fin
                 <p className="text-[10px] font-semibold text-slate-400 text-left">Despesas fixas e custos operacionais registrados</p>
               </div>
 
-              <div className="my-5 text-left font-sans">
+              <div className="my-3.5 md:my-5 text-left font-sans">
                 <div className="space-y-1">
-                  <span className="text-3xl font-black text-slate-100 font-mono tracking-tight block">
+                  <span className="text-2xl md:text-3xl font-black text-slate-100 font-mono tracking-tight block">
                     {formatBRL(totalSaidasGeral)}
                   </span>
                   <span className="text-[10px] font-semibold text-slate-400 block uppercase tracking-wider">Total de Gastos/Custos</span>
@@ -1664,7 +1664,7 @@ export function FinancialReports({ sales, expenses, company, cashRegister }: Fin
             </div>
 
             {/* RELATÓRIO DE LUCRO REAL */}
-            <div className="bg-slate-950/60 rounded-xl border border-slate-850 p-5 font-sans flex flex-col justify-between hover:border-slate-800 transition-all">
+            <div className="bg-slate-950/60 rounded-xl border border-slate-850 p-3.5 md:p-5 font-sans flex flex-col justify-between hover:border-slate-800 transition-all">
               <div className="space-y-1.5">
                 <div className="flex items-center justify-between">
                   <span className="text-xs font-black text-emerald-400 uppercase tracking-widest block font-sans">
@@ -1675,9 +1675,9 @@ export function FinancialReports({ sales, expenses, company, cashRegister }: Fin
                 <p className="text-[10px] font-semibold text-slate-400 text-left">Resultado auferido (Entradas - Gastos)</p>
               </div>
 
-              <div className="my-5 text-left font-sans">
+              <div className="my-3.5 md:my-5 text-left font-sans">
                 <div className="space-y-1">
-                  <span className={`text-3xl font-black font-mono tracking-tight block ${lucroLiquidoReal >= 0 ? "text-emerald-450" : "text-rose-500"}`}>
+                  <span className={`text-2xl md:text-3xl font-black font-mono tracking-tight block ${lucroLiquidoReal >= 0 ? "text-emerald-450" : "text-rose-500"}`}>
                     {formatBRL(lucroLiquidoReal)}
                   </span>
                   <span className="text-[10px] font-semibold text-slate-400 block uppercase tracking-wider">Lucro Líquido Real</span>
@@ -1708,10 +1708,10 @@ export function FinancialReports({ sales, expenses, company, cashRegister }: Fin
           </div>
 
           {/* 🏆 TOP SELLING PRODUCTS REPORT */}
-          <div className="bg-slate-950/60 p-4 rounded-xl border border-slate-850 font-sans space-y-3">
-            <div className="flex flex-col sm:flex-row justify-between sm:items-center pb-2 border-b border-slate-850 gap-2">
+          <div className="bg-slate-950/60 p-3.5 md:p-4 rounded-xl border border-slate-850 font-sans space-y-3">
+            <div className="flex flex-col md:flex-row justify-between md:items-center pb-2 border-b border-slate-850 gap-2">
               <div>
-                <h3 className="text-xs font-extrabold uppercase text-slate-300 tracking-wider flex items-center gap-1.5">
+                <h3 className="text-xs font-extrabold uppercase text-slate-300 tracking-wider flex flex-wrap items-center gap-1.5">
                   <span>🏆 Produtos Mais Vendidos</span>
                   <span className="text-[10px] font-mono text-brand-cyan normal-case bg-brand-cyan/10 px-2 py-0.5 rounded border border-brand-cyan/15">
                     {activePreset === "today" ? "Hoje" : activePreset === "week" ? "Esta Semana" : activePreset === "month" ? "Este Mês" : "Período Selecionado"}
@@ -1723,7 +1723,7 @@ export function FinancialReports({ sales, expenses, company, cashRegister }: Fin
               <button
                 type="button"
                 onClick={() => handleDownloadTopProductsReport()}
-                className="self-start sm:self-auto py-1 px-2.5 bg-slate-900 hover:bg-slate-800 text-[10px] font-bold uppercase rounded-lg border border-slate-850 text-brand-cyan hover:text-white transition-all flex items-center gap-1 cursor-pointer"
+                className="self-start md:self-auto py-1 px-2.5 bg-slate-900 hover:bg-slate-800 text-[10px] font-bold uppercase rounded-lg border border-slate-850 text-brand-cyan hover:text-white transition-all flex items-center gap-1 cursor-pointer"
               >
                 <FileDown className="h-3 w-3" />
                 <span>Gerar Relatório de Produtos (PDF)</span>
@@ -1782,10 +1782,10 @@ export function FinancialReports({ sales, expenses, company, cashRegister }: Fin
           </div>
 
           {/* Main Charts area on Screen: Gráfico Redondo + Evolução Histórica */}
-          <div className="grid grid-cols-1 lg:grid-cols-12 gap-5">
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-3.5 md:gap-5">
             {/* Gráfico Redondo / Pizza (5 cols) */}
-            <div className="lg:col-span-5 bg-slate-950/60 p-5 rounded-xl border border-slate-850 font-sans space-y-4 flex flex-col justify-between">
-              <div className="flex justify-between items-center pb-2.5 border-b border-slate-850">
+            <div className="lg:col-span-5 bg-slate-950/60 p-3.5 md:p-5 rounded-xl border border-slate-850 font-sans space-y-3.5 md:space-y-4 flex flex-col justify-between">
+              <div className="flex flex-wrap justify-between items-center gap-2 pb-2.5 border-b border-slate-850">
                 <h3 className="text-xs font-extrabold uppercase text-slate-200 tracking-wider flex items-center gap-2">
                   <PieChartIcon className="h-4 w-4 text-brand-cyan" />
                   <span>Proporção Financeira (Gráfico Redondo)</span>
@@ -1796,7 +1796,7 @@ export function FinancialReports({ sales, expenses, company, cashRegister }: Fin
               </div>
 
               {/* Pie Chart Display */}
-              <div className="h-60 w-full relative flex items-center justify-center">
+              <div className="h-56 md:h-60 w-full relative flex items-center justify-center">
                 {faturamentoTotal === 0 && totalSaidasGeral === 0 ? (
                   <div className="text-center text-slate-500 font-mono text-xs">Sem dados no período para o gráfico redondo</div>
                 ) : (
@@ -1825,7 +1825,7 @@ export function FinancialReports({ sales, expenses, company, cashRegister }: Fin
               </div>
 
               {/* Color Legend Breakdown */}
-              <div className="grid grid-cols-3 gap-2 pt-3 border-t border-slate-850/80 font-mono text-center">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-2 pt-3 border-t border-slate-850/80 font-mono text-center">
                 <div className="p-2.5 rounded-xl bg-emerald-500/10 border border-emerald-500/25">
                   <span className="text-[9px] font-extrabold text-emerald-400 block uppercase font-sans">O Que Vendeu</span>
                   <span className="text-xs font-black text-white block mt-0.5">{formatBRL(faturamentoTotal)}</span>
@@ -1845,7 +1845,7 @@ export function FinancialReports({ sales, expenses, company, cashRegister }: Fin
             </div>
 
             {/* Evolução Histórica / Gráfico de Barras (7 cols) */}
-            <div className="lg:col-span-7 bg-slate-950/60 p-5 rounded-xl border border-slate-850 font-sans space-y-3 flex flex-col justify-between">
+            <div className="lg:col-span-7 bg-slate-950/60 p-3.5 md:p-5 rounded-xl border border-slate-850 font-sans space-y-3 flex flex-col justify-between">
               <div className="flex justify-between items-center pb-2.5 border-b border-slate-850">
                 <h3 className="text-xs font-extrabold uppercase text-slate-200 tracking-wider flex items-center gap-2">
                   <BarChart4 className="h-4 w-4 text-brand-magenta" />
@@ -1945,22 +1945,22 @@ export function FinancialReports({ sales, expenses, company, cashRegister }: Fin
       {displayMode === "entradas" && (
         <div className="space-y-4 animate-fade-in">
           {/* KPI Banner */}
-          <div className="bg-slate-950/60 rounded-xl border border-brand-cyan/25 p-5 font-sans flex flex-col md:flex-row md:items-center justify-between gap-4">
+          <div className="bg-slate-950/60 rounded-xl border border-brand-cyan/25 p-3.5 md:p-5 font-sans flex flex-col md:flex-row md:items-center justify-between gap-4">
             <div className="space-y-1 text-left">
               <span className="text-[10px] font-extrabold uppercase tracking-widest text-brand-cyan block">
                 Entradas Reais em Caixa (Recebidos)
               </span>
-              <h3 className="text-3xl font-black text-white font-mono">{formatBRL(totalRevenuePaid)}</h3>
+              <h3 className="text-2xl md:text-3xl font-black text-white font-mono">{formatBRL(totalRevenuePaid)}</h3>
               <p className="text-xs text-slate-400">Total de sinais e pagamentos efetivamente recebidos no período</p>
             </div>
             <div className="text-left font-mono text-xs space-y-1 p-3 bg-slate-900/60 rounded-lg border border-slate-800">
-              <div className="flex justify-between gap-6">
+              <div className="flex justify-between gap-3 md:gap-6">
                 <span className="text-slate-450">Vendas normais (sinais/parcelas):</span>
                 <span className="font-bold text-slate-200">
                   {formatBRL(entriesList.filter(e => e.clientName !== "Venda Rápida").reduce((acc, curr) => acc + curr.amount, 0))}
                 </span>
               </div>
-              <div className="flex justify-between gap-6">
+              <div className="flex justify-between gap-3 md:gap-6">
                 <span className="text-slate-450">Vendas Rápidas:</span>
                 <span className="font-bold text-brand-cyan">
                   {formatBRL(entriesList.filter(e => e.clientName === "Venda Rápida").reduce((acc, curr) => acc + curr.amount, 0))}
@@ -1970,7 +1970,7 @@ export function FinancialReports({ sales, expenses, company, cashRegister }: Fin
           </div>
 
           {/* List of cash entries */}
-          <div className="bg-slate-950/60 p-5 rounded-xl border border-slate-850 font-sans space-y-4">
+          <div className="bg-slate-950/60 p-3.5 md:p-5 rounded-xl border border-slate-850 font-sans space-y-4">
             <h4 className="text-xs font-extrabold text-slate-355 uppercase tracking-wider text-left">
               📋 Histórico Detalhado de Entradas ({entriesList.length})
             </h4>
@@ -2017,7 +2017,7 @@ export function FinancialReports({ sales, expenses, company, cashRegister }: Fin
             </div>
 
             {/* Sum total row/banner at the bottom */}
-            <div className="pt-3 border-t border-slate-800 flex justify-between items-center bg-slate-900/40 p-4 rounded-xl border border-slate-800/60">
+            <div className="pt-3 border-t border-slate-800 flex flex-col md:flex-row justify-between items-start md:items-center gap-2 bg-slate-900/40 p-3.5 md:p-4 rounded-xl border border-slate-800/60">
               <span className="text-xs font-black uppercase tracking-wider text-slate-300 font-sans">
                 Valor Total de Entradas no Período:
               </span>
@@ -2032,20 +2032,20 @@ export function FinancialReports({ sales, expenses, company, cashRegister }: Fin
       {displayMode === "gastos" && (
         <div className="space-y-4 animate-fade-in">
           {/* KPI Banner */}
-          <div className="bg-slate-950/60 rounded-xl border border-rose-500/25 p-5 font-sans flex flex-col md:flex-row md:items-center justify-between gap-4">
+          <div className="bg-slate-950/60 rounded-xl border border-rose-500/25 p-3.5 md:p-5 font-sans flex flex-col md:flex-row md:items-center justify-between gap-4">
             <div className="space-y-1 text-left">
               <span className="text-[10px] font-extrabold uppercase tracking-widest text-rose-500 block">
                 Gastos & Custos (Saídas)
               </span>
-              <h3 className="text-3xl font-black text-white font-mono">{formatBRL(totalSaidasGeral)}</h3>
+              <h3 className="text-2xl md:text-3xl font-black text-white font-mono">{formatBRL(totalSaidasGeral)}</h3>
               <p className="text-xs text-slate-400">Despesas fixas corporativas e custos operacionais dos pedidos</p>
             </div>
             <div className="text-left font-mono text-xs space-y-1 p-3 bg-slate-900/60 rounded-lg border border-slate-800">
-              <div className="flex justify-between gap-6">
+              <div className="flex justify-between gap-3 md:gap-6">
                 <span className="text-slate-450">Despesas Administrativas (Fixas/Gerais):</span>
                 <span className="font-bold text-rose-400">{formatBRL(totalDespesasGerais)}</span>
               </div>
-              <div className="flex justify-between gap-6">
+              <div className="flex justify-between gap-3 md:gap-6">
                 <span className="text-slate-450">Custos Operacionais de Vendas:</span>
                 <span className="font-bold text-red-400">{formatBRL(totalCustosOp)}</span>
               </div>
@@ -2053,7 +2053,7 @@ export function FinancialReports({ sales, expenses, company, cashRegister }: Fin
           </div>
 
           {/* List of expenses & costs */}
-          <div className="bg-slate-950/60 p-5 rounded-xl border border-slate-850 font-sans space-y-4">
+          <div className="bg-slate-950/60 p-3.5 md:p-5 rounded-xl border border-slate-850 font-sans space-y-4">
             <h4 className="text-xs font-extrabold text-slate-355 uppercase tracking-wider text-left">
               📋 Histórico Detalhado de Gastos ({expensesList.length})
             </h4>
@@ -2105,7 +2105,7 @@ export function FinancialReports({ sales, expenses, company, cashRegister }: Fin
             </div>
 
             {/* Sum total row/banner at the bottom */}
-            <div className="pt-3 border-t border-slate-800 flex justify-between items-center bg-slate-900/40 p-4 rounded-xl border border-slate-800/60">
+            <div className="pt-3 border-t border-slate-800 flex flex-col md:flex-row justify-between items-start md:items-center gap-2 bg-slate-900/40 p-3.5 md:p-4 rounded-xl border border-slate-800/60">
               <span className="text-xs font-black uppercase tracking-wider text-slate-300 font-sans">
                 Valor Total de Gastos no Período:
               </span>
@@ -2120,26 +2120,26 @@ export function FinancialReports({ sales, expenses, company, cashRegister }: Fin
       {displayMode === "lucro" && (
         <div className="space-y-4 animate-fade-in">
           {/* KPI Banner */}
-          <div className="bg-slate-950/60 rounded-xl border border-emerald-500/25 p-5 font-sans flex flex-col md:flex-row md:items-center justify-between gap-4">
+          <div className="bg-slate-950/60 rounded-xl border border-emerald-500/25 p-3.5 md:p-5 font-sans flex flex-col md:flex-row md:items-center justify-between gap-4">
             <div className="space-y-1 text-left">
               <span className="text-[10px] font-extrabold uppercase tracking-widest text-emerald-400 block">
                 Ganho Real (Lucro Líquido)
               </span>
-              <h3 className={`text-3xl font-black font-mono ${lucroLiquidoReal >= 0 ? "text-emerald-400" : "text-rose-500"}`}>
+              <h3 className={`text-2xl md:text-3xl font-black font-mono ${lucroLiquidoReal >= 0 ? "text-emerald-400" : "text-rose-500"}`}>
                 {formatBRL(lucroLiquidoReal)}
               </h3>
               <p className="text-xs text-slate-400">Faturamento Bruto descontado de todos os Custos e Despesas do período</p>
             </div>
             <div className="text-left font-mono text-xs space-y-1 p-3 bg-slate-900/60 rounded-lg border border-slate-800">
-              <div className="flex justify-between gap-6">
+              <div className="flex justify-between gap-3 md:gap-6">
                 <span className="text-slate-450">Faturamento Bruto Total:</span>
                 <span className="font-bold text-slate-200">{formatBRL(faturamentoTotal)}</span>
               </div>
-              <div className="flex justify-between gap-6">
+              <div className="flex justify-between gap-3 md:gap-6">
                 <span className="text-slate-450">(-) Custos & Saídas Gerais:</span>
                 <span className="font-bold text-rose-400">{formatBRL(totalSaidasGeral)}</span>
               </div>
-              <div className="flex justify-between gap-6 pt-1.5 border-t border-slate-800">
+              <div className="flex justify-between gap-3 md:gap-6 pt-1.5 border-t border-slate-800">
                 <span className="text-slate-400 font-bold font-sans">Margem de Lucro Real:</span>
                 <span className="font-bold text-emerald-400">{margemLucro.toFixed(1)}%</span>
               </div>
@@ -2147,7 +2147,7 @@ export function FinancialReports({ sales, expenses, company, cashRegister }: Fin
           </div>
 
           {/* List of profit margins by sale */}
-          <div className="bg-slate-950/60 p-5 rounded-xl border border-slate-850 font-sans space-y-4">
+          <div className="bg-slate-950/60 p-3.5 md:p-5 rounded-xl border border-slate-850 font-sans space-y-4">
             <h4 className="text-xs font-extrabold text-slate-355 uppercase tracking-wider text-left">
               📋 Demonstração de Lucratividade por Venda ({profitList.length})
             </h4>
@@ -2196,7 +2196,7 @@ export function FinancialReports({ sales, expenses, company, cashRegister }: Fin
             </div>
 
             {/* Sum total row/banner at the bottom */}
-            <div className="pt-3 border-t border-slate-800 flex justify-between items-center bg-slate-900/40 p-4 rounded-xl border border-slate-800/60">
+            <div className="pt-3 border-t border-slate-800 flex flex-col md:flex-row justify-between items-start md:items-center gap-2 bg-slate-900/40 p-3.5 md:p-4 rounded-xl border border-slate-800/60">
               <span className="text-xs font-black uppercase tracking-wider text-slate-300 font-sans">
                 Ganho Real Total Acumulado:
               </span>
@@ -2211,20 +2211,20 @@ export function FinancialReports({ sales, expenses, company, cashRegister }: Fin
       {displayMode === "total_vendido" && (
         <div className="space-y-4 animate-fade-in">
           {/* KPI Banner */}
-          <div className="bg-slate-950/60 rounded-xl border border-violet-500/25 p-5 font-sans flex flex-col md:flex-row md:items-center justify-between gap-4">
+          <div className="bg-slate-950/60 rounded-xl border border-violet-500/25 p-3.5 md:p-5 font-sans flex flex-col md:flex-row md:items-center justify-between gap-4">
             <div className="space-y-1 text-left">
               <span className="text-[10px] font-extrabold uppercase tracking-widest text-violet-400 block">
                 Valor Total Vendido (Faturamento Bruto)
               </span>
-              <h3 className="text-3xl font-black text-white font-mono">{formatBRL(faturamentoTotal)}</h3>
+              <h3 className="text-2xl md:text-3xl font-black text-white font-mono">{formatBRL(faturamentoTotal)}</h3>
               <p className="text-xs text-slate-400">Somatório de todas as vendas e encomendas faturadas no período</p>
             </div>
             <div className="text-left font-mono text-xs space-y-1 p-3 bg-slate-900/60 rounded-lg border border-slate-800">
-              <div className="flex justify-between gap-6">
+              <div className="flex justify-between gap-3 md:gap-6">
                 <span className="text-slate-450">Vendas Tradicionais:</span>
                 <span className="font-bold text-slate-200">{formatBRL(faturamentoVendasPadrao)}</span>
               </div>
-              <div className="flex justify-between gap-6">
+              <div className="flex justify-between gap-3 md:gap-6">
                 <span className="text-slate-450">Vendas Rápidas PDV:</span>
                 <span className="font-bold text-violet-400">{formatBRL(faturamentoVendasRapidas)}</span>
               </div>
@@ -2232,7 +2232,7 @@ export function FinancialReports({ sales, expenses, company, cashRegister }: Fin
           </div>
 
           {/* List of sales */}
-          <div className="bg-slate-950/60 p-5 rounded-xl border border-slate-850 font-sans space-y-4">
+          <div className="bg-slate-950/60 p-3.5 md:p-5 rounded-xl border border-slate-850 font-sans space-y-4">
             <h4 className="text-xs font-extrabold text-slate-355 uppercase tracking-wider text-left">
               📋 Histórico Detalhado de Vendas ({salesList.length})
             </h4>
@@ -2279,7 +2279,7 @@ export function FinancialReports({ sales, expenses, company, cashRegister }: Fin
             </div>
 
             {/* Sum total row/banner at the bottom */}
-            <div className="pt-3 border-t border-slate-800 flex justify-between items-center bg-slate-900/40 p-4 rounded-xl border border-slate-800/60">
+            <div className="pt-3 border-t border-slate-800 flex flex-col md:flex-row justify-between items-start md:items-center gap-2 bg-slate-900/40 p-3.5 md:p-4 rounded-xl border border-slate-800/60">
               <span className="text-xs font-black uppercase tracking-wider text-slate-300 font-sans">
                 Valor Total Vendido no Período:
               </span>
@@ -2295,9 +2295,9 @@ export function FinancialReports({ sales, expenses, company, cashRegister }: Fin
         <AttendantAuditReport sales={sales} company={company} />
       ) : (
         /* ACCESS / OPENING REPORT VIEWPORT */
-        <div className="space-y-6 animate-fade-in">
+        <div className="space-y-4 md:space-y-6 animate-fade-in">
           {/* Access Report Header */}
-          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3.5 bg-slate-950/45 p-4 rounded-xl border border-slate-850 font-sans">
+          <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-3.5 bg-slate-950/45 p-3.5 md:p-4 rounded-xl border border-slate-850 font-sans">
             <div className="text-left">
               <h2 className="text-sm font-extrabold uppercase text-white tracking-widest flex items-center gap-2">
                 🔐 Relatório de Acesso e Abertura de Caixa
@@ -2310,7 +2310,7 @@ export function FinancialReports({ sales, expenses, company, cashRegister }: Fin
             <button
               type="button"
               onClick={handleDownloadAccessReport}
-              className="w-full sm:w-auto py-2 px-4 bg-violet-650 hover:bg-violet-700 text-white font-bold text-[11px] uppercase rounded-xl border border-violet-550 transition-all duration-200 flex items-center justify-center gap-2 shadow-lg shadow-violet-950/40 shrink-0 cursor-pointer"
+              className="w-full md:w-auto py-2 px-4 bg-violet-650 hover:bg-violet-700 text-white font-bold text-[11px] uppercase rounded-xl border border-violet-550 transition-all duration-200 flex items-center justify-center gap-2 shadow-lg shadow-violet-950/40 shrink-0 cursor-pointer"
             >
               <FileDown className="h-4 w-4 text-violet-200" />
               <span>Exportar PDF de Acessos</span>
@@ -2318,7 +2318,7 @@ export function FinancialReports({ sales, expenses, company, cashRegister }: Fin
           </div>
 
           {/* Access report table / list */}
-          <div className="bg-slate-950/60 p-5 rounded-xl border border-slate-850 font-sans space-y-4">
+          <div className="bg-slate-950/60 p-3.5 md:p-5 rounded-xl border border-slate-850 font-sans space-y-4">
             <div className="overflow-x-auto">
               <table className="w-full text-left border-collapse">
                 <thead>

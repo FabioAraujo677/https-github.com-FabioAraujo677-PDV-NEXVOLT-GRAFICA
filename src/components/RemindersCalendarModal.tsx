@@ -214,27 +214,27 @@ export function RemindersCalendarModal({ isOpen, onClose }: RemindersCalendarMod
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-[110] flex items-center justify-center p-3 sm:p-4 bg-slate-950/85 backdrop-blur-md animate-fade-in font-sans">
+    <div className="fixed inset-0 z-[110] flex items-center justify-center p-2 md:p-4 bg-slate-950/85 backdrop-blur-md animate-fade-in font-sans">
       <div 
         id="reminders-calendar-modal"
-        className="relative w-full max-w-4xl bg-slate-900 border border-slate-800/80 rounded-3xl shadow-2xl flex flex-col h-[90vh] lg:h-[82vh] max-h-[700px] overflow-hidden animate-scale-in"
+        className="relative w-full max-w-4xl bg-slate-900 border border-slate-800/80 rounded-2xl md:rounded-3xl shadow-2xl flex flex-col h-[92dvh] lg:h-[82vh] max-h-[92dvh] lg:max-h-[700px] overflow-hidden animate-scale-in"
       >
         {/* Modal Top Header */}
-        <div className="flex items-center justify-between p-4 border-b border-slate-800 bg-slate-950 shrink-0">
-          <div className="flex items-center gap-2.5">
-            <div className="p-2 rounded-xl bg-gradient-to-br from-brand-magenta/20 to-pink-500/10 text-brand-magenta shadow-inner">
+        <div className="flex items-center justify-between p-3 md:p-4 border-b border-slate-800 bg-slate-950 shrink-0">
+          <div className="flex items-center gap-2.5 min-w-0">
+            <div className="p-2 rounded-xl bg-gradient-to-br from-brand-magenta/20 to-pink-500/10 text-brand-magenta shadow-inner shrink-0">
               <Calendar className="h-5 w-5 animate-pulse" />
             </div>
-            <div>
-              <h3 className="text-xs sm:text-xs font-black text-slate-100 uppercase tracking-widest flex items-center gap-2">
+            <div className="min-w-0">
+              <h3 className="text-xs font-black text-slate-100 uppercase tracking-widest flex items-center gap-2 truncate">
                 AGENDA DE LEMBRETES NÚCLEO
               </h3>
-              <p className="text-[9.5px] text-slate-450 font-mono uppercase tracking-wider font-semibold">Calendário mensal de obrigações e avisos sincronizados</p>
+              <p className="text-[9.5px] text-slate-450 font-mono uppercase tracking-wider font-semibold truncate">Calendário mensal de obrigações e avisos sincronizados</p>
             </div>
           </div>
           <button
             onClick={onClose}
-            className="p-2 rounded-xl text-slate-400 hover:text-white hover:bg-slate-850 transition-all cursor-pointer border border-transparent hover:border-slate-800"
+            className="p-2 rounded-xl text-slate-400 hover:text-white hover:bg-slate-850 transition-all cursor-pointer border border-transparent hover:border-slate-800 shrink-0"
             title="Fechar"
           >
             <X className="h-5 w-5" />
@@ -245,10 +245,10 @@ export function RemindersCalendarModal({ isOpen, onClose }: RemindersCalendarMod
         <div className="flex-1 overflow-y-auto lg:overflow-hidden grid grid-cols-1 lg:grid-cols-12 bg-slate-905">
           
           {/* COLUMN LEFT: MONTH COMPACT CALENDAR GRID (7 columns) */}
-          <div className="lg:col-span-7 p-3 sm:p-4 flex flex-col justify-between border-b lg:border-b-0 lg:border-r border-slate-800 bg-slate-900">
+          <div className="lg:col-span-7 p-2.5 md:p-4 flex flex-col justify-between border-b lg:border-b-0 lg:border-r border-slate-800 bg-slate-900">
             <div>
               {/* Calendar Control Header */}
-              <div className="flex items-center justify-between mb-4 bg-slate-950/40 p-2 border border-slate-850 rounded-xl">
+              <div className="flex items-center justify-between mb-3 md:mb-4 bg-slate-950/40 p-2 border border-slate-850 rounded-xl">
                 <button
                   type="button"
                   onClick={handlePrevMonth}
@@ -257,7 +257,7 @@ export function RemindersCalendarModal({ isOpen, onClose }: RemindersCalendarMod
                   <ChevronLeft className="h-4 w-4" />
                 </button>
 
-                <div className="text-sm sm:text-base font-black uppercase text-rose-500 tracking-widest font-sans flex items-center gap-1.5 select-none">
+                <div className="text-sm md:text-base font-black uppercase text-rose-500 tracking-widest font-sans flex items-center gap-1.5 select-none">
                   <span>{MONTHS_PT[currentMonth]}</span>
                   <span className="text-slate-600 font-light">|</span>
                   <span className="text-slate-200 font-extrabold">{currentYear}</span>
@@ -309,7 +309,7 @@ export function RemindersCalendarModal({ isOpen, onClose }: RemindersCalendarMod
                   const weekdayIndex = index % 7;
 
                   // Compute absolute status classes for aesthetic representation
-                  let cellClasses = "relative h-10 sm:h-11 lg:h-12 py-1 px-0.5 flex flex-col justify-between items-center transition-all cursor-pointer group outline-none ";
+                  let cellClasses = "relative h-10 md:h-11 lg:h-12 py-1 px-0.5 flex flex-col justify-between items-center transition-all cursor-pointer group outline-none ";
 
                   if (isSelected) {
                     // Highlights selected day
@@ -340,7 +340,7 @@ export function RemindersCalendarModal({ isOpen, onClose }: RemindersCalendarMod
                       className={cellClasses}
                     >
                       {/* Day Number text */}
-                      <span className={`text-[12px] sm:text-[13px] font-black font-mono leading-none ${
+                      <span className={`text-[12px] md:text-[13px] font-black font-mono leading-none ${
                         isSelected 
                           ? "text-brand-magenta" 
                           : hasReminders 
@@ -381,7 +381,7 @@ export function RemindersCalendarModal({ isOpen, onClose }: RemindersCalendarMod
             </div>
 
             {/* Calendar indicators glossary footer */}
-            <div className="mt-4 pt-3 border-t border-slate-850/60 grid grid-cols-3 gap-2 text-[8.5px] text-slate-400 select-none">
+            <div className="mt-3 md:mt-4 pt-2.5 md:pt-3 border-t border-slate-850/60 grid grid-cols-1 md:grid-cols-3 gap-1.5 md:gap-2 text-[8.5px] text-slate-400 select-none">
               <span className="flex items-center gap-1.5 font-semibold">
                 <span className="w-2.5 h-2.5 rounded bg-brand-cyan block shrink-0" />
                 <span>Hoje (Dia Atual)</span>
@@ -398,7 +398,7 @@ export function RemindersCalendarModal({ isOpen, onClose }: RemindersCalendarMod
           </div>
 
           {/* COLUMN RIGHT: ACTION DETAILS LIST VIEWPORT */}
-          <div className="lg:col-span-5 p-3 sm:p-4 bg-slate-950/40 flex flex-col justify-between max-h-none lg:max-h-[500px] overflow-y-auto custom-scrollbar">
+          <div className="lg:col-span-5 p-2.5 md:p-4 bg-slate-950/40 flex flex-col justify-between max-h-none lg:max-h-[500px] overflow-y-auto custom-scrollbar">
             <div className="space-y-4">
               {/* Day header info */}
               <div className="bg-slate-950 p-3 rounded-2xl border border-slate-850 space-y-1">
@@ -494,15 +494,15 @@ export function RemindersCalendarModal({ isOpen, onClose }: RemindersCalendarMod
         </div>
 
         {/* Modal Bottom Legend bar */}
-        <div className="p-3 bg-slate-950 border-t border-slate-805 flex flex-col sm:flex-row items-center justify-between gap-3 shrink-0 font-sans select-none">
-          <div className="flex items-center gap-1.5 text-[9.5px] text-slate-500 justify-center text-center sm:text-left leading-tight">
+        <div className="p-2.5 md:p-3 bg-slate-950 border-t border-slate-805 flex flex-col md:flex-row items-center justify-between gap-2.5 md:gap-3 shrink-0 font-sans select-none">
+          <div className="flex items-center gap-1.5 text-[9.5px] text-slate-500 justify-center text-center md:text-left leading-tight">
             <Clock className="h-3.5 w-3.5 text-brand-cyan shrink-0 animate-spin-slow" />
             <span>Nucleo ERP Lembretes v2.5 • Sincronismo local instantâneo com monitor de alarmes das vendas em tempo real.</span>
           </div>
           <button
             type="button"
             onClick={onClose}
-            className="w-full sm:w-auto px-5 py-2 rounded-xl bg-slate-900 border border-slate-800 hover:bg-slate-850 hover:border-slate-750 text-slate-200 text-xs font-bold transition-all cursor-pointer hover:text-white"
+            className="w-full md:w-auto px-5 py-2 rounded-xl bg-slate-900 border border-slate-800 hover:bg-slate-850 hover:border-slate-750 text-slate-200 text-xs font-bold transition-all cursor-pointer hover:text-white"
           >
             Fechar Janela
           </button>

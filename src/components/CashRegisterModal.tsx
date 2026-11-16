@@ -976,7 +976,7 @@ export function CashRegisterModal({
     <div className="fixed inset-0 z-[100] flex items-center justify-center p-2 bg-slate-950/85 backdrop-blur-sm overflow-y-auto animate-fade-in font-sans">
       <div 
         id="cash-register-modal-container"
-        className="relative w-full max-w-sm bg-slate-900 border border-slate-800 rounded-2xl shadow-2xl overflow-hidden flex flex-col my-auto max-h-[96vh] sm:max-h-[92vh]"
+        className="relative w-full max-w-sm bg-slate-900 border border-slate-800 rounded-2xl shadow-2xl overflow-hidden flex flex-col my-auto max-h-[94dvh] md:max-h-[92vh]"
       >
         {/* Header */}
         <div className="flex items-center justify-between p-3 border-b border-slate-805 bg-slate-905 shrink-0">
@@ -1036,7 +1036,7 @@ export function CashRegisterModal({
               <div className="space-y-2">
                 <h5 className="text-[10px] uppercase font-bold text-slate-400 tracking-wider">Resumo da Conciliação Financeira</h5>
                 
-                <div className="grid grid-cols-2 gap-2 text-xs">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-2 text-xs">
                   <div className="bg-slate-950/60 p-2.5 rounded-lg border border-slate-850">
                     <span className="text-[9px] text-slate-500 uppercase block">Fundo de Abertura</span>
                     <span className="font-mono font-bold text-slate-300 text-[11px]">R$ {closedSessionSummary.valorAbertura.toFixed(2)}</span>
@@ -1141,7 +1141,7 @@ export function CashRegisterModal({
                 </div>
               </div>
 
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-2.5 md:gap-3">
                 <div>
                   <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block mb-1">
                     Operador do Caixa 👤
@@ -1229,7 +1229,7 @@ export function CashRegisterModal({
                   📊 RESUMO DO EXPEDIENTE (Turno Atual)
                 </span>
                 
-                <div className="grid grid-cols-2 gap-2">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
                   {/* CARD 1: RECEBIMENTOS */}
                   <div className="p-2 bg-slate-950 border border-slate-850 rounded-xl">
                     <span className="text-[9px] text-slate-450 uppercase tracking-widest font-black block">Entradas / Recebimentos</span>

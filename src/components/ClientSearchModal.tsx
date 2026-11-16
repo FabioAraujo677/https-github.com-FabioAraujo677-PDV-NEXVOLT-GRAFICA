@@ -544,27 +544,27 @@ export function ClientSearchModal({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-5 bg-slate-950/80 backdrop-blur-md animate-fade-in text-slate-100">
-      <div className="relative w-full max-w-4xl bg-slate-900 border border-slate-800 rounded-2xl shadow-2xl flex flex-col max-h-[90vh] overflow-hidden">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-2.5 md:p-5 bg-slate-950/80 backdrop-blur-md animate-fade-in text-slate-100">
+      <div className="relative w-full max-w-4xl bg-slate-900 border border-slate-800 rounded-2xl shadow-2xl flex flex-col max-h-[92dvh] md:max-h-[90vh] overflow-hidden">
         
         {/* Header */}
-        <div className="p-4 sm:p-5 border-b border-slate-800 bg-slate-950 flex justify-between items-center shrink-0">
-          <div className="flex items-center gap-3">
-            <div className="p-2.5 bg-gradient-to-tr from-cyan-500 to-blue-600 rounded-xl text-slate-950 shadow-lg shadow-cyan-500/20">
+        <div className="p-3.5 md:p-5 border-b border-slate-800 bg-slate-950 flex justify-between items-center shrink-0">
+          <div className="flex items-center gap-3 min-w-0">
+            <div className="p-2 md:p-2.5 bg-gradient-to-tr from-cyan-500 to-blue-600 rounded-xl text-slate-950 shadow-lg shadow-cyan-500/20 shrink-0">
               <History className="h-5 w-5 font-black" />
             </div>
-            <div>
-              <h2 className="text-base sm:text-lg font-black text-white flex items-center gap-2">
+            <div className="min-w-0">
+              <h2 className="text-sm md:text-lg font-black text-white flex items-center gap-2 truncate">
                 Consulta & Histórico de Pedidos por Cliente
               </h2>
-              <p className="text-xs text-slate-400 hidden sm:block">
+              <p className="text-xs text-slate-400 hidden md:block">
                 Pesquise por nome ou telefone para visualizar notinhas, serviços e débitos de cada cliente.
               </p>
             </div>
           </div>
           <button
             onClick={onClose}
-            className="p-2 hover:bg-slate-800 text-slate-400 hover:text-white rounded-xl transition cursor-pointer"
+            className="p-2 hover:bg-slate-800 text-slate-400 hover:text-white rounded-xl transition cursor-pointer shrink-0"
             title="Fechar"
           >
             <X className="h-5 w-5" />
@@ -572,7 +572,7 @@ export function ClientSearchModal({
         </div>
 
         {/* Search Bar & Auto-Complete Header */}
-        <div className="p-4 border-b border-slate-850 bg-slate-900/90 shrink-0 space-y-3">
+        <div className="p-3 md:p-4 border-b border-slate-850 bg-slate-900/90 shrink-0 space-y-2.5 md:space-y-3">
           <div className="relative">
             <input
               type="text"
@@ -693,7 +693,7 @@ export function ClientSearchModal({
         </div>
 
         {/* Main Body */}
-        <div className="flex-1 overflow-y-auto p-4 sm:p-6 space-y-6 customize-scrollbar">
+        <div className="flex-1 overflow-y-auto p-3.5 md:p-6 space-y-4 md:space-y-6 customize-scrollbar">
           {!activeClient ? (
             /* Clients directory / selection view */
             <div>
@@ -744,7 +744,7 @@ export function ClientSearchModal({
                   <span>{filteredClients.length} cliente(s) encontrado(s)</span>
                 </div>
 
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-2.5">
                   {/* Day of Week */}
                   <div>
                     <label className="text-[10px] font-mono uppercase font-bold text-slate-400 block mb-1 flex items-center gap-1">
@@ -869,16 +869,16 @@ export function ClientSearchModal({
                         </div>
 
                         {/* Right: Financial & Order Metrics Badges */}
-                        <div className="flex items-center gap-2 shrink-0 font-mono text-xs border-t md:border-t-0 pt-2 md:pt-0 border-slate-850 justify-between md:justify-end">
-                          <div className="bg-slate-900/80 px-3 py-1.5 rounded-lg border border-slate-800 text-center min-w-[70px]">
+                        <div className="flex flex-wrap md:flex-nowrap items-center gap-2 shrink-0 font-mono text-xs border-t md:border-t-0 pt-2 md:pt-0 border-slate-850 justify-between md:justify-end">
+                          <div className="bg-slate-900/80 px-2.5 md:px-3 py-1.5 rounded-lg border border-slate-800 text-center flex-1 md:flex-initial min-w-0 md:min-w-[70px]">
                             <span className="text-[9px] text-slate-500 uppercase font-bold block">Pedidos</span>
                             <strong className="text-slate-200 text-xs">{client.totalOrders}</strong>
                           </div>
-                          <div className="bg-slate-900/80 px-3 py-1.5 rounded-lg border border-slate-800 text-center min-w-[90px]">
+                          <div className="bg-slate-900/80 px-2.5 md:px-3 py-1.5 rounded-lg border border-slate-800 text-center flex-1 md:flex-initial min-w-0 md:min-w-[90px]">
                             <span className="text-[9px] text-slate-500 uppercase font-bold block">Consumo</span>
                             <strong className="text-cyan-400 text-xs">{formatBRL(client.totalSpent)}</strong>
                           </div>
-                          <div className={`px-3 py-1.5 rounded-lg border text-center min-w-[90px] ${client.totalPending > 0 ? "bg-rose-500/10 border-rose-500/30 text-rose-400" : "bg-slate-900/80 border-slate-800 text-slate-400"}`}>
+                          <div className={`px-2.5 md:px-3 py-1.5 rounded-lg border text-center flex-1 md:flex-initial min-w-0 md:min-w-[90px] ${client.totalPending > 0 ? "bg-rose-500/10 border-rose-500/30 text-rose-400" : "bg-slate-900/80 border-slate-800 text-slate-400"}`}>
                             <span className="text-[9px] uppercase font-bold block opacity-80">Pendente</span>
                             <strong className="text-xs">{formatBRL(client.totalPending)}</strong>
                           </div>
@@ -892,7 +892,7 @@ export function ClientSearchModal({
                 </div>
               ) : (
                 /* GRID VIEW (QUADRADO) */
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
                   {filteredClients.map((client, idx) => {
                     const dayOfWeek = getPortugueseDayOfWeek(client.lastOrderDate);
                     const monthYear = getPortugueseMonthYear(client.lastOrderDate);
@@ -940,7 +940,7 @@ export function ClientSearchModal({
                           </div>
                         )}
 
-                        <div className="grid grid-cols-3 gap-1 pt-2 border-t border-slate-850/80 text-center text-[10px] font-mono">
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-1.5 md:gap-1 pt-2 border-t border-slate-850/80 text-center text-[10px] font-mono">
                           <div className="bg-slate-900/60 p-1.5 rounded-lg border border-slate-850">
                             <span className="text-slate-500 block uppercase font-bold">Pedidos</span>
                             <strong className="text-slate-200 text-xs font-bold">{client.totalOrders}</strong>
@@ -962,11 +962,11 @@ export function ClientSearchModal({
             </div>
           ) : (
             /* Selected Client Detailed History View */
-            <div className="space-y-6">
+            <div className="space-y-4 md:space-y-6">
               {/* Back button & Client Header */}
-              <div className="bg-slate-950 border border-slate-800 rounded-2xl p-5 space-y-4">
-                <div className="flex flex-wrap items-center justify-between gap-4">
-                  <div className="flex items-center gap-4 min-w-0">
+              <div className="bg-slate-950 border border-slate-800 rounded-2xl p-3.5 md:p-5 space-y-3 md:space-y-4">
+                <div className="flex flex-wrap items-center justify-between gap-3 md:gap-4">
+                  <div className="flex items-center gap-3 md:gap-4 min-w-0">
                     <button
                       onClick={() => setSelectedClientName(null)}
                       className="px-3 py-1.5 bg-slate-900 hover:bg-slate-800 text-slate-300 rounded-xl text-xs font-bold border border-slate-800 transition flex items-center gap-1.5 cursor-pointer shrink-0"
@@ -974,7 +974,7 @@ export function ClientSearchModal({
                       ← Outros Clientes
                     </button>
                     <div className="min-w-0">
-                      <h2 className="text-lg font-black text-white flex items-center gap-2 truncate">
+                      <h2 className="text-base md:text-lg font-black text-white flex items-center gap-2 truncate">
                         {activeClient.name}
                       </h2>
                       <div className="flex flex-wrap items-center gap-3 text-xs text-slate-400 mt-0.5 font-mono">
@@ -994,7 +994,7 @@ export function ClientSearchModal({
                         onNewOrderWithClient(activeClient.name, activeClient.phone || "");
                         onClose();
                       }}
-                      className="px-4 py-2 bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500 text-slate-950 font-black text-xs uppercase tracking-wide rounded-xl shadow-lg shadow-cyan-500/20 transition flex items-center gap-2 cursor-pointer shrink-0"
+                      className="w-full md:w-auto justify-center px-4 py-2 bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500 text-slate-950 font-black text-xs uppercase tracking-wide rounded-xl shadow-lg shadow-cyan-500/20 transition flex items-center gap-2 cursor-pointer shrink-0"
                     >
                       <ShoppingCart className="h-4 w-4" />
                       <span>Novo Pedido para este Cliente</span>
@@ -1003,7 +1003,7 @@ export function ClientSearchModal({
                 </div>
 
                 {/* Client Stats Banner */}
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-3 border-t border-slate-850 font-mono">
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-2.5 md:gap-3 pt-3 border-t border-slate-850 font-mono">
                   <div className="bg-slate-900/80 border border-slate-800 p-3 rounded-xl flex items-center justify-between">
                     <div>
                       <span className="text-[10px] text-slate-500 uppercase font-bold block">Total de Pedidos</span>
@@ -1062,7 +1062,7 @@ export function ClientSearchModal({
                 </div>
 
                 {/* Filter Controls Bar: Dia da Semana, Mês, Data Específica */}
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-1">
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-2.5 md:gap-3 pt-1">
                   {/* Filter by Day of Week */}
                   <div>
                     <label className="text-[10px] font-mono uppercase font-bold text-slate-400 block mb-1 flex items-center gap-1">
@@ -1155,7 +1155,7 @@ export function ClientSearchModal({
                     return (
                       <div
                         key={sale.id}
-                        className="bg-slate-950 border border-slate-800 hover:border-slate-700 rounded-2xl p-5 space-y-4 shadow-lg transition duration-200"
+                        className="bg-slate-950 border border-slate-800 hover:border-slate-700 rounded-2xl p-3.5 md:p-5 space-y-3 md:space-y-4 shadow-lg transition duration-200"
                       >
                         {/* Notinha Header */}
                         <div className="flex flex-wrap justify-between items-start border-b border-dashed border-slate-800 pb-3 gap-2">
@@ -1296,8 +1296,8 @@ export function ClientSearchModal({
                               <span className="text-xs font-bold text-slate-200">Dar Baixa no Saldo Pendente:</span>
                             </div>
 
-                            <div className="flex items-center gap-2">
-                              <div className="relative w-32">
+                            <div className="flex flex-wrap items-center gap-2 w-full md:w-auto">
+                              <div className="relative flex-1 md:flex-initial min-w-[110px] md:w-32">
                                 <span className="absolute left-2.5 top-1.5 text-xs text-slate-500 font-mono">R$</span>
                                 <input
                                   type="number"
@@ -1318,7 +1318,7 @@ export function ClientSearchModal({
 
                               <button
                                 onClick={() => handleDarBaixa(sale)}
-                                className="px-3 py-1 bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-black text-xs rounded-lg transition shadow-md shadow-emerald-500/20 cursor-pointer flex items-center gap-1"
+                                className="w-full md:w-auto justify-center px-3 py-1.5 md:py-1 bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-black text-xs rounded-lg transition shadow-md shadow-emerald-500/20 cursor-pointer flex items-center gap-1"
                               >
                                 <CheckCircle2 className="h-3.5 w-3.5" />
                                 <span>Confirmar Baixa</span>
@@ -1336,13 +1336,13 @@ export function ClientSearchModal({
         </div>
 
         {/* Footer */}
-        <div className="p-4 border-t border-slate-800 bg-slate-950 flex justify-between items-center text-xs text-slate-500 shrink-0">
+        <div className="p-3 md:p-4 border-t border-slate-800 bg-slate-950 flex flex-col md:flex-row justify-between items-center gap-2 text-xs text-slate-500 shrink-0">
           <span>
             {clientsList.length} clientes cadastrados com histórico de serviços
           </span>
           <button
             onClick={onClose}
-            className="px-5 py-2 bg-slate-800 hover:bg-slate-700 text-white font-bold rounded-xl transition cursor-pointer"
+            className="w-full md:w-auto px-5 py-2 bg-slate-800 hover:bg-slate-700 text-white font-bold rounded-xl transition cursor-pointer"
           >
             Fechar
           </button>

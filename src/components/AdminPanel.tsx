@@ -746,33 +746,33 @@ export function AdminPanel({ isMasterUser }: { isMasterUser: boolean }) {
   }, [supportFeedbacks]);
 
   return (
-    <div className="space-y-6 animate-fade-in pb-12 relative">
+    <div className="space-y-4 md:space-y-6 animate-fade-in pb-10 md:pb-12 relative max-w-full overflow-x-hidden">
       {/* Glow Backdrops */}
       <div className="absolute top-0 left-0 w-96 h-96 bg-amber-500/5 blur-[120px] pointer-events-none rounded-full"></div>
       <div className="absolute top-1/2 right-0 w-80 h-80 bg-brand-cyan/5 blur-[100px] pointer-events-none rounded-full"></div>
 
       {/* Header do Painel Master Futuristic */}
-      <div className="bg-slate-900/40 backdrop-blur-md p-6 rounded-3xl border border-slate-800 shadow-2xl flex flex-col md:flex-row md:items-center justify-between gap-6 relative overflow-hidden group">
+      <div className="bg-slate-900/40 backdrop-blur-md p-3.5 md:p-6 rounded-2xl md:rounded-3xl border border-slate-800 shadow-2xl flex flex-col md:flex-row md:items-center justify-between gap-4 md:gap-6 relative overflow-hidden group">
         <div className="absolute inset-0 bg-gradient-to-r from-amber-500/5 via-transparent to-brand-cyan/5 opacity-0 group-hover:opacity-100 transition-opacity duration-700"></div>
         
-        <div className="relative z-10 flex items-center gap-4">
-          <div className="p-4 rounded-2xl bg-amber-500/10 border border-amber-500/30 text-amber-400 shadow-[0_0_20px_rgba(245,158,11,0.15)] animate-pulse">
-            <ShieldCheck className="h-8 w-8" />
+        <div className="relative z-10 flex items-center gap-3 md:gap-4 min-w-0">
+          <div className="p-2.5 md:p-4 rounded-2xl bg-amber-500/10 border border-amber-500/30 text-amber-400 shadow-[0_0_20px_rgba(245,158,11,0.15)] animate-pulse shrink-0">
+            <ShieldCheck className="h-6 w-6 md:h-8 md:w-8" />
           </div>
-          <div>
-            <h1 className="text-2xl font-black text-white tracking-tight flex items-center gap-3">
-              CENTRAL DE COMANDO MASTER
-              <span className="text-[10px] uppercase font-black tracking-widest px-3 py-1 rounded-full bg-amber-500 text-slate-950 border border-amber-400 shadow-[0_0_15px_rgba(245,158,11,0.4)]">
+          <div className="min-w-0">
+            <h1 className="text-lg md:text-2xl font-black text-white tracking-tight flex flex-wrap items-center gap-2 md:gap-3">
+              <span>CENTRAL DE COMANDO MASTER</span>
+              <span className="text-[10px] uppercase font-black tracking-widest px-2.5 md:px-3 py-0.5 md:py-1 rounded-full bg-amber-500 text-slate-950 border border-amber-400 shadow-[0_0_15px_rgba(245,158,11,0.4)]">
                 MASTER ACCESS
               </span>
             </h1>
-            <p className="text-sm text-slate-400 mt-1 max-w-xl leading-relaxed">
+            <p className="text-xs md:text-sm text-slate-400 mt-1 max-w-xl leading-relaxed">
               Gestão omnicanal de ecossistema: usuários, faturamento, suporte global e integridade de dados em tempo real via Supabase High-Availability.
             </p>
           </div>
         </div>
 
-        <div className="flex items-center gap-3 relative z-10">
+        <div className="flex flex-wrap items-center gap-2.5 md:gap-3 relative z-10 w-full md:w-auto">
           <button
             type="button"
             onClick={() => handleOpenUserModal()}
@@ -798,50 +798,50 @@ export function AdminPanel({ isMasterUser }: { isMasterUser: boolean }) {
       </div>
 
       {/* Cards de Métricas Futuristic */}
-      <div className="grid grid-cols-2 sm:grid-cols-5 gap-4">
-        <div className="bg-slate-900/50 backdrop-blur-sm p-4 rounded-2xl border border-slate-800 hover:border-slate-700 transition-all group">
+      <div className="grid grid-cols-1 md:grid-cols-5 gap-2.5 md:gap-4">
+        <div className="bg-slate-900/50 backdrop-blur-sm p-3.5 md:p-4 rounded-2xl border border-slate-800 hover:border-slate-700 transition-all group">
           <div className="text-[10px] font-black text-slate-500 uppercase tracking-widest flex items-center justify-between">
             <span>TOTAL DE USUÁRIOS</span>
             <Users className="h-4 w-4 text-slate-600 group-hover:text-amber-500 transition-colors" />
           </div>
-          <div className="text-3xl font-black text-white mt-2 group-hover:scale-110 transition-transform origin-left">{stats.total}</div>
+          <div className="text-2xl md:text-3xl font-black text-white mt-1.5 md:mt-2 group-hover:scale-110 transition-transform origin-left">{stats.total}</div>
         </div>
-        <div className="bg-slate-900/50 backdrop-blur-sm p-4 rounded-2xl border border-slate-800 hover:border-emerald-500/30 transition-all group">
+        <div className="bg-slate-900/50 backdrop-blur-sm p-3.5 md:p-4 rounded-2xl border border-slate-800 hover:border-emerald-500/30 transition-all group">
           <div className="text-[10px] font-black text-emerald-500 uppercase tracking-widest flex items-center justify-between">
             <span>SISTEMA ATIVO</span>
             <CheckCircle2 className="h-4 w-4 text-emerald-600 group-hover:text-emerald-400 transition-colors" />
           </div>
-          <div className="text-3xl font-black text-emerald-400 mt-2 group-hover:scale-110 transition-transform origin-left">{stats.active}</div>
+          <div className="text-2xl md:text-3xl font-black text-emerald-400 mt-1.5 md:mt-2 group-hover:scale-110 transition-transform origin-left">{stats.active}</div>
         </div>
-        <div className="bg-slate-900/50 backdrop-blur-sm p-4 rounded-2xl border border-slate-800 hover:border-red-500/30 transition-all group">
+        <div className="bg-slate-900/50 backdrop-blur-sm p-3.5 md:p-4 rounded-2xl border border-slate-800 hover:border-red-500/30 transition-all group">
           <div className="text-[10px] font-black text-red-500 uppercase tracking-widest flex items-center justify-between">
             <span>BLOQUEADOS</span>
             <XCircle className="h-4 w-4 text-red-600 group-hover:text-red-400 transition-colors" />
           </div>
-          <div className="text-3xl font-black text-red-400 mt-2 group-hover:scale-110 transition-transform origin-left">{stats.blocked}</div>
+          <div className="text-2xl md:text-3xl font-black text-red-400 mt-1.5 md:mt-2 group-hover:scale-110 transition-transform origin-left">{stats.blocked}</div>
         </div>
-        <div className="bg-slate-900/50 backdrop-blur-sm p-4 rounded-2xl border border-slate-800 hover:border-amber-500/30 transition-all group">
+        <div className="bg-slate-900/50 backdrop-blur-sm p-3.5 md:p-4 rounded-2xl border border-slate-800 hover:border-amber-500/30 transition-all group">
           <div className="text-[10px] font-black text-amber-500 uppercase tracking-widest flex items-center justify-between">
             <span>VITALÍCIOS</span>
             <InfinityIcon className="h-4 w-4 text-amber-600 group-hover:text-amber-400 transition-colors" />
           </div>
-          <div className="text-3xl font-black text-amber-400 mt-2 group-hover:scale-110 transition-transform origin-left">{stats.lifetime}</div>
+          <div className="text-2xl md:text-3xl font-black text-amber-400 mt-1.5 md:mt-2 group-hover:scale-110 transition-transform origin-left">{stats.lifetime}</div>
         </div>
-        <div className="bg-slate-900/50 backdrop-blur-sm p-4 rounded-2xl border border-slate-800 hover:border-brand-cyan/30 transition-all group col-span-2 sm:col-span-1">
+        <div className="bg-slate-900/50 backdrop-blur-sm p-3.5 md:p-4 rounded-2xl border border-slate-800 hover:border-brand-cyan/30 transition-all group md:col-span-1">
           <div className="text-[10px] font-black text-brand-cyan uppercase tracking-widest flex items-center justify-between">
             <span>PERÍODO DE TESTE</span>
             <Clock className="h-4 w-4 text-brand-cyan group-hover:text-cyan-300 transition-colors" />
           </div>
-          <div className="text-3xl font-black text-brand-cyan mt-2 group-hover:scale-110 transition-transform origin-left">{stats.trial}</div>
+          <div className="text-2xl md:text-3xl font-black text-brand-cyan mt-1.5 md:mt-2 group-hover:scale-110 transition-transform origin-left">{stats.trial}</div>
         </div>
       </div>
 
       {/* Navegação entre Abas Futuristic */}
-      <div className="flex border-b border-slate-800/50 gap-4 overflow-x-auto whitespace-nowrap pb-px">
+      <div className="flex border-b border-slate-800/50 gap-2 md:gap-4 overflow-x-auto whitespace-nowrap pb-px">
         <button
           type="button"
           onClick={() => setActiveTab("usuarios")}
-          className={`px-6 py-4 text-xs font-black uppercase tracking-widest transition-all cursor-pointer flex items-center gap-3 relative group ${
+          className={`px-3.5 md:px-6 py-3 md:py-4 text-xs font-black uppercase tracking-widest transition-all cursor-pointer flex items-center gap-2 md:gap-3 relative group ${
             activeTab === "usuarios" 
               ? "text-amber-400" 
               : "text-slate-500 hover:text-slate-300"
@@ -860,7 +860,7 @@ export function AdminPanel({ isMasterUser }: { isMasterUser: boolean }) {
             setActiveTab("suporte_mensagens");
             fetchFeedbacks();
           }}
-          className={`px-6 py-4 text-xs font-black uppercase tracking-widest transition-all cursor-pointer flex items-center gap-3 relative group ${
+          className={`px-3.5 md:px-6 py-3 md:py-4 text-xs font-black uppercase tracking-widest transition-all cursor-pointer flex items-center gap-2 md:gap-3 relative group ${
             activeTab === "suporte_mensagens" 
               ? "text-amber-400" 
               : "text-slate-500 hover:text-slate-300"
@@ -884,7 +884,7 @@ export function AdminPanel({ isMasterUser }: { isMasterUser: boolean }) {
             setActiveTab("suporte_config");
             loadSupportConfig();
           }}
-          className={`px-6 py-4 text-xs font-black uppercase tracking-widest transition-all cursor-pointer flex items-center gap-3 relative group ${
+          className={`px-3.5 md:px-6 py-3 md:py-4 text-xs font-black uppercase tracking-widest transition-all cursor-pointer flex items-center gap-2 md:gap-3 relative group ${
             activeTab === "suporte_config" 
               ? "text-amber-400" 
               : "text-slate-500 hover:text-slate-300"
@@ -902,7 +902,7 @@ export function AdminPanel({ isMasterUser }: { isMasterUser: boolean }) {
       {activeTab === "usuarios" && (
         <div className="space-y-4 animate-in slide-in-from-left-4 duration-500">
           {/* Barra de Filtros e Busca Futuristic */}
-          <div className="bg-slate-900/40 backdrop-blur-md p-5 rounded-2xl border border-slate-800 flex flex-col md:flex-row gap-4 items-center justify-between shadow-xl relative overflow-hidden group">
+          <div className="bg-slate-900/40 backdrop-blur-md p-3.5 md:p-5 rounded-2xl border border-slate-800 flex flex-col md:flex-row gap-3 md:gap-4 items-center justify-between shadow-xl relative overflow-hidden group">
             <div className="absolute inset-0 bg-gradient-to-r from-brand-cyan/5 to-transparent opacity-50"></div>
             
             <div className="relative w-full md:w-96 group/search">
@@ -912,17 +912,17 @@ export function AdminPanel({ isMasterUser }: { isMasterUser: boolean }) {
                 placeholder="Identidade, e-mail ou nome..."
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
-                className="w-full pl-11 pr-4 py-3 bg-slate-950/80 border border-slate-800 rounded-xl text-xs text-white placeholder-slate-500 focus:outline-none focus:border-brand-cyan focus:ring-1 focus:ring-brand-cyan/30 transition-all font-mono shadow-inner"
+                className="w-full pl-11 pr-4 py-2.5 md:py-3 bg-slate-950/80 border border-slate-800 rounded-xl text-xs text-white placeholder-slate-500 focus:outline-none focus:border-brand-cyan focus:ring-1 focus:ring-brand-cyan/30 transition-all font-mono shadow-inner"
               />
             </div>
 
-            <div className="flex flex-wrap items-center gap-3 w-full md:w-auto relative z-10">
+            <div className="flex flex-wrap items-center gap-2.5 md:gap-3 w-full md:w-auto relative z-10">
               {/* Filtro de Status */}
-              <div className="flex bg-slate-950/80 p-1 rounded-xl border border-slate-800 text-[10px] font-black uppercase tracking-wider">
+              <div className="flex bg-slate-950/80 p-1 rounded-xl border border-slate-800 text-[10px] font-black uppercase tracking-wider overflow-x-auto max-w-full">
                 <button
                   type="button"
                   onClick={() => setStatusFilter("all")}
-                  className={`px-4 py-2 rounded-lg transition-all cursor-pointer ${
+                  className={`px-3 md:px-4 py-1.5 md:py-2 rounded-lg transition-all cursor-pointer whitespace-nowrap ${
                     statusFilter === "all" ? "bg-amber-500 text-slate-950 shadow-lg shadow-amber-500/20" : "text-slate-500 hover:text-slate-300"
                   }`}
                 >
@@ -931,7 +931,7 @@ export function AdminPanel({ isMasterUser }: { isMasterUser: boolean }) {
                 <button
                   type="button"
                   onClick={() => setStatusFilter("active")}
-                  className={`px-4 py-2 rounded-lg transition-all cursor-pointer ${
+                  className={`px-3 md:px-4 py-1.5 md:py-2 rounded-lg transition-all cursor-pointer whitespace-nowrap ${
                     statusFilter === "active" ? "bg-emerald-500 text-slate-950 shadow-lg shadow-emerald-500/20" : "text-slate-500 hover:text-slate-300"
                   }`}
                 >
@@ -940,7 +940,7 @@ export function AdminPanel({ isMasterUser }: { isMasterUser: boolean }) {
                 <button
                   type="button"
                   onClick={() => setStatusFilter("blocked")}
-                  className={`px-4 py-2 rounded-lg transition-all cursor-pointer ${
+                  className={`px-3 md:px-4 py-1.5 md:py-2 rounded-lg transition-all cursor-pointer whitespace-nowrap ${
                     statusFilter === "blocked" ? "bg-red-500 text-slate-950 shadow-lg shadow-red-500/20" : "text-slate-500 hover:text-slate-300"
                   }`}
                 >
@@ -949,11 +949,11 @@ export function AdminPanel({ isMasterUser }: { isMasterUser: boolean }) {
               </div>
 
               {/* Filtro de Plano */}
-              <div className="flex bg-slate-950/80 p-1 rounded-xl border border-slate-800 text-[10px] font-black uppercase tracking-wider">
+              <div className="flex bg-slate-950/80 p-1 rounded-xl border border-slate-800 text-[10px] font-black uppercase tracking-wider overflow-x-auto max-w-full">
                 <button
                   type="button"
                   onClick={() => setPlanFilter("all")}
-                  className={`px-4 py-2 rounded-lg transition-all cursor-pointer ${
+                  className={`px-3 md:px-4 py-1.5 md:py-2 rounded-lg transition-all cursor-pointer whitespace-nowrap ${
                     planFilter === "all" ? "bg-brand-cyan text-slate-950 shadow-lg shadow-brand-cyan/20" : "text-slate-500 hover:text-slate-300"
                   }`}
                 >
@@ -962,7 +962,7 @@ export function AdminPanel({ isMasterUser }: { isMasterUser: boolean }) {
                 <button
                   type="button"
                   onClick={() => setPlanFilter("lifetime")}
-                  className={`px-4 py-2 rounded-lg transition-all cursor-pointer ${
+                  className={`px-3 md:px-4 py-1.5 md:py-2 rounded-lg transition-all cursor-pointer whitespace-nowrap ${
                     planFilter === "lifetime" ? "bg-amber-400 text-slate-950 shadow-lg shadow-amber-400/20" : "text-slate-500 hover:text-slate-300"
                   }`}
                 >
@@ -971,7 +971,7 @@ export function AdminPanel({ isMasterUser }: { isMasterUser: boolean }) {
                 <button
                   type="button"
                   onClick={() => setPlanFilter("trial")}
-                  className={`px-4 py-2 rounded-lg transition-all cursor-pointer ${
+                  className={`px-3 md:px-4 py-1.5 md:py-2 rounded-lg transition-all cursor-pointer whitespace-nowrap ${
                     planFilter === "trial" ? "bg-purple-500 text-slate-950 shadow-lg shadow-purple-500/20" : "text-slate-500 hover:text-slate-300"
                   }`}
                 >
@@ -1140,7 +1140,7 @@ export function AdminPanel({ isMasterUser }: { isMasterUser: boolean }) {
                           </td>
 
                           <td className="py-4 px-6 text-right">
-                            <div className="flex items-center justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                            <div className="flex items-center justify-end gap-2 opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-opacity duration-300">
                               <button
                                 type="button"
                                 onClick={() => handleOpenUserModal(p)}
@@ -1228,25 +1228,25 @@ export function AdminPanel({ isMasterUser }: { isMasterUser: boolean }) {
 
       {/* ABA 2: SUPORTE GLOBAL Futuristic */}
       {activeTab === "suporte_mensagens" && (
-        <div className="space-y-6 animate-in slide-in-from-right-4 duration-500">
-          <div className="bg-slate-900/60 backdrop-blur-xl p-6 rounded-3xl border border-slate-800 flex flex-col md:flex-row items-center justify-between shadow-2xl relative overflow-hidden group">
+        <div className="space-y-4 md:space-y-6 animate-in slide-in-from-right-4 duration-500">
+          <div className="bg-slate-900/60 backdrop-blur-xl p-4 md:p-6 rounded-2xl md:rounded-3xl border border-slate-800 flex flex-col md:flex-row items-start md:items-center justify-between gap-3 md:gap-0 shadow-2xl relative overflow-hidden group">
             <div className="absolute inset-0 bg-gradient-to-r from-brand-cyan/10 to-transparent opacity-50"></div>
             
-            <div className="flex items-center gap-4 relative z-10">
-              <div className="p-4 rounded-2xl bg-brand-cyan/10 border border-brand-cyan/30 text-brand-cyan shadow-[0_0_20px_rgba(6,182,212,0.15)]">
-                <MessageSquare className="h-6 w-6" />
+            <div className="flex items-center gap-3 md:gap-4 relative z-10">
+              <div className="p-3 md:p-4 rounded-2xl bg-brand-cyan/10 border border-brand-cyan/30 text-brand-cyan shadow-[0_0_20px_rgba(6,182,212,0.15)] shrink-0">
+                <MessageSquare className="h-5 w-5 md:h-6 md:w-6" />
               </div>
               <div>
-                <h3 className="text-lg font-black text-white uppercase tracking-tighter">CENTRAL DE TRANSMISSÃO GLOBAL</h3>
+                <h3 className="text-base md:text-lg font-black text-white uppercase tracking-tighter">CENTRAL DE TRANSMISSÃO GLOBAL</h3>
                 <p className="text-[10px] text-slate-500 font-mono mt-0.5 tracking-widest uppercase">Global Interaction Monitoring & Telemetry</p>
               </div>
             </div>
 
-            <div className="flex bg-slate-950/80 p-1.5 rounded-2xl border border-slate-800 text-[10px] font-black uppercase tracking-widest relative z-10 mt-4 md:mt-0">
+            <div className="flex bg-slate-950/80 p-1.5 rounded-2xl border border-slate-800 text-[10px] font-black uppercase tracking-widest relative z-10 w-full md:w-auto">
               <button
                 type="button"
                 onClick={() => setFeedbackFilter("unanswered")}
-                className={`px-6 py-2.5 rounded-xl transition-all cursor-pointer flex items-center gap-2 ${
+                className={`flex-1 md:flex-initial justify-center px-4 md:px-6 py-2 md:py-2.5 rounded-xl transition-all cursor-pointer flex items-center gap-2 ${
                   feedbackFilter === "unanswered" ? "bg-amber-500 text-slate-950 shadow-lg shadow-amber-500/20" : "text-slate-500 hover:text-slate-300"
                 }`}
               >
@@ -1256,7 +1256,7 @@ export function AdminPanel({ isMasterUser }: { isMasterUser: boolean }) {
               <button
                 type="button"
                 onClick={() => setFeedbackFilter("all")}
-                className={`px-6 py-2.5 rounded-xl transition-all cursor-pointer flex items-center gap-2 ${
+                className={`flex-1 md:flex-initial justify-center px-4 md:px-6 py-2 md:py-2.5 rounded-xl transition-all cursor-pointer flex items-center gap-2 ${
                   feedbackFilter === "all" ? "bg-slate-800 text-white shadow-lg shadow-slate-950/50" : "text-slate-500 hover:text-slate-300"
                 }`}
               >
@@ -1266,9 +1266,9 @@ export function AdminPanel({ isMasterUser }: { isMasterUser: boolean }) {
             </div>
           </div>
 
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 md:gap-6">
             {loadingFeedbacks ? (
-              <div className="col-span-full py-32 text-center">
+              <div className="col-span-full py-20 md:py-32 text-center">
                 <div className="relative inline-block">
                   <RefreshCw className="h-12 w-12 animate-spin text-brand-cyan opacity-40 mx-auto" />
                   <div className="absolute inset-0 blur-2xl bg-brand-cyan/20 animate-pulse"></div>
@@ -1276,8 +1276,8 @@ export function AdminPanel({ isMasterUser }: { isMasterUser: boolean }) {
                 <p className="mt-4 text-[10px] font-mono text-slate-500 tracking-[0.3em] uppercase animate-pulse">Retrieving satellite feeds...</p>
               </div>
             ) : supportFeedbacks.length === 0 ? (
-              <div className="col-span-full py-32 text-center border-2 border-dashed border-slate-800/60 rounded-[40px] bg-slate-950/20 backdrop-blur-sm">
-                <p className="text-slate-600 font-mono text-[10px] tracking-[0.5em] uppercase">NO SIGNAL DETECTED IN THIS FREQUENCY.</p>
+              <div className="col-span-full py-20 md:py-32 text-center border-2 border-dashed border-slate-800/60 rounded-2xl md:rounded-[40px] bg-slate-950/20 backdrop-blur-sm">
+                <p className="text-slate-600 font-mono text-[10px] tracking-[0.3em] md:tracking-[0.5em] uppercase">NO SIGNAL DETECTED IN THIS FREQUENCY.</p>
               </div>
             ) : (
               supportFeedbacks
@@ -1288,34 +1288,34 @@ export function AdminPanel({ isMasterUser }: { isMasterUser: boolean }) {
                     key={f.id}
                     initial={{ opacity: 0, scale: 0.95 }}
                     animate={{ opacity: 1, scale: 1 }}
-                    className={`group relative bg-slate-900/40 backdrop-blur-md rounded-3xl border p-6 space-y-5 shadow-2xl transition-all duration-500 hover:scale-[1.01] hover:border-slate-600 ${
+                    className={`group relative bg-slate-900/40 backdrop-blur-md rounded-2xl md:rounded-3xl border p-3.5 md:p-6 space-y-4 md:space-y-5 shadow-2xl transition-all duration-500 hover:scale-[1.01] hover:border-slate-600 ${
                       f.resposta_admin ? "border-slate-800/40 opacity-75" : "border-amber-500/20 shadow-amber-500/5 ring-1 ring-amber-500/5"
                     }`}
                   >
-                    <div className="flex items-center justify-between border-b border-slate-800/40 pb-4">
-                      <div className="flex items-center gap-4">
-                        <div className="w-14 h-14 rounded-2xl bg-slate-950 flex items-center justify-center font-black text-xl text-brand-cyan border border-slate-800 shadow-inner group-hover:border-brand-cyan/30 transition-colors">
+                    <div className="flex flex-wrap items-center justify-between gap-2 border-b border-slate-800/40 pb-3 md:pb-4">
+                      <div className="flex items-center gap-3 md:gap-4 min-w-0">
+                        <div className="w-11 h-11 md:w-14 md:h-14 rounded-2xl bg-slate-950 flex items-center justify-center font-black text-lg md:text-xl text-brand-cyan border border-slate-800 shadow-inner group-hover:border-brand-cyan/30 transition-colors shrink-0">
                           {(f.user_name || "U").charAt(0).toUpperCase()}
                         </div>
-                        <div>
-                          <div className="text-white font-black text-sm uppercase tracking-tight flex items-center gap-2">
+                        <div className="min-w-0">
+                          <div className="text-white font-black text-sm uppercase tracking-tight flex items-center gap-2 truncate">
                             {f.user_name}
-                            {!f.resposta_admin && <span className="w-2 h-2 rounded-full bg-amber-500 animate-ping"></span>}
+                            {!f.resposta_admin && <span className="w-2 h-2 rounded-full bg-amber-500 animate-ping shrink-0"></span>}
                           </div>
                           <div className="text-[10px] text-slate-500 font-mono mt-0.5 flex items-center gap-2">
-                            <Clock className="h-3 w-3" />
+                            <Clock className="h-3 w-3 shrink-0" />
                             {new Date(f.created_at).toLocaleString("pt-BR")}
                           </div>
                         </div>
                       </div>
                       {!f.resposta_admin && (
-                        <div className="px-3 py-1 rounded-full bg-amber-500 text-slate-950 text-[9px] font-black tracking-widest animate-pulse shadow-[0_0_15px_rgba(245,158,11,0.3)]">
+                        <div className="px-3 py-1 rounded-full bg-amber-500 text-slate-950 text-[9px] font-black tracking-widest animate-pulse shadow-[0_0_15px_rgba(245,158,11,0.3)] shrink-0">
                           ACTIVE TICKET
                         </div>
                       )}
                     </div>
 
-                    <div className="bg-slate-950/80 p-5 rounded-2xl border border-slate-800/60 relative overflow-hidden group/message shadow-inner">
+                    <div className="bg-slate-950/80 p-3.5 md:p-5 rounded-2xl border border-slate-800/60 relative overflow-hidden group/message shadow-inner">
                       <div className="absolute right-4 top-4 opacity-5 group-hover/message:opacity-20 transition-opacity duration-700">
                         <Volume2 className="h-12 w-12 text-brand-cyan" />
                       </div>
@@ -1377,36 +1377,36 @@ export function AdminPanel({ isMasterUser }: { isMasterUser: boolean }) {
       {/* ABA 3: CONFIGURAÇÕES Futuristic */}
       {activeTab === "suporte_config" && supportConfig && (
         <div className="max-w-4xl mx-auto animate-in fade-in zoom-in-95 duration-700">
-          <div className="bg-slate-900/60 backdrop-blur-2xl p-10 rounded-[40px] border border-slate-800 shadow-[0_30px_100px_rgba(0,0,0,0.6)] space-y-10 relative overflow-hidden group">
+          <div className="bg-slate-900/60 backdrop-blur-2xl p-4 md:p-10 rounded-2xl md:rounded-[40px] border border-slate-800 shadow-[0_30px_100px_rgba(0,0,0,0.6)] space-y-6 md:space-y-10 relative overflow-hidden group">
             <div className="absolute inset-0 bg-gradient-to-br from-amber-500/10 via-transparent to-brand-cyan/10 opacity-30"></div>
             <div className="absolute -top-24 -right-24 w-64 h-64 bg-amber-500/10 blur-[100px] rounded-full animate-pulse"></div>
             <div className="absolute -bottom-24 -left-24 w-64 h-64 bg-brand-cyan/10 blur-[100px] rounded-full animate-pulse duration-[5000ms]"></div>
             
-            <div className="text-center space-y-3 relative z-10">
-              <div className="inline-block p-6 rounded-[32px] bg-amber-500/10 border border-amber-500/20 text-amber-400 mb-4 shadow-[0_0_30px_rgba(245,158,11,0.1)] transition-transform duration-700 hover:rotate-180">
-                <Settings className="h-10 w-10 animate-spin-slow" />
+            <div className="text-center space-y-2 md:space-y-3 relative z-10">
+              <div className="inline-block p-4 md:p-6 rounded-2xl md:rounded-[32px] bg-amber-500/10 border border-amber-500/20 text-amber-400 mb-2 md:mb-4 shadow-[0_0_30px_rgba(245,158,11,0.1)] transition-transform duration-700 hover:rotate-180">
+                <Settings className="h-8 w-8 md:h-10 md:w-10 animate-spin-slow" />
               </div>
-              <h3 className="text-3xl font-black text-white uppercase tracking-tight">PROTOCOLOS DE COMANDO</h3>
-              <p className="text-[11px] text-slate-500 font-mono tracking-[0.4em] uppercase">Global Interface Logic & Aesthetic Parameters</p>
+              <h3 className="text-xl md:text-3xl font-black text-white uppercase tracking-tight">PROTOCOLOS DE COMANDO</h3>
+              <p className="text-[10px] md:text-[11px] text-slate-500 font-mono tracking-[0.2em] md:tracking-[0.4em] uppercase">Global Interface Logic & Aesthetic Parameters</p>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-10 relative z-10">
-              <div className="space-y-5">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-5 md:gap-10 relative z-10">
+              <div className="space-y-3 md:space-y-5">
                 <div className="flex items-center gap-3">
                   <div className="w-1 h-6 bg-amber-500 rounded-full shadow-[0_0_10px_rgba(245,158,11,0.5)]"></div>
                   <label className="block text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">URL do Avatar do Comandante</label>
                 </div>
-                <div className="flex gap-4">
+                <div className="flex flex-col md:flex-row gap-3 md:gap-4">
                   <div className="relative group/input flex-1">
                     <input
                       type="text"
                       value={supportConfig.admin_avatar || ""}
                       onChange={(e) => setSupportConfig({ ...supportConfig, admin_avatar: e.target.value })}
                       placeholder="https://satellite.link/avatar.png"
-                      className="w-full bg-slate-950/80 border border-slate-800 rounded-2xl px-5 py-4 text-xs text-white placeholder-slate-700 focus:outline-none focus:border-amber-500 focus:ring-1 focus:ring-amber-500/20 font-mono transition-all shadow-inner"
+                      className="w-full bg-slate-950/80 border border-slate-800 rounded-2xl px-4 md:px-5 py-3 md:py-4 text-xs text-white placeholder-slate-700 focus:outline-none focus:border-amber-500 focus:ring-1 focus:ring-amber-500/20 font-mono transition-all shadow-inner"
                     />
                   </div>
-                  <div className="w-14 h-14 rounded-2xl bg-slate-950 border border-slate-800 overflow-hidden shrink-0 flex items-center justify-center shadow-lg group-hover:border-amber-500/30 transition-colors">
+                  <div className="w-12 h-12 md:w-14 md:h-14 rounded-2xl bg-slate-950 border border-slate-800 overflow-hidden shrink-0 flex items-center justify-center shadow-lg group-hover:border-amber-500/30 transition-colors">
                     {supportConfig.admin_avatar ? (
                       <img src={supportConfig.admin_avatar} className="w-full h-full object-cover" />
                     ) : (
@@ -1416,7 +1416,7 @@ export function AdminPanel({ isMasterUser }: { isMasterUser: boolean }) {
                 </div>
               </div>
 
-              <div className="space-y-5">
+              <div className="space-y-3 md:space-y-5">
                 <div className="flex items-center gap-3">
                   <div className="w-1 h-6 bg-brand-cyan rounded-full shadow-[0_0_10px_rgba(6,182,212,0.5)]"></div>
                    <label className="block text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">Identidade do Comandante</label>
@@ -1427,12 +1427,12 @@ export function AdminPanel({ isMasterUser }: { isMasterUser: boolean }) {
                     value={supportConfig.admin_name || ""}
                     onChange={(e) => setSupportConfig({ ...supportConfig, admin_name: e.target.value })}
                     placeholder="Ex: NEXVOLT OVERSEER"
-                    className="w-full bg-slate-950/80 border border-slate-800 rounded-2xl px-5 py-4 text-xs text-white placeholder-slate-700 focus:outline-none focus:border-brand-cyan focus:ring-1 focus:ring-brand-cyan/20 font-mono font-black transition-all shadow-inner"
+                    className="w-full bg-slate-950/80 border border-slate-800 rounded-2xl px-4 md:px-5 py-3 md:py-4 text-xs text-white placeholder-slate-700 focus:outline-none focus:border-brand-cyan focus:ring-1 focus:ring-brand-cyan/20 font-mono font-black transition-all shadow-inner"
                   />
                 </div>
               </div>
 
-              <div className="col-span-full space-y-5">
+              <div className="col-span-full space-y-3 md:space-y-5">
                 <div className="flex items-center gap-3">
                   <div className="w-1 h-6 bg-purple-500 rounded-full shadow-[0_0_10px_rgba(168,85,247,0.5)]"></div>
                   <label className="block text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">Transmissão Global de Boas-Vindas</label>
@@ -1441,13 +1441,13 @@ export function AdminPanel({ isMasterUser }: { isMasterUser: boolean }) {
                   value={supportConfig.welcome_message || ""}
                   onChange={(e) => setSupportConfig({ ...supportConfig, welcome_message: e.target.value })}
                   placeholder="Sequência de transmissão automatizada ao conectar..."
-                  className="w-full bg-slate-950/80 border border-slate-800 rounded-3xl px-6 py-5 text-sm text-white placeholder-slate-700 focus:outline-none focus:border-purple-500 focus:ring-1 focus:ring-purple-500/20 font-mono transition-all shadow-inner leading-relaxed"
+                  className="w-full bg-slate-950/80 border border-slate-800 rounded-2xl md:rounded-3xl px-4 md:px-6 py-3.5 md:py-5 text-sm text-white placeholder-slate-700 focus:outline-none focus:border-purple-500 focus:ring-1 focus:ring-purple-500/20 font-mono transition-all shadow-inner leading-relaxed"
                   rows={4}
                 />
               </div>
 
-              <div className="col-span-full grid grid-cols-1 md:grid-cols-2 gap-10">
-                <div className="space-y-5">
+              <div className="col-span-full grid grid-cols-1 md:grid-cols-2 gap-5 md:gap-10">
+                <div className="space-y-3 md:space-y-5">
                   <div className="flex items-center gap-3">
                     <div className="w-1 h-6 bg-emerald-500 rounded-full shadow-[0_0_10px_rgba(16,185,129,0.5)]"></div>
                     <label className="block text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">Transmission Start</label>
@@ -1456,10 +1456,10 @@ export function AdminPanel({ isMasterUser }: { isMasterUser: boolean }) {
                     type="time"
                     value={supportConfig.horario_inicio || "09:00"}
                     onChange={(e) => setSupportConfig({ ...supportConfig, horario_inicio: e.target.value })}
-                    className="w-full bg-slate-950/80 border border-slate-800 rounded-2xl px-5 py-4 text-sm text-white focus:outline-none focus:border-emerald-500 font-mono font-bold"
+                    className="w-full bg-slate-950/80 border border-slate-800 rounded-2xl px-4 md:px-5 py-3 md:py-4 text-sm text-white focus:outline-none focus:border-emerald-500 font-mono font-bold"
                   />
                 </div>
-                <div className="space-y-5">
+                <div className="space-y-3 md:space-y-5">
                   <div className="flex items-center gap-3">
                     <div className="w-1 h-6 bg-rose-500 rounded-full shadow-[0_0_10px_rgba(244,63,94,0.5)]"></div>
                     <label className="block text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">Transmission End</label>
@@ -1468,18 +1468,18 @@ export function AdminPanel({ isMasterUser }: { isMasterUser: boolean }) {
                     type="time"
                     value={supportConfig.horario_fim || "19:00"}
                     onChange={(e) => setSupportConfig({ ...supportConfig, horario_fim: e.target.value })}
-                    className="w-full bg-slate-950/80 border border-slate-800 rounded-2xl px-5 py-4 text-sm text-white focus:outline-none focus:border-rose-500 font-mono font-bold"
+                    className="w-full bg-slate-950/80 border border-slate-800 rounded-2xl px-4 md:px-5 py-3 md:py-4 text-sm text-white focus:outline-none focus:border-rose-500 font-mono font-bold"
                   />
                 </div>
               </div>
             </div>
 
-            <div className="pt-4 relative z-10">
+            <div className="pt-2 md:pt-4 relative z-10">
               <button
                 type="button"
                 onClick={handleSaveSupportConfig}
                 disabled={savingConfig}
-                className="w-full py-5 rounded-[24px] bg-gradient-to-r from-amber-500 via-orange-600 to-red-600 text-slate-950 text-xs font-black uppercase tracking-[0.3em] transition-all cursor-pointer shadow-2xl shadow-amber-600/30 active:scale-[0.98] flex items-center justify-center gap-4 group/btn overflow-hidden"
+                className="w-full py-3.5 md:py-5 rounded-2xl md:rounded-[24px] bg-gradient-to-r from-amber-500 via-orange-600 to-red-600 text-slate-950 text-xs font-black uppercase tracking-[0.12em] md:tracking-[0.3em] transition-all cursor-pointer shadow-2xl shadow-amber-600/30 active:scale-[0.98] flex items-center justify-center gap-3 md:gap-4 group/btn overflow-hidden"
               >
                 <div className="absolute inset-0 bg-white/10 translate-x-[-100%] group-hover/btn:translate-x-[100%] transition-transform duration-1000"></div>
                 {savingConfig ? <RefreshCw className="h-5 w-5 animate-spin" /> : <Lock className="h-5 w-5" />}
@@ -1493,7 +1493,7 @@ export function AdminPanel({ isMasterUser }: { isMasterUser: boolean }) {
       {/* USER CREATION/EDITING MODAL */}
       <AnimatePresence>
         {showUserModal && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-2.5 md:p-4">
             <motion.div 
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
@@ -1505,18 +1505,18 @@ export function AdminPanel({ isMasterUser }: { isMasterUser: boolean }) {
               initial={{ opacity: 0, scale: 0.9, y: 20 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.9, y: 20 }}
-              className="bg-slate-900 border border-slate-800 w-full max-w-lg rounded-3xl shadow-2xl relative z-10 overflow-hidden"
+              className="bg-slate-900 border border-slate-800 w-full max-w-lg rounded-2xl md:rounded-3xl shadow-2xl relative z-10 overflow-hidden max-h-[92dvh] overflow-y-auto"
             >
               <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-amber-500 to-orange-600 shadow-[0_0_10px_rgba(245,158,11,0.5)]"></div>
               
-              <form onSubmit={handleSaveUser} className="p-8 space-y-6">
+              <form onSubmit={handleSaveUser} className="p-4 md:p-8 space-y-4 md:space-y-6">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-3">
-                    <div className="p-3 rounded-xl bg-amber-500/10 text-amber-500 border border-amber-500/20">
-                      <Users className="h-6 w-6" />
+                    <div className="p-2.5 md:p-3 rounded-xl bg-amber-500/10 text-amber-500 border border-amber-500/20">
+                      <Users className="h-5 w-5 md:h-6 md:w-6" />
                     </div>
                     <div>
-                      <h3 className="text-lg font-black text-white uppercase tracking-tight">
+                      <h3 className="text-base md:text-lg font-black text-white uppercase tracking-tight">
                         {editingProfile ? "EDITAR IDENTIDADE" : "PROVISIONAR USUÁRIO"}
                       </h3>
                       <p className="text-[10px] text-slate-500 font-mono tracking-widest">SYSTEM ENTITY REGISTRATION</p>
@@ -1584,18 +1584,18 @@ export function AdminPanel({ isMasterUser }: { isMasterUser: boolean }) {
                   </div>
                 </div>
 
-                <div className="pt-4 flex gap-3">
+                <div className="pt-2 md:pt-4 flex flex-col-reverse md:flex-row gap-2.5 md:gap-3">
                   <button
                     type="button"
                     onClick={() => setShowUserModal(false)}
-                    className="flex-1 py-4 rounded-2xl bg-slate-800 text-slate-300 text-xs font-black uppercase tracking-widest hover:bg-slate-700 transition-all"
+                    className="flex-1 py-3 md:py-4 rounded-2xl bg-slate-800 text-slate-300 text-xs font-black uppercase tracking-widest hover:bg-slate-700 transition-all"
                   >
                     CANCELAR
                   </button>
                   <button
                     type="submit"
                     disabled={submittingForm}
-                    className="flex-1 py-4 rounded-2xl bg-gradient-to-r from-amber-500 to-orange-600 text-slate-950 text-xs font-black uppercase tracking-widest shadow-lg shadow-amber-500/20 active:scale-95 disabled:opacity-50"
+                    className="flex-1 py-3 md:py-4 rounded-2xl bg-gradient-to-r from-amber-500 to-orange-600 text-slate-950 text-xs font-black uppercase tracking-widest shadow-lg shadow-amber-500/20 active:scale-95 disabled:opacity-50"
                   >
                     {submittingForm ? <RefreshCw className="h-4 w-4 animate-spin mx-auto" /> : "CONFIRMAR REGISTRO"}
                   </button>

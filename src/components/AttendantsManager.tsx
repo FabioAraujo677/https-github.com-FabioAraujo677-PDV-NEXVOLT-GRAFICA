@@ -1023,19 +1023,19 @@ export function AttendantsManager({
   };
 
   return (
-    <div className="space-y-6 animate-fade-in pb-12">
+    <div className="space-y-4 md:space-y-6 animate-fade-in pb-10 md:pb-12 max-w-full overflow-x-hidden">
       {/* Top Banner & Header */}
-      <div className="bg-slate-900/90 backdrop-blur-md rounded-2xl border border-slate-800 p-5 shadow-xl">
+      <div className="bg-slate-900/90 backdrop-blur-md rounded-2xl border border-slate-800 p-3.5 md:p-5 shadow-xl">
         <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
           <div className="space-y-1">
             <div className="flex items-center gap-2.5">
-              <div className="p-2.5 bg-gradient-to-br from-cyan-600 to-blue-700 rounded-xl text-white shadow-md shadow-cyan-600/30">
-                <UserCheck className="h-6 w-6" />
+              <div className="p-2 md:p-2.5 bg-gradient-to-br from-cyan-600 to-blue-700 rounded-xl text-white shadow-md shadow-cyan-600/30 shrink-0">
+                <UserCheck className="h-5 w-5 md:h-6 md:w-6" />
               </div>
-              <div>
-                <h1 className="text-xl font-black text-slate-100 uppercase tracking-wide flex items-center gap-2">
-                  Gestão & Auditoria de Atendentes
-                  <span className="text-xs font-bold px-2 py-0.5 rounded-full bg-cyan-500/10 text-cyan-400 border border-cyan-500/20 lowercase">
+              <div className="min-w-0">
+                <h1 className="text-base md:text-xl font-black text-slate-100 uppercase tracking-wide flex flex-wrap items-center gap-2">
+                  <span>Gestão & Auditoria de Atendentes</span>
+                  <span className="text-[10px] md:text-xs font-bold px-2 py-0.5 rounded-full bg-cyan-500/10 text-cyan-400 border border-cyan-500/20 lowercase">
                     painel do administrador
                   </span>
                 </h1>
@@ -1160,20 +1160,20 @@ export function AttendantsManager({
       {selectedAttendant && attendantDetailedData && (
         <div className="space-y-5 animate-fade-in">
           {/* Attendant Detail Header Bar */}
-          <div className="bg-slate-900 border border-slate-800 rounded-2xl p-5 shadow-lg">
-            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-              <div className="flex items-center gap-3.5">
+          <div className="bg-slate-900 border border-slate-800 rounded-2xl p-3.5 md:p-5 shadow-lg">
+            <div className="flex flex-col md:flex-row md:items-center justify-between gap-3.5 md:gap-4">
+              <div className="flex items-center gap-3">
                 <button
                   type="button"
                   onClick={() => setSelectedAttendant(null)}
-                  className="p-2 bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white rounded-xl transition-all cursor-pointer"
+                  className="p-2 bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white rounded-xl transition-all cursor-pointer shrink-0"
                   title="Voltar para todos os atendentes"
                 >
                   <ArrowLeft className="h-5 w-5" />
                 </button>
-                <div>
-                  <div className="flex items-center gap-2">
-                    <h2 className="text-lg font-black text-slate-100">{selectedAttendant.name}</h2>
+                <div className="min-w-0">
+                  <div className="flex flex-wrap items-center gap-2">
+                    <h2 className="text-base md:text-lg font-black text-slate-100">{selectedAttendant.name}</h2>
                     <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-cyan-500/15 text-cyan-300 border border-cyan-500/30">
                       @{selectedAttendant.username}
                     </span>
@@ -1188,7 +1188,7 @@ export function AttendantsManager({
               </div>
 
               {/* Action Buttons: Print and Export */}
-              <div className="flex items-center gap-2">
+              <div className="flex flex-wrap items-center gap-2">
                 <button
                   type="button"
                   onClick={handlePrintAttendantReport}
@@ -1366,7 +1366,7 @@ export function AttendantsManager({
           </div>
 
           {/* Attendant Executive Metric Cards */}
-          <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-8 gap-3">
+          <div className="grid grid-cols-1 md:grid-cols-4 lg:grid-cols-8 gap-2.5 md:gap-3">
             {/* Vendas */}
             <div className="bg-slate-900/90 border border-slate-800 p-3.5 rounded-xl shadow-sm">
               <span className="text-[10px] font-bold text-slate-400 uppercase block tracking-wider">Vendas</span>
@@ -1446,7 +1446,7 @@ export function AttendantsManager({
 
           {/* Detailed Activity Timeline Table */}
           <div className="bg-slate-900 border border-slate-800 rounded-2xl overflow-hidden shadow-xl">
-            <div className="p-4 border-b border-slate-800 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+            <div className="p-3.5 md:p-4 border-b border-slate-800 flex flex-col md:flex-row md:items-center justify-between gap-3">
               <div className="flex items-center gap-2">
                 <h3 className="text-sm font-bold text-slate-200 uppercase tracking-wider">
                   Histórico de Tudo o que Fez no Programa ({attendantDetailedData.activities.length})
@@ -1583,8 +1583,8 @@ export function AttendantsManager({
       {activeTab === "atendentes" && !selectedAttendant && (
         <div className="space-y-5 animate-fade-in">
           {/* Search bar & Refresh */}
-          <div className="flex flex-col sm:flex-row items-center justify-between gap-3 bg-slate-900 border border-slate-800 p-4 rounded-2xl">
-            <div className="relative w-full sm:w-96">
+          <div className="flex flex-col md:flex-row items-center justify-between gap-3 bg-slate-900 border border-slate-800 p-3.5 md:p-4 rounded-2xl">
+            <div className="relative w-full md:w-96">
               <Search className="h-4 w-4 absolute left-3 top-1/2 -translate-y-1/2 text-slate-500" />
               <input
                 type="text"
@@ -1595,7 +1595,7 @@ export function AttendantsManager({
               />
             </div>
 
-            <div className="flex items-center gap-2 w-full sm:w-auto justify-end">
+            <div className="flex flex-wrap items-center gap-2 w-full md:w-auto justify-between md:justify-end">
               <button
                 type="button"
                 onClick={loadUsers}
@@ -1656,7 +1656,7 @@ export function AttendantsManager({
                   return (
                     <div
                       key={att.id}
-                      className="bg-slate-900 border border-slate-800 hover:border-cyan-500/40 rounded-2xl p-5 transition-all shadow-md flex flex-col justify-between"
+                      className="bg-slate-900 border border-slate-800 hover:border-cyan-500/40 rounded-2xl p-3.5 md:p-5 transition-all shadow-md flex flex-col justify-between"
                     >
                       <div>
                         {/* Card Header */}
@@ -1680,7 +1680,7 @@ export function AttendantsManager({
                         </div>
 
                         {/* Attendant Metrics Snapshot */}
-                        <div className="grid grid-cols-2 gap-2 mt-4 pt-4 border-t border-slate-800/80">
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-2 mt-4 pt-4 border-t border-slate-800/80">
                           <div className="bg-slate-950/60 p-2.5 rounded-xl border border-slate-850">
                             <span className="text-[10px] text-slate-400 uppercase font-semibold block">Vendas</span>
                             <span className="text-xs font-black text-slate-200">{stats.salesCount} vendas</span>
@@ -1743,8 +1743,8 @@ export function AttendantsManager({
       {activeTab === "exclusoes" && (
         <div className="space-y-5 animate-fade-in">
           {/* Big Banner Alert: Total de Arquivos Apagados */}
-          <div className="bg-gradient-to-r from-red-950/60 via-slate-900 to-red-950/40 border border-red-500/40 rounded-2xl p-6 shadow-xl">
-            <div className="flex flex-col md:flex-row md:items-center justify-between gap-5">
+          <div className="bg-gradient-to-r from-red-950/60 via-slate-900 to-red-950/40 border border-red-500/40 rounded-2xl p-3.5 md:p-6 shadow-xl">
+            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 md:gap-5">
               <div className="space-y-1.5">
                 <div className="flex items-center gap-2">
                   <span className="p-2 bg-red-600/20 text-red-400 rounded-lg border border-red-500/30">
@@ -1754,7 +1754,7 @@ export function AttendantsManager({
                     Auditoria de Segurança & Anti-Fraude
                   </span>
                 </div>
-                <h2 className="text-2xl font-black text-slate-100 uppercase tracking-wide">
+                <h2 className="text-lg md:text-2xl font-black text-slate-100 uppercase tracking-wide">
                   Relatório de Arquivos e Vendas Apagados
                 </h2>
                 <p className="text-xs text-slate-300 max-w-2xl">
@@ -1764,9 +1764,9 @@ export function AttendantsManager({
               </div>
 
               {/* Big Counter */}
-              <div className="bg-slate-950/90 border border-red-500/40 rounded-2xl p-4 text-center min-w-[220px] shadow-lg">
+              <div className="bg-slate-950/90 border border-red-500/40 rounded-2xl p-3.5 md:p-4 text-center w-full md:w-auto md:min-w-[220px] shadow-lg">
                 <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider block">Total de Arquivos Apagados</span>
-                <div className="text-3xl font-black text-red-500 mt-1">
+                <div className="text-2xl md:text-3xl font-black text-red-500 mt-1">
                   {totalDeletedFilesCount}
                 </div>
                 <div className="text-xs font-semibold text-slate-300 mt-0.5">
@@ -1776,8 +1776,8 @@ export function AttendantsManager({
             </div>
 
             {/* Quick Actions for Exclusions: Print and Export */}
-            <div className="flex flex-wrap items-center justify-between gap-3 mt-6 pt-4 border-t border-red-500/20">
-              <div className="flex items-center gap-2">
+            <div className="flex flex-wrap items-center justify-between gap-3 mt-4 md:mt-6 pt-4 border-t border-red-500/20">
+              <div className="flex flex-wrap items-center gap-2">
                 <button
                   type="button"
                   onClick={handlePrintExclusions}
@@ -1816,8 +1816,8 @@ export function AttendantsManager({
           </div>
 
           {/* Filters Bar */}
-          <div className="bg-slate-900 border border-slate-800 rounded-2xl p-4 shadow-md space-y-3">
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+          <div className="bg-slate-900 border border-slate-800 rounded-2xl p-3.5 md:p-4 shadow-md space-y-3">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3">
               {/* Filter by Operator */}
               <div>
                 <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block mb-1">
@@ -1893,7 +1893,7 @@ export function AttendantsManager({
 
             {/* Custom Date Range if selected */}
             {exclusionPeriod === "custom" && (
-              <div className="flex items-center gap-3 pt-2 border-t border-slate-800/80">
+              <div className="flex flex-wrap items-center gap-2 md:gap-3 pt-2 border-t border-slate-800/80">
                 <span className="text-xs text-slate-400 font-semibold">Data Inicial:</span>
                 <input
                   type="date"
@@ -1914,7 +1914,7 @@ export function AttendantsManager({
 
           {/* Exclusions Table */}
           <div className="bg-slate-900 border border-slate-800 rounded-2xl overflow-hidden shadow-xl">
-            <div className="p-4 border-b border-slate-800 flex items-center justify-between">
+            <div className="p-3.5 md:p-4 border-b border-slate-800 flex flex-col md:flex-row items-start md:items-center justify-between gap-2">
               <h3 className="text-sm font-black text-slate-200 uppercase tracking-wider flex items-center gap-2">
                 <Trash2 className="h-4 w-4 text-red-400" />
                 Registros Apagados Encontrados ({filteredExclusions.length})
@@ -2024,7 +2024,7 @@ export function AttendantsManager({
       {/* VIEW 4: CADASTRAR NOVO ATENDENTE */}
       {/* ========================================================= */}
       {activeTab === "novo" && (
-        <div className="max-w-xl mx-auto bg-slate-900 border border-slate-800 rounded-2xl p-6 shadow-xl animate-fade-in">
+        <div className="max-w-xl mx-auto bg-slate-900 border border-slate-800 rounded-2xl p-4 md:p-6 shadow-xl animate-fade-in">
           <div className="flex items-center gap-3 pb-4 border-b border-slate-800 mb-5">
             <div className="p-2.5 bg-emerald-600/20 text-emerald-400 rounded-xl border border-emerald-500/30">
               <UserPlus className="h-6 w-6" />
@@ -2111,18 +2111,18 @@ export function AttendantsManager({
               </div>
             </div>
 
-            <div className="pt-3 flex items-center justify-end gap-3">
+            <div className="pt-3 flex flex-col-reverse md:flex-row items-stretch md:items-center justify-end gap-2.5 md:gap-3">
               <button
                 type="button"
                 onClick={() => setActiveTab("atendentes")}
-                className="px-4 py-2.5 bg-slate-800 hover:bg-slate-750 text-slate-300 text-xs font-bold rounded-xl transition-all cursor-pointer"
+                className="px-4 py-2.5 bg-slate-800 hover:bg-slate-750 text-slate-300 text-xs font-bold rounded-xl transition-all cursor-pointer text-center"
               >
                 Cancelar
               </button>
               <button
                 type="submit"
                 disabled={savingUser}
-                className="px-5 py-2.5 bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-black uppercase tracking-wider rounded-xl transition-all flex items-center gap-2 cursor-pointer shadow-lg shadow-emerald-600/20 disabled:opacity-50"
+                className="px-5 py-2.5 bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-black uppercase tracking-wider rounded-xl transition-all flex items-center justify-center gap-2 cursor-pointer shadow-lg shadow-emerald-600/20 disabled:opacity-50"
               >
                 {savingUser ? <RefreshCw className="h-4 w-4 animate-spin" /> : <CheckCircle2 className="h-4 w-4" />}
                 <span>Salvar Atendente</span>

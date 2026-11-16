@@ -558,28 +558,28 @@ export function AdminMensalistas({ currentUser, onBack, addToast }: AdminMensali
   }
 
   return (
-    <div className="min-h-screen bg-slate-950 text-slate-100 font-sans pb-12 transition-colors duration-250 body.light:bg-slate-50 body.light:text-slate-900">
+    <div className="min-h-dvh md:min-h-screen max-w-[100vw] overflow-x-hidden bg-slate-950 text-slate-100 font-sans pb-10 md:pb-12 transition-colors duration-250 body.light:bg-slate-50 body.light:text-slate-900">
       {/* Decorative gradients */}
       <div className="absolute top-0 left-0 right-0 h-[320px] bg-gradient-to-b from-violet-600/10 via-transparent to-transparent pointer-events-none" />
 
       {/* Header Container */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-6 relative z-10">
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 border-b border-slate-800 pb-5">
-          <div className="flex items-center gap-3">
+      <div className="max-w-7xl mx-auto px-3 md:px-6 lg:px-8 pt-4 md:pt-6 relative z-10">
+        <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3 md:gap-4 border-b border-slate-800 pb-4 md:pb-5">
+          <div className="flex items-center gap-3 min-w-0">
             <button
               onClick={onBack}
-              className="p-2 rounded-xl bg-slate-900 hover:bg-slate-800 text-slate-400 hover:text-slate-100 border border-slate-800 hover:border-slate-700 transition-all cursor-pointer shadow-inner flex items-center justify-center"
+              className="p-2 rounded-xl bg-slate-900 hover:bg-slate-800 text-slate-400 hover:text-slate-100 border border-slate-800 hover:border-slate-700 transition-all cursor-pointer shadow-inner flex items-center justify-center shrink-0"
               title="Voltar ao Sistema"
             >
               <ArrowLeft className="h-4 w-4" />
             </button>
-            <div>
+            <div className="min-w-0">
               <div className="flex items-center gap-2">
                 <span className="text-[10px] bg-violet-500/10 text-violet-400 border border-violet-500/20 px-2.5 py-0.5 rounded-full font-bold uppercase tracking-widest font-mono">
                   Painel Administrativo
                 </span>
               </div>
-              <h1 className="text-xl sm:text-2xl font-black text-slate-100 tracking-tight mt-1 flex items-center gap-2">
+              <h1 className="text-lg md:text-2xl font-black text-slate-100 tracking-tight mt-1 flex items-center gap-2">
                 Gerenciamento de Mensalistas 🛡️
               </h1>
               <p className="text-xs text-slate-500 mt-0.5">
@@ -588,7 +588,7 @@ export function AdminMensalistas({ currentUser, onBack, addToast }: AdminMensali
             </div>
           </div>
 
-          <div className="flex items-center gap-2 self-start sm:self-auto">
+          <div className="flex items-center gap-2 self-start md:self-auto">
             <button
               onClick={fetchUsers}
               className="flex items-center gap-1.5 px-3 py-1.5 bg-slate-900 hover:bg-slate-800 border border-slate-850 hover:border-slate-700 text-xs text-slate-300 hover:text-white rounded-lg transition-all cursor-pointer"
@@ -601,43 +601,43 @@ export function AdminMensalistas({ currentUser, onBack, addToast }: AdminMensali
         </div>
 
         {/* Statistics Cards */}
-        <div className="grid grid-cols-2 md:grid-cols-5 gap-4 mt-6">
-          <div className="bg-slate-900/40 border border-slate-850/60 p-4 rounded-xl flex flex-col justify-between">
+        <div className="grid grid-cols-1 md:grid-cols-5 gap-2.5 md:gap-4 mt-4 md:mt-6">
+          <div className="bg-slate-900/40 border border-slate-850/60 p-3.5 md:p-4 rounded-xl flex flex-col justify-between">
             <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Total de Usuários</span>
-            <div className="flex items-baseline justify-between mt-2">
-              <span className="text-2xl font-extrabold text-slate-100">{stats.total}</span>
+            <div className="flex items-baseline justify-between mt-1.5 md:mt-2">
+              <span className="text-xl md:text-2xl font-extrabold text-slate-100">{stats.total}</span>
               <Users className="h-5 w-5 text-slate-600 shrink-0" />
             </div>
           </div>
 
-          <div className="bg-slate-900/40 border border-slate-850/60 p-4 rounded-xl flex flex-col justify-between">
+          <div className="bg-slate-900/40 border border-slate-850/60 p-3.5 md:p-4 rounded-xl flex flex-col justify-between">
             <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Assinaturas Ativas</span>
-            <div className="flex items-baseline justify-between mt-2">
-              <span className="text-2xl font-extrabold text-emerald-400">{stats.active}</span>
+            <div className="flex items-baseline justify-between mt-1.5 md:mt-2">
+              <span className="text-xl md:text-2xl font-extrabold text-emerald-400">{stats.active}</span>
               <CheckCircle2 className="h-5 w-5 text-emerald-500 shrink-0" />
             </div>
           </div>
 
-          <div className="bg-slate-900/40 border border-slate-850/60 p-4 rounded-xl flex flex-col justify-between">
+          <div className="bg-slate-900/40 border border-slate-850/60 p-3.5 md:p-4 rounded-xl flex flex-col justify-between">
             <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Período de Trial</span>
-            <div className="flex items-baseline justify-between mt-2">
-              <span className="text-2xl font-extrabold text-brand-cyan">{stats.trial}</span>
+            <div className="flex items-baseline justify-between mt-1.5 md:mt-2">
+              <span className="text-xl md:text-2xl font-extrabold text-brand-cyan">{stats.trial}</span>
               <Calendar className="h-5 w-5 text-brand-cyan shrink-0" />
             </div>
           </div>
 
-          <div className="bg-slate-900/40 border border-slate-850/60 p-4 rounded-xl flex flex-col justify-between">
+          <div className="bg-slate-900/40 border border-slate-850/60 p-3.5 md:p-4 rounded-xl flex flex-col justify-between">
             <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Prazos Expirados</span>
-            <div className="flex items-baseline justify-between mt-2">
-              <span className="text-2xl font-extrabold text-amber-500">{stats.expired}</span>
+            <div className="flex items-baseline justify-between mt-1.5 md:mt-2">
+              <span className="text-xl md:text-2xl font-extrabold text-amber-500">{stats.expired}</span>
               <ShieldAlert className="h-5 w-5 text-amber-500 shrink-0" />
             </div>
           </div>
 
-          <div className="bg-slate-900/40 border border-slate-850/60 p-4 rounded-xl col-span-2 md:col-span-1 flex flex-col justify-between">
+          <div className="bg-slate-900/40 border border-slate-850/60 p-3.5 md:p-4 rounded-xl md:col-span-1 flex flex-col justify-between">
             <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Contas Bloqueadas</span>
-            <div className="flex items-baseline justify-between mt-2">
-              <span className="text-2xl font-extrabold text-red-500">{stats.blocked}</span>
+            <div className="flex items-baseline justify-between mt-1.5 md:mt-2">
+              <span className="text-xl md:text-2xl font-extrabold text-red-500">{stats.blocked}</span>
               <XCircle className="h-5 w-5 text-red-500 shrink-0" />
             </div>
           </div>
@@ -705,8 +705,8 @@ export function AdminMensalistas({ currentUser, onBack, addToast }: AdminMensali
         {activeSubTab === "mensalistas" && (
           <>
             {/* Filter and search controls */}
-            <div className="mt-6 flex flex-col sm:flex-row gap-4 items-center justify-between">
-          <div className="relative w-full sm:max-w-md">
+            <div className="mt-4 md:mt-6 flex flex-col md:flex-row gap-3 md:gap-4 items-center justify-between">
+          <div className="relative w-full md:max-w-md">
             <span className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none text-slate-500">
               <Search className="h-4 w-4" />
             </span>
@@ -719,12 +719,12 @@ export function AdminMensalistas({ currentUser, onBack, addToast }: AdminMensali
             />
           </div>
 
-          <div className="flex items-center gap-2 self-stretch sm:self-auto shrink-0 justify-end">
+          <div className="flex items-center gap-2 self-stretch md:self-auto shrink-0 justify-end">
             <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Filtrar:</span>
             <select
               value={statusFilter}
               onChange={(e) => setStatusFilter(e.target.value)}
-              className="bg-slate-900/60 border border-slate-850 rounded-xl px-3 py-1.5 text-xs text-slate-200 font-bold focus:outline-none focus:border-violet-500 cursor-pointer"
+              className="bg-slate-900/60 border border-slate-850 rounded-xl px-3 py-1.5 text-xs text-slate-200 font-bold focus:outline-none focus:border-violet-500 cursor-pointer flex-1 md:flex-initial"
             >
               <option value="all">Todos os Status</option>
               <option value="ativo">Somente Ativos</option>
@@ -930,7 +930,7 @@ export function AdminMensalistas({ currentUser, onBack, addToast }: AdminMensali
 
         {/* Support Settings Section */}
         {activeSubTab === "config_suporte" && (
-          <div className="mt-6 bg-slate-900/40 border border-slate-850 p-6 rounded-2xl max-w-2xl space-y-5 backdrop-blur-md">
+          <div className="mt-4 md:mt-6 bg-slate-900/40 border border-slate-850 p-4 md:p-6 rounded-2xl max-w-2xl space-y-4 md:space-y-5 backdrop-blur-md">
             <div>
               <h3 className="text-sm font-bold text-slate-100 uppercase tracking-wider flex items-center gap-1.5">
                 <Headphones className="h-4 w-4 text-violet-400" />
@@ -941,7 +941,7 @@ export function AdminMensalistas({ currentUser, onBack, addToast }: AdminMensali
               </p>
             </div>
 
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-3 md:gap-4">
               <div className="space-y-1.5">
                 <label className="text-xs font-bold text-slate-300">Horário de Início (HH:MM)</label>
                 <input
@@ -994,14 +994,14 @@ export function AdminMensalistas({ currentUser, onBack, addToast }: AdminMensali
 
         {/* Asaas Integration & Pix Keys */}
         {activeSubTab === "integracao_asaas" && (
-          <div className="mt-6 space-y-6">
-            <div className="bg-slate-900/60 border border-slate-850 p-6 rounded-2xl space-y-6">
+          <div className="mt-4 md:mt-6 space-y-4 md:space-y-6">
+            <div className="bg-slate-900/60 border border-slate-850 p-4 md:p-6 rounded-2xl space-y-4 md:space-y-6">
               {/* Header */}
-              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-800 pb-5">
+              <div className="flex flex-col md:flex-row md:items-center justify-between gap-3 md:gap-4 border-b border-slate-800 pb-4 md:pb-5">
                 <div>
-                  <h3 className="text-base font-black text-white flex items-center gap-2">
-                    <Zap className="h-5 w-5 text-emerald-400" />
-                    Integração Oficial Asaas • Cobrança Pix & Liberação Automática
+                  <h3 className="text-sm md:text-base font-black text-white flex items-center gap-2">
+                    <Zap className="h-5 w-5 text-emerald-400 shrink-0" />
+                    <span>Integração Oficial Asaas • Cobrança Pix & Liberação Automática</span>
                   </h3>
                   <p className="text-xs text-slate-400 mt-1">
                     Gera QR Code Pix automático ao expirar o prazo do usuário e destrava o sistema imediatamente após o pagamento.
@@ -1021,23 +1021,23 @@ export function AdminMensalistas({ currentUser, onBack, addToast }: AdminMensali
               </div>
 
               {/* Status Cards */}
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <div className="bg-slate-950/70 border border-slate-800/80 p-4 rounded-xl space-y-1">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-3 md:gap-4">
+                <div className="bg-slate-950/70 border border-slate-800/80 p-3.5 md:p-4 rounded-xl space-y-1">
                   <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Status da Chave</span>
                   <div className="text-sm font-bold text-white font-mono flex items-center justify-between">
                     <span>{asaasConfig?.configured ? `Conectada (${asaasConfig.maskedKey || "OK"})` : "Não Configurada"}</span>
-                    {asaasConfig?.configured && <CheckCircle2 className="h-4 w-4 text-emerald-400" />}
+                    {asaasConfig?.configured && <CheckCircle2 className="h-4 w-4 text-emerald-400 shrink-0" />}
                   </div>
                 </div>
 
-                <div className="bg-slate-950/70 border border-slate-800/80 p-4 rounded-xl space-y-1">
+                <div className="bg-slate-950/70 border border-slate-800/80 p-3.5 md:p-4 rounded-xl space-y-1 min-w-0">
                   <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Ambiente da API</span>
-                  <div className="text-sm font-bold text-white font-mono">
+                  <div className="text-sm font-bold text-white font-mono truncate">
                     {asaasConfig?.baseUrl || "https://api.asaas.com/v3"}
                   </div>
                 </div>
 
-                <div className="bg-slate-950/70 border border-slate-800/80 p-4 rounded-xl space-y-1">
+                <div className="bg-slate-950/70 border border-slate-800/80 p-3.5 md:p-4 rounded-xl space-y-1">
                   <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Sincronização</span>
                   <div className="text-sm font-bold text-emerald-400 flex items-center gap-1.5 font-mono">
                     <span className="w-2 h-2 rounded-full bg-emerald-400 animate-ping" />
@@ -1047,10 +1047,10 @@ export function AdminMensalistas({ currentUser, onBack, addToast }: AdminMensali
               </div>
 
               {/* Webhook URL Configuration Card */}
-              <div className="bg-slate-950/80 border border-emerald-500/30 p-5 rounded-2xl space-y-3">
-                <div className="flex items-center justify-between">
+              <div className="bg-slate-950/80 border border-emerald-500/30 p-3.5 md:p-5 rounded-2xl space-y-3">
+                <div className="flex flex-wrap items-center justify-between gap-2">
                   <div className="flex items-center gap-2">
-                    <QrCode className="w-5 h-5 text-emerald-400" />
+                    <QrCode className="w-5 h-5 text-emerald-400 shrink-0" />
                     <span className="text-xs font-black uppercase tracking-wider text-slate-200">
                       1. URL do Webhook do Asaas (Sincronização Automática)
                     </span>
@@ -1064,12 +1064,12 @@ export function AdminMensalistas({ currentUser, onBack, addToast }: AdminMensali
                   Copie esta URL e cadastre no painel do Asaas em <strong>Configurações da Conta &gt; Integrações &gt; Webhooks para Cobranças</strong>:
                 </p>
 
-                <div className="flex items-center gap-2">
+                <div className="flex flex-col md:flex-row items-stretch md:items-center gap-2">
                   <input
                     type="text"
                     readOnly
                     value={asaasConfig?.webhookUrl || `${window.location.origin}/api/webhook/asaas`}
-                    className="flex-1 bg-slate-900 border border-slate-800 rounded-xl px-4 py-2.5 text-xs text-emerald-300 font-mono select-all focus:outline-none focus:border-emerald-500"
+                    className="flex-1 min-w-0 bg-slate-900 border border-slate-800 rounded-xl px-3 md:px-4 py-2.5 text-xs text-emerald-300 font-mono select-all focus:outline-none focus:border-emerald-500"
                   />
                   <button
                     type="button"
@@ -1080,7 +1080,7 @@ export function AdminMensalistas({ currentUser, onBack, addToast }: AdminMensali
                       localAddToast("URL do Webhook copiada para a área de transferência! 📋", "success");
                       setTimeout(() => setCopiedWebhook(false), 3000);
                     }}
-                    className="px-4 py-2.5 bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs uppercase rounded-xl transition-all cursor-pointer flex items-center gap-1.5 shrink-0 shadow-lg shadow-emerald-600/10"
+                    className="w-full md:w-auto justify-center px-4 py-2.5 bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs uppercase rounded-xl transition-all cursor-pointer flex items-center gap-1.5 shrink-0 shadow-lg shadow-emerald-600/10"
                   >
                     {copiedWebhook ? <Check className="w-4 h-4" /> : <Copy className="w-4 h-4" />}
                     <span>{copiedWebhook ? "Copiado!" : "Copiar URL"}</span>
@@ -1101,9 +1101,9 @@ export function AdminMensalistas({ currentUser, onBack, addToast }: AdminMensali
               </div>
 
               {/* API Key Configuration Card */}
-              <div className="bg-slate-950/80 border border-slate-800 p-5 rounded-2xl space-y-4">
+              <div className="bg-slate-950/80 border border-slate-800 p-3.5 md:p-5 rounded-2xl space-y-4">
                 <div className="flex items-center gap-2">
-                  <KeyRound className="w-5 h-5 text-amber-400" />
+                  <KeyRound className="w-5 h-5 text-amber-400 shrink-0" />
                   <span className="text-xs font-black uppercase tracking-wider text-slate-200">
                     2. Chave de API do Asaas (ASAAS_API_KEY)
                   </span>
@@ -1144,7 +1144,7 @@ export function AdminMensalistas({ currentUser, onBack, addToast }: AdminMensali
                     type="button"
                     onClick={handleSaveAsaasConfig}
                     disabled={savingAsaas}
-                    className="w-full sm:w-auto px-6 py-2.5 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 disabled:opacity-50 text-white font-black text-xs uppercase rounded-xl transition-all cursor-pointer flex items-center justify-center gap-2 shadow-lg shadow-emerald-600/20"
+                    className="w-full md:w-auto px-6 py-2.5 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 disabled:opacity-50 text-white font-black text-xs uppercase rounded-xl transition-all cursor-pointer flex items-center justify-center gap-2 shadow-lg shadow-emerald-600/20"
                   >
                     {savingAsaas ? (
                       <>
@@ -1180,8 +1180,8 @@ export function AdminMensalistas({ currentUser, onBack, addToast }: AdminMensali
 
         {/* Unified Support Inbox */}
         {activeSubTab === "mensagens_suporte" && (
-          <div className="mt-6 space-y-6">
-            <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between">
+          <div className="mt-4 md:mt-6 space-y-4 md:space-y-6">
+            <div className="flex flex-col md:flex-row gap-3 md:gap-4 items-start md:items-center justify-between">
               <div>
                 <h3 className="text-sm font-bold text-slate-100 uppercase tracking-wider flex items-center gap-1.5">
                   <MessageSquare className="h-4 w-4 text-violet-400" />
@@ -1192,12 +1192,12 @@ export function AdminMensalistas({ currentUser, onBack, addToast }: AdminMensali
                 </p>
               </div>
 
-              <div className="flex items-center gap-2 shrink-0">
+              <div className="flex flex-wrap items-center gap-2 shrink-0 w-full md:w-auto">
                 {/* Filter toggle */}
-                <div className="flex bg-slate-950/60 p-1 rounded-xl border border-slate-850">
+                <div className="flex flex-1 md:flex-initial bg-slate-950/60 p-1 rounded-xl border border-slate-850 overflow-x-auto">
                   <button
                     onClick={() => setFeedbackFilter("unanswered")}
-                    className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
+                    className={`flex-1 md:flex-initial px-2.5 md:px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer whitespace-nowrap ${
                       feedbackFilter === "unanswered"
                         ? "bg-violet-600/25 text-violet-400 shadow-sm"
                         : "text-slate-400 hover:text-slate-200"
@@ -1207,7 +1207,7 @@ export function AdminMensalistas({ currentUser, onBack, addToast }: AdminMensali
                   </button>
                   <button
                     onClick={() => setFeedbackFilter("all")}
-                    className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
+                    className={`flex-1 md:flex-initial px-2.5 md:px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer whitespace-nowrap ${
                       feedbackFilter === "all"
                         ? "bg-violet-600/25 text-violet-400 shadow-sm"
                         : "text-slate-400 hover:text-slate-200"
@@ -1221,7 +1221,7 @@ export function AdminMensalistas({ currentUser, onBack, addToast }: AdminMensali
                 <button
                   onClick={fetchAllFeedbacks}
                   disabled={loadingAllFeedbacks}
-                  className="p-2 bg-slate-900 border border-slate-800 hover:bg-slate-800 text-slate-400 hover:text-slate-200 rounded-xl transition-all cursor-pointer"
+                  className="p-2 bg-slate-900 border border-slate-800 hover:bg-slate-800 text-slate-400 hover:text-slate-200 rounded-xl transition-all cursor-pointer shrink-0"
                   title="Atualizar mensagens"
                 >
                   <RefreshCw className={`h-4 w-4 ${loadingAllFeedbacks ? 'animate-spin' : ''}`} />
@@ -1243,7 +1243,7 @@ export function AdminMensalistas({ currentUser, onBack, addToast }: AdminMensali
 
                 if (filtered.length === 0) {
                   return (
-                    <div className="bg-slate-900/20 border border-dashed border-slate-850 rounded-2xl py-16 text-center flex flex-col items-center justify-center gap-3 max-w-xl mx-auto">
+                    <div className="bg-slate-900/20 border border-dashed border-slate-850 rounded-2xl py-16 text-center flex flex-col items-center justify-center gap-3 max-w-xl mx-auto px-4">
                       <HelpCircle className="h-10 w-10 text-slate-700" />
                       <span className="text-xs font-bold text-slate-400">Nenhuma mensagem encontrada</span>
                       <p className="text-[10px] text-slate-500 max-w-xs leading-relaxed">
@@ -1257,7 +1257,7 @@ export function AdminMensalistas({ currentUser, onBack, addToast }: AdminMensali
                 }
 
                 return (
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3 md:gap-4">
                     {filtered.map((fb) => {
                       const isTextMessage = fb.message || fb.audio_url?.startsWith("text:");
                       const textContent = fb.message || (fb.audio_url?.startsWith("text:") ? fb.audio_url.substring(5) : "");
@@ -1265,7 +1265,7 @@ export function AdminMensalistas({ currentUser, onBack, addToast }: AdminMensali
                       const sending = submittingReply[fb.id] || false;
 
                       return (
-                        <div key={fb.id} className="bg-slate-900/30 border border-slate-850 p-5 rounded-2xl space-y-4 shadow-sm flex flex-col justify-between">
+                        <div key={fb.id} className="bg-slate-900/30 border border-slate-850 p-3.5 md:p-5 rounded-2xl space-y-4 shadow-sm flex flex-col justify-between">
                           <div className="space-y-3">
                             {/* Card Header info */}
                             <div className="flex items-start justify-between">
@@ -1370,32 +1370,32 @@ export function AdminMensalistas({ currentUser, onBack, addToast }: AdminMensali
 
       {/* Selected User Support Dialog Modal */}
       {selectedUserForSupport && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-sm">
-          <div className="bg-slate-900 border border-slate-800 rounded-2xl w-full max-w-2xl max-h-[85vh] flex flex-col shadow-2xl overflow-hidden animate-in fade-in zoom-in-95 duration-200">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-2.5 md:p-4 bg-slate-950/80 backdrop-blur-sm">
+          <div className="bg-slate-900 border border-slate-800 rounded-2xl w-full max-w-2xl max-h-[90dvh] md:max-h-[85vh] flex flex-col shadow-2xl overflow-hidden animate-in fade-in zoom-in-95 duration-200">
             
             {/* Modal Header */}
-            <div className="p-4 border-b border-slate-800 flex items-center justify-between bg-slate-950/40">
-              <div className="flex items-center gap-2">
-                <Headphones className="h-5 w-5 text-violet-400" />
-                <div>
-                  <h3 className="text-sm font-bold text-slate-100">
+            <div className="p-3.5 md:p-4 border-b border-slate-800 flex items-center justify-between bg-slate-950/40">
+              <div className="flex items-center gap-2 min-w-0">
+                <Headphones className="h-5 w-5 text-violet-400 shrink-0" />
+                <div className="min-w-0">
+                  <h3 className="text-sm font-bold text-slate-100 truncate">
                     Histórico de Suporte: {selectedUserForSupport.name || selectedUserForSupport.username}
                   </h3>
-                  <span className="text-[10px] text-slate-500 font-mono">
+                  <span className="text-[10px] text-slate-500 font-mono block truncate">
                     ID do Cliente: {selectedUserForSupport.id}
                   </span>
                 </div>
               </div>
               <button
                 onClick={() => setSelectedUserForSupport(null)}
-                className="p-1.5 rounded-lg bg-slate-950 hover:bg-slate-800 text-slate-400 hover:text-white border border-slate-850 cursor-pointer transition-all"
+                className="p-1.5 rounded-lg bg-slate-950 hover:bg-slate-800 text-slate-400 hover:text-white border border-slate-850 cursor-pointer transition-all shrink-0"
               >
                 <X className="h-4 w-4" />
               </button>
             </div>
 
             {/* Modal Body */}
-            <div className="p-5 overflow-y-auto space-y-4 flex-grow scrollbar-thin">
+            <div className="p-3.5 md:p-5 overflow-y-auto space-y-4 flex-grow scrollbar-thin">
               {loadingFeedbacks ? (
                 <div className="py-12 flex flex-col items-center justify-center gap-3">
                   <RefreshCw className="h-6 w-6 text-violet-500 animate-spin" />
@@ -1416,7 +1416,7 @@ export function AdminMensalistas({ currentUser, onBack, addToast }: AdminMensali
                     const textContent = fb.message || (fb.audio_url?.startsWith("text:") ? fb.audio_url.substring(5) : "");
 
                     return (
-                      <div key={fb.id} className="bg-slate-950/50 border border-slate-850 p-4 rounded-xl space-y-3 shadow-inner">
+                      <div key={fb.id} className="bg-slate-950/50 border border-slate-850 p-3.5 md:p-4 rounded-xl space-y-3 shadow-inner">
                         <div className="flex items-center justify-between text-[10px] text-slate-500">
                           <span className="font-mono">Código: #{fb.id}</span>
                           <span>{new Date(fb.created_at).toLocaleString("pt-BR")}</span>
@@ -1463,7 +1463,7 @@ export function AdminMensalistas({ currentUser, onBack, addToast }: AdminMensali
                           <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">
                             {fb.resposta_admin ? "Atualizar ou Enviar Nova Resposta:" : "Responder Cliente:"}
                           </label>
-                          <div className="flex gap-2">
+                          <div className="flex flex-col md:flex-row gap-2">
                             <input
                               type="text"
                               name="Responder Cliente"
@@ -1476,7 +1476,7 @@ export function AdminMensalistas({ currentUser, onBack, addToast }: AdminMensali
                             <button
                               onClick={() => handleSubmitReply(fb.id)}
                               disabled={sending || !replyVal.trim()}
-                              className="px-4 py-2 bg-violet-600 hover:bg-violet-500 disabled:bg-slate-800 disabled:text-slate-600 text-white text-xs font-bold uppercase rounded-xl transition-all cursor-pointer flex items-center gap-1 shrink-0"
+                              className="w-full md:w-auto justify-center px-4 py-2 bg-violet-600 hover:bg-violet-500 disabled:bg-slate-800 disabled:text-slate-600 text-white text-xs font-bold uppercase rounded-xl transition-all cursor-pointer flex items-center gap-1 shrink-0"
                             >
                               {sending ? (
                                 <RefreshCw className="h-3.5 w-3.5 animate-spin" />

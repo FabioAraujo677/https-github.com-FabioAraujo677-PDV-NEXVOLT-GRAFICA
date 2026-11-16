@@ -348,11 +348,11 @@ export const FrenteCaixaPDV: React.FC<FrenteCaixaPDVProps> = ({
   };
 
   return (
-    <div className="w-full max-w-7xl mx-auto p-4 space-y-4 font-sans text-slate-100">
+    <div className="w-full max-w-7xl mx-auto p-2.5 md:p-4 space-y-3 md:space-y-4 font-sans text-slate-100 overflow-x-hidden">
       {/* ====================================================================== */}
       {/* BARRA SUPERIOR: STATUS DO CAIXA E IDENTIFICAÇÃO DO ATENDENTE */}
       {/* ====================================================================== */}
-      <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4 p-4 rounded-xl bg-slate-900 border border-slate-800 shadow-md">
+      <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-3 md:gap-4 p-3 md:p-4 rounded-xl bg-slate-900 border border-slate-800 shadow-md">
         <div className="flex items-center gap-3">
           <div className={`p-2.5 rounded-lg border ${
             sessaoAtiva
@@ -391,8 +391,8 @@ export const FrenteCaixaPDV: React.FC<FrenteCaixaPDVProps> = ({
         </div>
 
         {/* Informações do Atendente Logado */}
-        <div className="flex items-center gap-3">
-          <div className="text-right hidden sm:block">
+        <div className="flex items-center gap-3 w-full md:w-auto">
+          <div className="text-right hidden md:block">
             <span className="text-[10px] uppercase font-bold text-slate-400 tracking-wider block">
               Atendente Atual
             </span>
@@ -404,7 +404,7 @@ export const FrenteCaixaPDV: React.FC<FrenteCaixaPDVProps> = ({
             <button
               type="button"
               onClick={onSolicitarAberturaCaixa}
-              className="px-3.5 py-2 text-xs font-bold rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white transition-all shadow-md cursor-pointer flex items-center gap-2"
+              className="w-full md:w-auto justify-center px-3.5 py-2 text-xs font-bold rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white transition-all shadow-md cursor-pointer flex items-center gap-2"
             >
               <Wallet className="h-4 w-4" />
               <span>Abrir Caixa Geral</span>
@@ -446,25 +446,25 @@ export const FrenteCaixaPDV: React.FC<FrenteCaixaPDVProps> = ({
       {/* ====================================================================== */}
       {/* GRID PRINCIPAL: FORMULÁRIO DE PRODUTO + CARRINHO + PAGAMENTO */}
       {/* ====================================================================== */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-4">
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-3 md:gap-4">
         {/* COLUNA ESQUERDA: INCLUSÃO DE PRODUTO & LISTA DO CARRINHO (7 Colunas) */}
-        <div className="lg:col-span-7 space-y-4">
+        <div className="lg:col-span-7 space-y-3 md:space-y-4 min-w-0">
           {/* Formulário de Adicionar Item */}
           <form
             onSubmit={adicionarItem}
-            className="p-4 rounded-xl bg-slate-900 border border-slate-800 shadow-sm space-y-3"
+            className="p-3 md:p-4 rounded-xl bg-slate-900 border border-slate-800 shadow-sm space-y-3"
           >
-            <div className="flex items-center justify-between border-b border-slate-800 pb-2">
+            <div className="flex flex-wrap items-center justify-between gap-1 border-b border-slate-800 pb-2">
               <span className="text-xs font-bold text-slate-300 uppercase tracking-wider flex items-center gap-1.5">
                 <Plus className="h-4 w-4 text-cyan-400" /> Adicionar Produto / Serviço
               </span>
-              <span className="text-[11px] text-slate-500 font-mono">
+              <span className="text-[10px] md:text-[11px] text-slate-500 font-mono">
                 Pressione Enter para lançar
               </span>
             </div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-12 gap-3">
-              <div className="sm:col-span-6">
+            <div className="grid grid-cols-1 md:grid-cols-12 gap-2.5 md:gap-3">
+              <div className="md:col-span-6 min-w-0">
                 <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block mb-1">
                   Descrição / Código de Barras
                 </label>
@@ -479,7 +479,7 @@ export const FrenteCaixaPDV: React.FC<FrenteCaixaPDVProps> = ({
                 </div>
               </div>
 
-              <div className="sm:col-span-3">
+              <div className="md:col-span-3 min-w-0">
                 <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block mb-1">
                   Quantidade
                 </label>
@@ -493,7 +493,7 @@ export const FrenteCaixaPDV: React.FC<FrenteCaixaPDVProps> = ({
                 />
               </div>
 
-              <div className="sm:col-span-3">
+              <div className="md:col-span-3 min-w-0">
                 <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block mb-1">
                   Valor Unitário (R$)
                 </label>
@@ -521,7 +521,7 @@ export const FrenteCaixaPDV: React.FC<FrenteCaixaPDVProps> = ({
           </form>
 
           {/* Lista de Itens do Pedido */}
-          <div className="p-4 rounded-xl bg-slate-900 border border-slate-800 shadow-sm space-y-3">
+          <div className="p-3 md:p-4 rounded-xl bg-slate-900 border border-slate-800 shadow-sm space-y-3">
             <div className="flex items-center justify-between border-b border-slate-800 pb-2">
               <span className="text-xs font-bold text-slate-300 uppercase tracking-wider flex items-center gap-1.5">
                 <ShoppingCart className="h-4 w-4 text-brand-magenta" /> Itens no Carrinho ({itens.length})
@@ -582,9 +582,9 @@ export const FrenteCaixaPDV: React.FC<FrenteCaixaPDVProps> = ({
         </div>
 
         {/* COLUNA DIREITA: CLIENTE, FORMA DE PAGAMENTO & FECHAR VENDA (5 Colunas) */}
-        <div className="lg:col-span-5 space-y-4">
+        <div className="lg:col-span-5 space-y-3 md:space-y-4 min-w-0">
           {/* Identificação do Cliente */}
-          <div className="p-4 rounded-xl bg-slate-900 border border-slate-800 shadow-sm space-y-3">
+          <div className="p-3 md:p-4 rounded-xl bg-slate-900 border border-slate-800 shadow-sm space-y-3">
             <span className="text-xs font-bold text-slate-300 uppercase tracking-wider flex items-center gap-1.5 border-b border-slate-800 pb-2">
               <UserIcon className="h-4 w-4 text-cyan-400" /> Dados do Cliente
             </span>
@@ -617,12 +617,12 @@ export const FrenteCaixaPDV: React.FC<FrenteCaixaPDVProps> = ({
           </div>
 
           {/* Forma de Pagamento */}
-          <div className="p-4 rounded-xl bg-slate-900 border border-slate-800 shadow-sm space-y-3">
+          <div className="p-3 md:p-4 rounded-xl bg-slate-900 border border-slate-800 shadow-sm space-y-3">
             <span className="text-xs font-bold text-slate-300 uppercase tracking-wider flex items-center gap-1.5 border-b border-slate-800 pb-2">
               <CreditCard className="h-4 w-4 text-emerald-400" /> Forma de Pagamento
             </span>
 
-            <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+            <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
               {[
                 { id: "dinheiro", label: "Dinheiro", icon: Banknote },
                 { id: "pix", label: "PIX", icon: QrCode },
@@ -678,7 +678,7 @@ export const FrenteCaixaPDV: React.FC<FrenteCaixaPDVProps> = ({
           </div>
 
           {/* Resumo Financeiro e Fechamento */}
-          <div className="p-4 rounded-xl bg-slate-900 border border-slate-800 shadow-lg space-y-4">
+          <div className="p-3 md:p-4 rounded-xl bg-slate-900 border border-slate-800 shadow-lg space-y-3 md:space-y-4">
             <div className="space-y-2 text-xs font-mono">
               <div className="flex justify-between text-slate-400">
                 <span>Subtotal dos Itens:</span>
@@ -739,25 +739,25 @@ export const FrenteCaixaPDV: React.FC<FrenteCaixaPDVProps> = ({
 
       {/* MODAL DE SUCESSO APÓS FECHAR VENDA */}
       {vendaSucessoId && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/85 backdrop-blur-sm animate-fade-in">
-          <div className="max-w-md w-full bg-slate-900 border border-slate-800 rounded-2xl p-6 text-center shadow-2xl space-y-4">
-            <div className="w-14 h-14 bg-emerald-500/20 text-emerald-400 rounded-full flex items-center justify-center mx-auto border border-emerald-500/30">
-              <CheckCircle2 className="h-8 w-8" />
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-2.5 md:p-4 bg-slate-950/85 backdrop-blur-sm animate-fade-in">
+          <div className="max-w-md w-full bg-slate-900 border border-slate-800 rounded-2xl p-4 md:p-6 text-center shadow-2xl space-y-4 max-h-[90dvh] md:max-h-[90vh] overflow-y-auto">
+            <div className="w-12 h-12 md:w-14 md:h-14 bg-emerald-500/20 text-emerald-400 rounded-full flex items-center justify-center mx-auto border border-emerald-500/30">
+              <CheckCircle2 className="h-7 w-7 md:h-8 md:w-8" />
             </div>
 
             <div>
-              <h2 className="text-lg font-black text-white uppercase tracking-wide">
+              <h2 className="text-base md:text-lg font-black text-white uppercase tracking-wide">
                 Venda Registrada com Sucesso!
               </h2>
               <p className="text-xs text-slate-400 mt-1">
                 A transação foi validada pela Trigger do banco e vinculada ao atendente <strong>{atendenteNome}</strong>.
               </p>
-              <div className="mt-2 p-2 bg-slate-950 rounded-lg border border-slate-800 text-[11px] font-mono text-cyan-300">
+              <div className="mt-2 p-2 bg-slate-950 rounded-lg border border-slate-800 text-[11px] font-mono text-cyan-300 break-all">
                 ID da Transação: {vendaSucessoId}
               </div>
             </div>
 
-            <div className="pt-2 flex flex-col sm:flex-row gap-2">
+            <div className="pt-2 flex flex-col md:flex-row gap-2">
               <button
                 type="button"
                 onClick={limparCarrinho}

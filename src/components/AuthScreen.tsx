@@ -304,17 +304,17 @@ export function AuthScreen({
   };
 
   return (
-    <div className="min-h-screen bg-brand-dark-navy flex items-center justify-center p-4 relative overflow-hidden select-none">
+    <div className="min-h-[100dvh] md:min-h-screen max-w-[100vw] bg-brand-dark-navy flex items-center justify-center p-3 md:p-4 relative overflow-x-hidden select-none">
       {/* Absolute backdrops/atmospherics */}
       <div className="absolute top-1/4 left-1/4 -translate-x-1/2 -translate-y-1/2 w-64 h-64 sm:w-96 sm:h-96 rounded-full bg-brand-magenta/10 blur-[100px] pointer-events-none"></div>
       <div className="absolute bottom-1/4 right-1/4 translate-x-1/2 translate-y-1/2 w-64 h-64 sm:w-96 sm:h-96 rounded-full bg-brand-cyan/10 blur-[100px] pointer-events-none"></div>
 
       {/* Main Container */}
-      <div className="w-full max-w-md relative z-10">
+      <div className="w-full max-w-md relative z-10 min-w-0">
         
         {/* Branding Title */}
-        <div className="text-center mb-6 flex flex-col items-center justify-center">
-          <NexvoltLogo showText={true} iconSize={52} className="mb-3" />
+        <div className="text-center mb-4 md:mb-6 flex flex-col items-center justify-center">
+          <NexvoltLogo showText={true} iconSize={44} className="mb-2 md:mb-3" />
           <p className="text-[10px] tracking-widest font-black text-slate-400 uppercase font-mono mt-1">
             SISTEMA DE VENDA · CONTROLE FINANCEIRO · NÚCLEO
           </p>
@@ -323,13 +323,13 @@ export function AuthScreen({
         {/* Content Card with motion */}
         <motion.div 
           layout
-          className="bg-brand-card/80 backdrop-blur-xl border border-slate-800/50 rounded-[32px] p-6 sm:p-8 shadow-[0_20px_50px_rgba(0,0,0,0.5)] h-auto select-none overflow-hidden relative group"
+          className="bg-brand-card/80 backdrop-blur-xl border border-slate-800/50 rounded-2xl md:rounded-[32px] p-4 md:p-8 shadow-[0_20px_50px_rgba(0,0,0,0.5)] h-auto select-none overflow-hidden relative group"
         >
           {/* Animated Futuristic Border */}
-          <div className="absolute inset-0 p-[2px] rounded-[32px] overflow-hidden pointer-events-none">
+          <div className="absolute inset-0 p-[2px] rounded-2xl md:rounded-[32px] overflow-hidden pointer-events-none">
             <div className="absolute inset-0 bg-gradient-to-r from-brand-magenta via-purple-500 to-brand-cyan opacity-40 group-hover:opacity-100 transition-opacity duration-1000"></div>
           </div>
-          <div className="absolute inset-[2px] bg-brand-card rounded-[30px] z-0"></div>
+          <div className="absolute inset-[2px] bg-brand-card rounded-[14px] md:rounded-[30px] z-0"></div>
           
           {/* Internal Glows */}
           <div className="absolute -top-20 -right-20 w-40 h-40 bg-brand-magenta/10 blur-3xl pointer-events-none"></div>

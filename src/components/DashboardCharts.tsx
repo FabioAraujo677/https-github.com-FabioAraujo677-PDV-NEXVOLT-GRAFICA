@@ -402,10 +402,10 @@ export function DashboardCharts({
   );
 
   return (
-    <div className="space-y-6">
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+    <div className="space-y-3.5 md:space-y-6 max-w-full overflow-x-hidden">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-2.5 md:gap-4">
         {/* Ticket Médio */}
-        <div className="bg-slate-900 border border-slate-800 p-5 rounded-2xl flex items-center justify-between">
+        <div className="bg-slate-900 border border-slate-800 p-3.5 md:p-5 rounded-2xl flex items-center justify-between">
           <div>
             <span className="text-xs text-slate-400 block font-medium">Ticket Médio</span>
             <span className="text-lg font-bold font-mono text-slate-200 mt-1 block">
@@ -418,7 +418,7 @@ export function DashboardCharts({
         </div>
 
         {/* Lucratividade média */}
-        <div className="bg-slate-900 border border-slate-800 p-5 rounded-2xl flex items-center justify-between">
+        <div className="bg-slate-900 border border-slate-800 p-3.5 md:p-5 rounded-2xl flex items-center justify-between">
           <div>
             <span className="text-xs text-slate-400 block font-medium">Margem Operacional</span>
             <span className={`text-lg font-bold font-mono mt-1 block ${profitMarginPercent > 50 ? "text-emerald-400" : "text-brand-cyan"}`}>
@@ -431,7 +431,7 @@ export function DashboardCharts({
         </div>
 
         {/* Paid ratio */}
-        <div className="bg-slate-900 border border-slate-800 p-5 rounded-2xl flex items-center justify-between">
+        <div className="bg-slate-900 border border-slate-800 p-3.5 md:p-5 rounded-2xl flex items-center justify-between">
           <div>
             <span className="text-xs text-slate-400 block font-medium">Taxa de Adiantamento</span>
             <span className="text-lg font-bold font-mono text-slate-200 mt-1 block">
@@ -444,7 +444,7 @@ export function DashboardCharts({
         </div>
 
         {/* Volume de Vendas */}
-        <div className="bg-slate-900 border border-slate-800 p-5 rounded-2xl flex items-center justify-between">
+        <div className="bg-slate-900 border border-slate-800 p-3.5 md:p-5 rounded-2xl flex items-center justify-between">
           <div>
             <span className="text-xs text-slate-400 block font-medium">Lançamentos</span>
             <span className="text-lg font-bold font-mono text-slate-200 mt-1 block">
@@ -458,7 +458,7 @@ export function DashboardCharts({
       </div>
 
       {/* Monthly Evolution Chart */}
-      <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6 space-y-6">
+      <div className="bg-slate-900 border border-slate-800 rounded-2xl p-3.5 md:p-6 space-y-4 md:space-y-6">
         <div>
           <h4 className="text-sm font-bold text-white flex items-center gap-1.5">
             <TrendingUp className="h-4.5 w-4.5 text-brand-cyan" />
@@ -474,7 +474,7 @@ export function DashboardCharts({
             Não há lançamentos de vendas registrados para analisar o histórico mensal.
           </div>
         ) : (
-          <div className="h-72 w-full font-mono text-xs">
+          <div className="h-56 md:h-72 w-full font-mono text-xs">
             <ResponsiveContainer width="100%" height="100%">
               <LineChart
                 data={monthlyData}
@@ -527,10 +527,10 @@ export function DashboardCharts({
       </div>
 
       {/* Main interactive visual layouts */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 md:gap-6">
         
         {/* Modern Vectorized Charts (SVG Bars) - Left Panel (2/3 width) */}
-        <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6 lg:col-span-2 space-y-6">
+        <div className="bg-slate-900 border border-slate-800 rounded-2xl p-3.5 md:p-6 lg:col-span-2 space-y-4 md:space-y-6">
           <div>
             <h4 className="text-sm font-bold text-white flex items-center gap-1.5">
               <Sparkles className="h-4 w-4 text-brand-cyan" />
@@ -598,12 +598,12 @@ export function DashboardCharts({
                 
                 <div className="max-h-52 overflow-y-auto space-y-2 pr-1">
                   {activeSales.slice(-5).reverse().map((sale) => (
-                    <div key={sale.id} className="bg-slate-950/40 border border-slate-850 p-2.5 rounded-xl flex items-center justify-between text-xs font-mono">
-                      <div className="space-y-0.5">
-                        <span className="text-slate-200 block font-bold">{sale.clientName}</span>
+                    <div key={sale.id} className="bg-slate-950/40 border border-slate-850 p-2.5 rounded-xl flex flex-col md:flex-row items-stretch md:items-center justify-between gap-2 text-xs font-mono">
+                      <div className="space-y-0.5 min-w-0">
+                        <span className="text-slate-200 block font-bold truncate">{sale.clientName}</span>
                         <span className="text-[9px] text-slate-400 block">{new Date(sale.date).toLocaleDateString("pt-BR")}</span>
                       </div>
-                      <div className="flex items-center gap-4">
+                      <div className="flex items-center justify-between md:justify-end gap-3 md:gap-4">
                         <div className="text-right">
                           <span className="text-[9px] text-slate-500 block">Venda</span>
                           <span className="text-white block font-bold">{formatBRL(sale.totalValue)}</span>
@@ -626,7 +626,7 @@ export function DashboardCharts({
         </div>
 
         {/* Cost Formula Explanation - Right Panel (1/3 width) */}
-        <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6 space-y-5">
+        <div className="bg-slate-900 border border-slate-800 rounded-2xl p-3.5 md:p-6 space-y-3.5 md:space-y-5">
           <h4 className="text-sm font-bold text-white flex items-center gap-2">
             <Info className="h-4.5 w-4.5 text-brand-cyan" />
             Entendendo os Lucros

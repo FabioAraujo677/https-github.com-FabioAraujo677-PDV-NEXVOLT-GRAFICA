@@ -509,10 +509,10 @@ export function TelaDeBloqueio({ currentUser, handleLogout, onUnlock }: AsaasPix
   // 3. Screen when Payment is Confirmed (Automatic Liberation)
   if (isPaid) {
     return (
-      <div className="min-h-screen bg-slate-950 text-slate-100 flex flex-col items-center justify-center p-6 relative overflow-hidden font-sans">
+      <div className="min-h-dvh md:min-h-screen bg-slate-950 text-slate-100 flex flex-col items-center justify-center p-3.5 md:p-6 relative overflow-hidden font-sans">
         <div className="absolute inset-0 bg-emerald-600/10 blur-[140px] pointer-events-none" />
         
-        <div className="max-w-md w-full bg-gradient-to-b from-emerald-950/60 via-slate-900 to-slate-950 border-2 border-emerald-500/50 rounded-3xl p-8 text-center space-y-6 shadow-[0_0_80px_rgba(16,185,129,0.25)] animate-fade-in relative z-10">
+        <div className="max-w-md w-full bg-gradient-to-b from-emerald-950/60 via-slate-900 to-slate-950 border-2 border-emerald-500/50 rounded-3xl p-5 md:p-8 text-center space-y-4 md:space-y-6 shadow-[0_0_80px_rgba(16,185,129,0.25)] animate-fade-in relative z-10">
           <div className="relative mx-auto w-24 h-24">
             <div className="absolute inset-0 bg-emerald-500/30 rounded-full blur-xl animate-ping" />
             <div className="relative w-24 h-24 bg-emerald-500/20 border-2 border-emerald-400 rounded-full flex items-center justify-center text-emerald-400">
@@ -525,7 +525,7 @@ export function TelaDeBloqueio({ currentUser, handleLogout, onUnlock }: AsaasPix
               <Sparkles className="w-3.5 h-3.5 text-emerald-400" />
               Pagamento Confirmado no Asaas!
             </span>
-            <h2 className="text-2xl sm:text-3xl font-black text-white uppercase tracking-tight">
+            <h2 className="text-xl md:text-3xl font-black text-white uppercase tracking-tight">
               Acesso 100% Liberado! 🎉
             </h2>
             <p className="text-sm text-slate-300 leading-relaxed">
@@ -545,22 +545,22 @@ export function TelaDeBloqueio({ currentUser, handleLogout, onUnlock }: AsaasPix
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-slate-950 via-slate-900 to-slate-950 text-slate-100 flex flex-col justify-between font-sans relative overflow-hidden">
+    <div className="min-h-dvh md:min-h-screen max-w-[100vw] overflow-x-hidden bg-gradient-to-b from-slate-950 via-slate-900 to-slate-950 text-slate-100 flex flex-col justify-between font-sans relative">
       {/* Background glow effects */}
       <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-red-600/5 rounded-full blur-[140px] pointer-events-none animate-pulse" />
       <div className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-cyan-600/5 rounded-full blur-[140px] pointer-events-none" />
 
       {/* Top Banner Alert */}
-      <div className="bg-red-950/90 border-b-2 border-red-500/30 py-2.5 px-4 text-center z-20 flex items-center justify-center gap-2">
+      <div className="bg-red-950/90 border-b-2 border-red-500/30 py-2 px-3 md:py-2.5 md:px-4 text-center z-20 flex items-center justify-center gap-2">
         <AlertTriangle className="h-4 w-4 text-red-500 shrink-0 animate-bounce" />
-        <span className="text-xs sm:text-sm font-black tracking-widest text-red-400 uppercase font-mono">
+        <span className="text-[11px] md:text-sm font-black tracking-widest text-red-400 uppercase font-mono">
           🚨 ALERTA DO SISTEMA: PAGAMENTO PENDENTE • ACESSO SUSPENSO 🚨
         </span>
         <AlertTriangle className="h-4 w-4 text-red-500 shrink-0 animate-bounce" />
       </div>
 
       {/* Header bar */}
-      <header className="border-b border-slate-800 bg-slate-950/80 py-3.5 px-6 flex items-center justify-between backdrop-blur-md z-10">
+      <header className="border-b border-slate-800 bg-slate-950/80 py-2.5 px-3.5 md:py-3.5 md:px-6 flex flex-wrap items-center justify-between gap-2 backdrop-blur-md z-10">
         <div className="flex items-center gap-3">
           <div className="p-2 bg-red-500/15 text-red-500 border border-red-500/30 rounded-xl">
             <ShieldAlert className="h-5 w-5" />
@@ -571,14 +571,14 @@ export function TelaDeBloqueio({ currentUser, handleLogout, onUnlock }: AsaasPix
           </div>
         </div>
 
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-2 md:gap-3">
           <button
             onClick={() => setAudioMuted(!audioMuted)}
             className="px-3 py-2 bg-slate-900 hover:bg-slate-850 text-slate-300 text-xs font-mono font-bold rounded-xl border border-slate-800 flex items-center gap-1.5 transition-all cursor-pointer"
             title={audioMuted ? "Ativar som do alerta" : "Silenciar som do alerta"}
           >
             {audioMuted ? <VolumeX className="w-4 h-4 text-slate-400" /> : <Volume2 className="w-4 h-4 text-red-400 animate-pulse" />}
-            <span className="hidden sm:inline">{audioMuted ? "Alarme Mudo" : "Silenciar"}</span>
+            <span className="hidden md:inline">{audioMuted ? "Alarme Mudo" : "Silenciar"}</span>
           </button>
 
           <button 
@@ -592,9 +592,9 @@ export function TelaDeBloqueio({ currentUser, handleLogout, onUnlock }: AsaasPix
       </header>
 
       {/* Main Content Area */}
-      <main className="flex-1 flex flex-col items-center justify-center p-4 sm:p-6 z-10 max-w-xl mx-auto w-full my-3">
+      <main className="flex-1 flex flex-col items-center justify-center p-3 md:p-6 z-10 max-w-xl mx-auto w-full my-2 md:my-3">
         {loadingPix ? (
-          <div className="p-8 bg-slate-900/80 border border-slate-800 rounded-3xl text-center space-y-4 max-w-md w-full shadow-2xl animate-pulse">
+          <div className="p-6 md:p-8 bg-slate-900/80 border border-slate-800 rounded-3xl text-center space-y-4 max-w-md w-full shadow-2xl animate-pulse">
             <div className="w-12 h-12 rounded-full border-4 border-slate-800 border-t-cyan-400 animate-spin mx-auto" />
             <div className="space-y-1">
               <h3 className="text-base font-bold text-white">Gerando QR Code Pix Oficial...</h3>
@@ -602,12 +602,12 @@ export function TelaDeBloqueio({ currentUser, handleLogout, onUnlock }: AsaasPix
             </div>
           </div>
         ) : (
-          <div className="p-5 sm:p-7 bg-gradient-to-b from-slate-900 to-slate-950 border-2 border-red-500/40 rounded-3xl w-full space-y-5 shadow-[0_0_50px_rgba(239,68,68,0.12)] relative">
+          <div className="p-4 md:p-7 bg-gradient-to-b from-slate-900 to-slate-950 border-2 border-red-500/40 rounded-3xl w-full space-y-4 md:space-y-5 shadow-[0_0_50px_rgba(239,68,68,0.12)] relative">
             <div className="absolute top-0 left-1/2 -translate-x-1/2 w-48 h-0.5 bg-red-500 animate-pulse rounded-full" />
 
             {/* Title & Price Header */}
             <div className="text-center space-y-1">
-              <div className="flex items-center justify-center gap-2">
+              <div className="flex flex-wrap items-center justify-center gap-2">
                 <span className="px-2.5 py-0.5 bg-cyan-500/10 text-cyan-400 border border-cyan-500/30 rounded-full text-[10px] font-mono font-black uppercase tracking-wider flex items-center gap-1">
                   <Zap className="w-3 h-3 text-cyan-400 fill-cyan-400" />
                   Liberação Imediata via Pix
@@ -618,13 +618,13 @@ export function TelaDeBloqueio({ currentUser, handleLogout, onUnlock }: AsaasPix
                 </span>
               </div>
 
-              <h2 className="text-lg sm:text-xl font-black text-white uppercase tracking-tight">
+              <h2 className="text-base md:text-xl font-black text-white uppercase tracking-tight">
                 Pague com Pix para Desbloquear Agora
               </h2>
               
               <div className="flex items-baseline justify-center gap-1.5 pt-1">
                 <span className="text-xs text-slate-400">Total:</span>
-                <span className="text-3xl font-black text-emerald-400 font-sans tracking-tight">
+                <span className="text-2xl md:text-3xl font-black text-emerald-400 font-sans tracking-tight">
                   R$ {(pixData?.value || 26.99).toFixed(2).replace(".", ",")}
                 </span>
                 <span className="text-xs text-slate-400 font-mono">/ mês</span>
@@ -635,11 +635,11 @@ export function TelaDeBloqueio({ currentUser, handleLogout, onUnlock }: AsaasPix
             <div className="flex flex-col items-center justify-center space-y-3">
               {pixData?.encodedImage ? (
                 <div className="relative group">
-                  <div className="p-3 bg-white rounded-2xl shadow-xl border-2 border-slate-200">
+                  <div className="p-2.5 md:p-3 bg-white rounded-2xl shadow-xl border-2 border-slate-200">
                     <img 
                       src={pixData.encodedImage} 
                       alt="QR Code Pix Asaas" 
-                      className="w-48 h-48 sm:w-56 sm:h-56 object-contain"
+                      className="w-44 h-44 md:w-56 md:h-56 object-contain"
                     />
                   </div>
                   <div className="mt-2 text-center">
@@ -650,7 +650,7 @@ export function TelaDeBloqueio({ currentUser, handleLogout, onUnlock }: AsaasPix
                   </div>
                 </div>
               ) : (
-                <div className="p-6 bg-slate-800/60 rounded-2xl text-center border border-slate-700 w-full">
+                <div className="p-4 md:p-6 bg-slate-800/60 rounded-2xl text-center border border-slate-700 w-full">
                   <p className="text-xs text-slate-400">QR Code não disponível. Copie o código Pix abaixo.</p>
                 </div>
               )}
@@ -661,16 +661,16 @@ export function TelaDeBloqueio({ currentUser, handleLogout, onUnlock }: AsaasPix
                   <label className="text-[11px] font-mono font-bold text-slate-300 block text-left">
                     Ou use o Pix Copia e Cola:
                   </label>
-                  <div className="flex items-center gap-2">
+                  <div className="flex flex-col md:flex-row items-stretch md:items-center gap-2">
                     <input 
                       type="text" 
                       readOnly 
                       value={pixData.payload}
-                      className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-[11px] font-mono text-slate-300 select-all focus:outline-none focus:border-cyan-500"
+                      className="w-full min-w-0 bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-[11px] font-mono text-slate-300 select-all focus:outline-none focus:border-cyan-500"
                     />
                     <button
                       onClick={handleCopyCode}
-                      className="px-4 py-2 bg-cyan-500 hover:bg-cyan-400 text-slate-950 font-black text-xs rounded-xl flex items-center gap-1.5 transition-all cursor-pointer shrink-0"
+                      className="px-4 py-2 bg-cyan-500 hover:bg-cyan-400 text-slate-950 font-black text-xs rounded-xl flex items-center justify-center gap-1.5 transition-all cursor-pointer shrink-0"
                     >
                       {copied ? <Check className="w-4 h-4 text-slate-950" /> : <Copy className="w-4 h-4" />}
                       <span>{copied ? "Copiado!" : "Copiar"}</span>

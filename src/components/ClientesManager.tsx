@@ -729,10 +729,10 @@ export const ClientesManager: React.FC<ClientesManagerProps> = ({
   };
 
   return (
-    <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 animate-fade-in font-sans">
+    <div className="grid grid-cols-1 lg:grid-cols-3 gap-3 md:gap-4 animate-fade-in font-sans max-w-full overflow-x-hidden">
       {/* 1. Add/Edit Form Column */}
-      <div className="lg:col-span-1 bg-slate-900 border border-slate-800 rounded-2xl shadow-xl overflow-hidden h-fit">
-        <div className="p-4 border-b border-slate-800 bg-slate-950/40 flex items-center justify-between">
+      <div className="lg:col-span-1 bg-slate-900 border border-slate-800 rounded-2xl shadow-xl overflow-hidden h-fit min-w-0">
+        <div className="p-3.5 md:p-4 border-b border-slate-800 bg-slate-950/40 flex items-center justify-between">
           <div className="flex items-center gap-2">
             <div className="p-1.5 bg-cyan-500/10 text-cyan-405 rounded-lg">
               <User className="h-4.5 w-4.5" />
@@ -864,10 +864,10 @@ export const ClientesManager: React.FC<ClientesManagerProps> = ({
       </div>
 
       {/* 2. Client Grid/List Column */}
-      <div className="lg:col-span-2 bg-slate-900 border border-slate-800 rounded-2xl shadow-xl flex flex-col min-h-[500px]">
+      <div className="lg:col-span-2 bg-slate-900 border border-slate-800 rounded-2xl shadow-xl flex flex-col min-h-0 md:min-h-[500px] min-w-0">
         {/* Search & Header controls */}
-        <div className="p-5 border-b border-slate-800 bg-slate-950/40 flex flex-col sm:flex-row gap-4 items-center justify-between">
-          <div className="w-full sm:w-72 relative">
+        <div className="p-3.5 md:p-5 border-b border-slate-800 bg-slate-950/40 flex flex-col md:flex-row gap-2.5 md:gap-4 items-stretch md:items-center justify-between">
+          <div className="w-full md:w-72 relative min-w-0">
             <input
               type="text"
               placeholder="Buscar por nome, telefone, email..."
@@ -878,7 +878,7 @@ export const ClientesManager: React.FC<ClientesManagerProps> = ({
             <Search className="absolute left-3.5 top-2.5 h-4 w-4 text-slate-600" />
           </div>
 
-          <div className="flex items-center gap-3 w-full sm:w-auto justify-end">
+          <div className="flex items-center gap-3 w-full md:w-auto justify-between md:justify-end">
             <button
               onClick={fetchClientes}
               className="p-2 bg-slate-950 hover:bg-slate-850 text-slate-400 hover:text-slate-200 rounded-xl border border-slate-850 hover:border-slate-800 transition-all cursor-pointer flex items-center gap-2 text-xs font-bold"
@@ -894,7 +894,7 @@ export const ClientesManager: React.FC<ClientesManagerProps> = ({
         </div>
 
         {/* Content View */}
-        <div className="flex-grow p-5 overflow-y-auto max-h-[650px]">
+        <div className="flex-grow p-3 md:p-5 overflow-y-auto max-h-[65dvh] md:max-h-[650px]">
           {loading ? (
             <div className="flex flex-col items-center justify-center py-20 text-slate-500 space-y-3">
               <RefreshCw className="h-8 w-8 animate-spin text-cyan-500 stroke-[1.5]" />
@@ -999,36 +999,36 @@ export const ClientesManager: React.FC<ClientesManagerProps> = ({
 
       {/* 3. Detailed Client History & CRM Analytics Modal */}
       {selectedCliente && (
-        <div className="fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-50 flex items-center justify-center p-4 animate-fade-in">
-          <div className="bg-slate-900 border border-slate-800 rounded-2xl shadow-2xl w-full max-w-5xl max-h-[90vh] flex flex-col overflow-hidden">
+        <div className="fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-50 flex items-center justify-center p-2.5 md:p-4 animate-fade-in">
+          <div className="bg-slate-900 border border-slate-800 rounded-2xl shadow-2xl w-full max-w-5xl max-h-[92dvh] md:max-h-[90vh] flex flex-col overflow-hidden">
             {/* Modal Header */}
-            <div className="p-5 border-b border-slate-800 bg-slate-950/40 flex items-center justify-between">
-              <div className="flex items-center gap-3">
-                <div className="p-2 bg-cyan-500/10 text-cyan-405 rounded-xl">
+            <div className="p-3.5 md:p-5 border-b border-slate-800 bg-slate-950/40 flex items-center justify-between gap-2">
+              <div className="flex items-center gap-2.5 md:gap-3 min-w-0">
+                <div className="p-2 bg-cyan-500/10 text-cyan-405 rounded-xl shrink-0">
                   <Briefcase className="h-5 w-5" />
                 </div>
-                <div>
-                  <h2 className="text-sm font-black text-slate-100 uppercase tracking-widest">
+                <div className="min-w-0">
+                  <h2 className="text-xs md:text-sm font-black text-slate-100 uppercase tracking-widest truncate">
                     Perfil & Histórico Operacional
                   </h2>
-                  <p className="text-[10px] text-slate-400 font-mono uppercase mt-0.5">
+                  <p className="text-[10px] text-slate-400 font-mono uppercase mt-0.5 truncate">
                     Sincronização analítica em tempo real
                   </p>
                 </div>
               </div>
               <button 
                 onClick={() => setSelectedCliente(null)}
-                className="p-1.5 bg-slate-800 hover:bg-slate-700 text-slate-400 hover:text-slate-200 rounded-lg transition cursor-pointer"
+                className="p-1.5 bg-slate-800 hover:bg-slate-700 text-slate-400 hover:text-slate-200 rounded-lg transition cursor-pointer shrink-0"
               >
                 <X className="h-4 w-4" />
               </button>
             </div>
 
             {/* Split Modal Content */}
-            <div className="flex-grow p-6 overflow-y-auto grid grid-cols-1 md:grid-cols-3 gap-6">
+            <div className="flex-grow p-3.5 md:p-6 overflow-y-auto grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-6">
               {/* Left Column: Profile Card & Dynamic Metrics */}
-              <div className="md:col-span-1 space-y-5">
-                <div className="bg-slate-950/40 border border-slate-850 rounded-xl p-5 text-center space-y-4">
+              <div className="md:col-span-1 space-y-4 md:space-y-5 min-w-0">
+                <div className="bg-slate-950/40 border border-slate-850 rounded-xl p-3.5 md:p-5 text-center space-y-3 md:space-y-4">
                   <div className="w-16 h-16 bg-gradient-to-tr from-cyan-500 to-blue-600 text-white rounded-2xl flex items-center justify-center font-black text-2xl mx-auto shadow-lg shadow-cyan-500/10">
                     {selectedCliente.name.charAt(0).toUpperCase()}
                   </div>
@@ -1115,8 +1115,8 @@ export const ClientesManager: React.FC<ClientesManagerProps> = ({
               </div>
 
               {/* Right Column: Complete Orders History Scroll list with Thermal Ticket design and Dar Baixa */}
-              <div className="md:col-span-2 flex flex-col h-full min-h-[350px]">
-                <div className="border-b border-slate-850 pb-3 flex justify-between items-center">
+              <div className="md:col-span-2 flex flex-col h-full min-h-0 md:min-h-[350px] min-w-0">
+                <div className="border-b border-slate-850 pb-3 flex flex-wrap gap-2 justify-between items-center">
                   <span className="text-xs font-black uppercase text-slate-300 tracking-wider">Histórico de Transações e Serviços</span>
                   <button
                     onClick={() => {
@@ -1133,7 +1133,7 @@ export const ClientesManager: React.FC<ClientesManagerProps> = ({
                   </button>
                 </div>
 
-                <div className="flex-grow overflow-y-auto max-h-[550px] mt-4 space-y-5 pr-1 customize-scrollbar">
+                <div className="flex-grow overflow-y-auto max-h-[550px] mt-4 space-y-3.5 md:space-y-5 pr-1 customize-scrollbar">
                   {clientSales.length === 0 ? (
                     <div className="text-center py-16 text-slate-600 space-y-2">
                       <AlertCircle className="h-10 w-10 mx-auto text-slate-700 stroke-[1.2]" />
@@ -1150,7 +1150,7 @@ export const ClientesManager: React.FC<ClientesManagerProps> = ({
                       return (
                         <div 
                           key={sale.id} 
-                          className="bg-slate-950 border border-slate-850 hover:border-slate-800 rounded-xl p-5 space-y-4 relative overflow-hidden transition-all duration-200 shadow-md"
+                          className="bg-slate-950 border border-slate-850 hover:border-slate-800 rounded-xl p-3.5 md:p-5 space-y-3 md:space-y-4 relative overflow-hidden transition-all duration-200 shadow-md"
                         >
                           {/* Receipt Top Header */}
                           <div className="flex justify-between items-start border-b border-dashed border-slate-700/60 pb-3">
@@ -1343,8 +1343,8 @@ export const ClientesManager: React.FC<ClientesManagerProps> = ({
                                 </button>
                               </div>
 
-                              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5 text-xs text-left text-slate-300">
-                                <div className="space-y-1">
+                              <div className="grid grid-cols-1 md:grid-cols-2 gap-3 md:gap-3.5 text-xs text-left text-slate-300">
+                                <div className="space-y-1 min-w-0">
                                   <label className="text-[10px] font-black uppercase tracking-wider text-slate-450 block">Valor Pago Agora (R$)</label>
                                   <input
                                     type="number"
@@ -1415,8 +1415,8 @@ export const ClientesManager: React.FC<ClientesManagerProps> = ({
                                 </button>
                               </div>
 
-                              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5 text-xs text-left text-slate-300">
-                                <div className="space-y-1">
+                              <div className="grid grid-cols-1 md:grid-cols-2 gap-3 md:gap-3.5 text-xs text-left text-slate-300">
+                                <div className="space-y-1 min-w-0">
                                   <label className="text-[10px] font-black uppercase tracking-wider text-slate-450 block">Nova Data Prevista de Entrega</label>
                                   <input
                                     type="date"

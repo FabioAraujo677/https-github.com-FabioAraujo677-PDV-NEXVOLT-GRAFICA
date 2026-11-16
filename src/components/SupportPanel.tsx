@@ -406,15 +406,15 @@ export function SupportPanel({ currentUser, addToast }: SupportPanelProps) {
   });
 
   return (
-    <div className="max-w-6xl mx-auto px-4 py-6 font-sans relative">
+    <div className="max-w-6xl mx-auto px-2.5 md:px-4 py-3.5 md:py-6 font-sans relative overflow-x-hidden">
       
       {/* Lightbox attachment preview modal */}
       {lightboxUrl && (
         <div 
-          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/90 backdrop-blur-sm animate-fade-in"
+          className="fixed inset-0 z-50 flex items-center justify-center p-2.5 md:p-4 bg-slate-950/90 backdrop-blur-sm animate-fade-in"
           onClick={() => setLightboxUrl(null)}
         >
-          <div className="relative max-w-4xl max-h-[85vh] overflow-hidden rounded-2xl bg-slate-900 border border-slate-800 p-2 shadow-2xl">
+          <div className="relative max-w-4xl max-h-[85dvh] md:max-h-[85vh] overflow-hidden rounded-2xl bg-slate-900 border border-slate-800 p-2 shadow-2xl">
             <button
               onClick={() => setLightboxUrl(null)}
               className="absolute top-4 right-4 p-2 rounded-full bg-slate-950/80 hover:bg-slate-950 text-slate-400 hover:text-white transition-colors cursor-pointer"
@@ -436,12 +436,12 @@ export function SupportPanel({ currentUser, addToast }: SupportPanelProps) {
       <div className="absolute top-1/4 left-1/2 -translate-x-1/2 w-72 h-72 bg-brand-cyan/5 rounded-full blur-[100px] pointer-events-none" />
 
       {/* Main Title Banner */}
-      <div className="border-b border-slate-800 pb-5 mb-6 flex flex-col md:flex-row md:items-center justify-between gap-4 relative z-10">
+      <div className="border-b border-slate-800 pb-4 md:pb-5 mb-4 md:mb-6 flex flex-col md:flex-row md:items-center justify-between gap-3 md:gap-4 relative z-10">
         <div>
           <span className="text-[10px] bg-brand-cyan/10 text-brand-cyan border border-brand-cyan/20 px-2.5 py-0.5 rounded-full font-bold uppercase tracking-widest font-mono">
             {isAdmin ? "Painel de Administração 👑" : "Atendimento ao Cliente"}
           </span>
-          <h1 className="text-xl sm:text-2xl font-black text-slate-100 tracking-tight mt-1 flex items-center gap-2">
+          <h1 className="text-lg md:text-2xl font-black text-slate-100 tracking-tight mt-1 flex items-center gap-2">
             {isAdmin ? "Central de Atendimento ao Suporte Técnico 🎧" : "Central de Suporte Gráfico 🎧"}
           </h1>
           <p className="text-xs text-slate-500 mt-0.5">
@@ -489,13 +489,13 @@ export function SupportPanel({ currentUser, addToast }: SupportPanelProps) {
       </div>
 
       {/* Grid: Configurator or Recorder + Messages list */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 relative z-10">
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 md:gap-6 relative z-10">
         
         {/* Left column: Admin configuration OR Client message workspace */}
-        <div className="lg:col-span-5 space-y-6">
+        <div className="lg:col-span-5 space-y-4 md:space-y-6">
           {isComposeOpen ? (
             /* Creation Workspace (Composer Card) with Option to write, record voice or upload image! */
-            <div className="bg-slate-900/40 border border-slate-850/60 p-5 rounded-2xl flex flex-col justify-between min-h-[460px] backdrop-blur-md">
+            <div className="bg-slate-900/40 border border-slate-850/60 p-3.5 md:p-5 rounded-2xl flex flex-col justify-between min-h-0 md:min-h-[460px] backdrop-blur-md">
               
               <div className="space-y-4">
                 {/* Header with back button */}
@@ -771,7 +771,7 @@ export function SupportPanel({ currentUser, addToast }: SupportPanelProps) {
           ) : isAdmin ? (
             /* Admin view on the left: Configuration (Only for Super Admin) or Support Info summary (for regular Admins) */
             isSuperAdmin ? (
-              <div className="bg-slate-900/40 border border-slate-850/60 p-5 rounded-2xl flex flex-col justify-between min-h-[460px] backdrop-blur-md">
+              <div className="bg-slate-900/40 border border-slate-850/60 p-3.5 md:p-5 rounded-2xl flex flex-col justify-between min-h-0 md:min-h-[460px] backdrop-blur-md">
                 <div className="space-y-5">
                   <h2 className="text-sm font-bold text-slate-250 uppercase tracking-wider flex items-center gap-2">
                     <Settings className="h-4 w-4 text-brand-cyan" />
@@ -782,7 +782,7 @@ export function SupportPanel({ currentUser, addToast }: SupportPanelProps) {
                     Defina os horários de funcionamento do atendimento técnico para o usuário final e a mensagem a ser exibida quando fechado.
                   </p>
 
-                  <div className="grid grid-cols-2 gap-3 pt-2">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3 pt-2">
                     <div className="space-y-1.5">
                       <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Abertura:</label>
                       <input
@@ -852,7 +852,7 @@ export function SupportPanel({ currentUser, addToast }: SupportPanelProps) {
               </div>
             ) : (
               /* Regular Admin View on Left (No access to change hours configuration, just overview) */
-              <div className="bg-slate-900/40 border border-slate-850/60 p-5 rounded-2xl flex flex-col justify-between min-h-[460px] backdrop-blur-md text-slate-300">
+              <div className="bg-slate-900/40 border border-slate-850/60 p-3.5 md:p-5 rounded-2xl flex flex-col justify-between min-h-0 md:min-h-[460px] backdrop-blur-md text-slate-300">
                 <div className="space-y-4">
                   <h2 className="text-sm font-bold text-slate-200 uppercase tracking-wider flex items-center gap-1.5">
                     <ShieldAlert className="h-4 w-4 text-violet-400" />
@@ -895,7 +895,7 @@ export function SupportPanel({ currentUser, addToast }: SupportPanelProps) {
           ) : (
             /* Client Voice / Written feedback submission box: Invitation card */
             /* Friendly, highly-polished Invitation card with a giant beautiful clickable "+ Nova Mensagem" button */
-            <div className="bg-slate-900/40 border border-slate-850/60 p-6 rounded-2xl flex flex-col justify-between min-h-[460px] backdrop-blur-md relative overflow-hidden text-center">
+            <div className="bg-slate-900/40 border border-slate-850/60 p-4 md:p-6 rounded-2xl flex flex-col justify-between min-h-0 md:min-h-[460px] backdrop-blur-md relative overflow-hidden text-center">
               
               <div className="absolute inset-0 bg-gradient-to-b from-brand-cyan/5 via-transparent to-transparent pointer-events-none" />
               
@@ -944,10 +944,10 @@ export function SupportPanel({ currentUser, addToast }: SupportPanelProps) {
         </div>
 
         {/* Right column: Feedbacks list (Either all users for Admin, or logged-in user only for Client) */}
-        <div className="lg:col-span-7 space-y-6">
-          <div className="bg-slate-900/40 border border-slate-850/60 p-5 rounded-2xl backdrop-blur-md flex flex-col min-h-[460px]">
+        <div className="lg:col-span-7 space-y-4 md:space-y-6">
+          <div className="bg-slate-900/40 border border-slate-850/60 p-3.5 md:p-5 rounded-2xl backdrop-blur-md flex flex-col min-h-0 md:min-h-[460px]">
             
-            <div className="flex flex-col sm:flex-row gap-3 items-start sm:items-center justify-between border-b border-slate-800/60 pb-3.5 mb-4">
+            <div className="flex flex-col md:flex-row gap-3 items-start md:items-center justify-between border-b border-slate-800/60 pb-3.5 mb-4">
               <h2 className="text-sm font-bold text-slate-200 uppercase tracking-wider flex items-center gap-1.5">
                 <MessageSquare className="h-4 w-4 text-brand-magenta" />
                 {isAdmin ? "Mensagens dos Clientes (Fila)" : "Minhas Solicitações e Respostas"}
@@ -1035,10 +1035,10 @@ export function SupportPanel({ currentUser, addToast }: SupportPanelProps) {
                   return (
                     <div 
                       key={item.id} 
-                      className="bg-slate-950/40 border border-slate-850 p-4 rounded-xl space-y-3 shadow-inner"
+                      className="bg-slate-950/40 border border-slate-850 p-3 md:p-4 rounded-xl space-y-3 shadow-inner"
                     >
                       {/* Subject Line & Protocol Header */}
-                      <div className="flex items-start justify-between gap-2">
+                      <div className="flex flex-wrap items-start justify-between gap-2">
                         <div className="space-y-1">
                           <span className="text-[11px] font-black uppercase text-brand-cyan tracking-wide bg-brand-cyan/10 px-2.5 py-1 rounded-lg border border-brand-cyan/15 block w-fit">
                             📌 {parsedSubject}
@@ -1076,7 +1076,7 @@ export function SupportPanel({ currentUser, addToast }: SupportPanelProps) {
                                 {parsedBody}
                               </p>
                             )}
-                            <div className="relative group w-44 rounded-lg overflow-hidden border border-slate-800 bg-slate-950 cursor-pointer">
+                            <div className="relative group w-full max-w-[11rem] rounded-lg overflow-hidden border border-slate-800 bg-slate-950 cursor-pointer">
                               <img 
                                 src={item.audio_url} 
                                 alt="Anexo do Cliente" 

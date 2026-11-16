@@ -104,11 +104,11 @@ export const SalesReceipt: React.FC<SalesReceiptProps> = ({
   return (
     <div className="bg-slate-900 border border-slate-800 rounded-2xl shadow-2xl max-w-lg w-full overflow-hidden flex flex-col font-sans text-slate-300">
       {/* Action Bar Header */}
-      <div className="p-4 bg-slate-950/60 border-b border-slate-800 flex justify-between items-center">
+      <div className="p-3 md:p-4 bg-slate-950/60 border-b border-slate-800 flex flex-wrap justify-between items-center gap-2">
         <span className="text-xs font-black uppercase tracking-widest text-slate-400">
           Visualização do Recibo
         </span>
-        <div className="flex items-center gap-2">
+        <div className="flex flex-wrap items-center gap-1.5 md:gap-2">
           {onShareWhatsApp && (
             <button
               onClick={onShareWhatsApp}
@@ -149,7 +149,7 @@ export const SalesReceipt: React.FC<SalesReceiptProps> = ({
       </div>
 
       {/* Printable Area Wrapper */}
-      <div id={`receipt-print-${sale.id}`} className="p-6 bg-white text-slate-900 overflow-y-auto max-h-[75vh]">
+      <div id={`receipt-print-${sale.id}`} className="p-3.5 md:p-6 bg-white text-slate-900 overflow-y-auto max-h-[72dvh] md:max-h-[75vh]">
         
         {/* Dynamic Header */}
         <div className="flex flex-col items-center text-center pb-5 border-b border-dashed border-slate-300">
@@ -236,7 +236,7 @@ export const SalesReceipt: React.FC<SalesReceiptProps> = ({
         <div className="py-4 space-y-2.5">
           <span className="text-[10px] text-slate-400 font-bold uppercase tracking-wider block">Itens / Serviços Registrados</span>
           
-          <div className="border border-slate-200 rounded-xl overflow-hidden">
+          <div className="border border-slate-200 rounded-xl overflow-x-auto">
             <table className="w-full text-left text-xs border-collapse">
               <thead>
                 <tr className="bg-slate-50 border-b border-slate-200 text-slate-500 font-bold">

@@ -1046,16 +1046,16 @@ export function ExpensesManager({ expenses, onAddExpense, onDeleteExpense, sales
   }, [reportPeriod, reportDate, reportMonth, reportStart, reportEnd]);
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-3.5 md:space-y-6 max-w-full overflow-x-hidden">
       
       {/* 1. Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-3 md:gap-4">
         <div>
-          <h2 className="text-xl font-bold text-white flex items-center gap-2">
-            <TrendingDown className="h-5 w-5 text-red-500" />
+          <h2 className="text-lg md:text-xl font-bold text-white flex items-center gap-2">
+            <TrendingDown className="h-5 w-5 text-red-500 shrink-0" />
             <span>{isAttendant ? "Lançamento de Despesas e Sangrias" : "Gestão de Gastos e Despesas"}</span>
           </h2>
-          <p className="text-xs text-slate-400">
+          <p className="text-[11px] md:text-xs text-slate-400">
             {isAttendant 
               ? "Cadastre compras de materiais do balcão ou retiradas (sangrias) do dinheiro do caixa de forma simplificada."
               : "Cadastre os gastos fixos ou variáveis da sua empresa para ter um cálculo real de lucros."
@@ -1067,9 +1067,9 @@ export function ExpensesManager({ expenses, onAddExpense, onDeleteExpense, sales
           <button
             type="button"
             onClick={() => setShowLargeReport(true)}
-            className="flex items-center justify-center gap-2 px-4 py-2.5 bg-gradient-to-r from-red-600 to-rose-600 hover:from-red-500 hover:to-rose-500 text-white rounded-xl text-xs font-bold transition-all duration-200 cursor-pointer shadow-lg shadow-red-950/40 transform hover:scale-[1.02]"
+            className="w-full md:w-auto flex items-center justify-center gap-2 px-3.5 py-2 md:px-4 md:py-2.5 bg-gradient-to-r from-red-600 to-rose-600 hover:from-red-500 hover:to-rose-500 text-white rounded-xl text-xs font-bold transition-all duration-200 cursor-pointer shadow-lg shadow-red-950/40 transform hover:scale-[1.02]"
           >
-            <BarChart3 className="h-4 w-4" />
+            <BarChart3 className="h-4 w-4 shrink-0" />
             <span>RELATÓRIO DE GASTOS COM GRÁFICO</span>
           </button>
         )}
@@ -1077,7 +1077,7 @@ export function ExpensesManager({ expenses, onAddExpense, onDeleteExpense, sales
 
       {/* 2. Top-level inline stats overview config (Owner/Admin only) */}
       {!isAttendant && (
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-2.5 md:gap-4">
         {/* Total cadastrado (Standalone/Manuais) */}
         <div 
           onClick={() => setActiveCardFilter("standalone")}
@@ -1286,10 +1286,10 @@ export function ExpensesManager({ expenses, onAddExpense, onDeleteExpense, sales
       )}
 
       {/* 3. Panel splits: Form registration on left, fast list on right */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-3.5 md:gap-6">
         
         {/* Form panel */}
-        <div className={`bg-brand-card border rounded-2xl p-5 space-y-4 transition-all duration-300 ${
+        <div className={`bg-brand-card border rounded-xl md:rounded-2xl p-3.5 md:p-5 space-y-3 md:space-y-4 transition-all duration-300 ${
           isPreRegistered 
             ? "border-amber-500/50 shadow-lg shadow-amber-950/15 bg-gradient-to-b from-brand-card to-amber-950/5" 
             : "border-slate-800"
@@ -1488,9 +1488,9 @@ export function ExpensesManager({ expenses, onAddExpense, onDeleteExpense, sales
               />
             </div>
 
-            <div className="grid grid-cols-2 gap-3">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-2.5 md:gap-3">
               {/* Value */}
-              <div className="space-y-1">
+              <div className="space-y-1 min-w-0">
                 <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest block font-mono">
                   Valor (R$) *
                 </label>
@@ -1504,7 +1504,7 @@ export function ExpensesManager({ expenses, onAddExpense, onDeleteExpense, sales
                     placeholder="25.00"
                     value={value}
                     onChange={(e) => setValue(e.target.value)}
-                    className={`w-full bg-slate-950 border rounded-xl pl-8 pr-2 py-2 text-xs font-bold text-white focus:outline-none focus:border-red-500 transition-all placeholder:text-slate-600 ${
+                    className={`w-full min-w-0 bg-slate-950 border rounded-xl pl-8 pr-2 py-2 text-xs font-bold text-white focus:outline-none focus:border-red-500 transition-all placeholder:text-slate-600 ${
                       isPreRegistered ? "border-amber-500/40 focus:border-amber-500 focus:ring-1 focus:ring-amber-500/10" : "border-slate-850"
                     }`}
                   />
@@ -1512,7 +1512,7 @@ export function ExpensesManager({ expenses, onAddExpense, onDeleteExpense, sales
               </div>
 
               {/* Date */}
-              <div className="space-y-1">
+              <div className="space-y-1 min-w-0">
                 <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest block">
                   Data de Lançamento
                 </label>
@@ -1521,7 +1521,7 @@ export function ExpensesManager({ expenses, onAddExpense, onDeleteExpense, sales
                   required
                   value={date}
                   onChange={(e) => setDate(e.target.value)}
-                  className={`w-full bg-slate-950 border rounded-xl px-2.5 py-2 text-xs text-slate-300 focus:outline-none focus:border-red-500 transition-all font-mono ${
+                  className={`w-full min-w-0 bg-slate-950 border rounded-xl px-2.5 py-2 text-xs text-slate-300 focus:outline-none focus:border-red-500 transition-all font-mono ${
                     isPreRegistered ? "border-amber-500/40 focus:border-amber-500 focus:ring-1 focus:ring-amber-500/10" : "border-slate-850"
                   }`}
                 />
@@ -1529,7 +1529,7 @@ export function ExpensesManager({ expenses, onAddExpense, onDeleteExpense, sales
             </div>
 
             {/* Category and Payment Method dropdowns */}
-            <div className="grid grid-cols-2 gap-3 font-sans">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-2.5 md:gap-3 font-sans">
               <div className="space-y-1">
                 <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest block">
                   Categoria / Classificação
@@ -1632,21 +1632,21 @@ export function ExpensesManager({ expenses, onAddExpense, onDeleteExpense, sales
         </div>
 
         {/* Expenses list panel */}
-        <div className="bg-brand-card border border-slate-800 rounded-2xl p-5 lg:col-span-2 space-y-4">
+        <div className="bg-brand-card border border-slate-800 rounded-xl md:rounded-2xl p-3.5 md:p-5 lg:col-span-2 space-y-3 md:space-y-4 min-w-0">
           
           {/* List Headers and Filter Periods */}
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-850 pb-3">
-            <div className="flex items-center gap-2">
+          <div className="flex flex-col md:flex-row md:items-center justify-between gap-2.5 md:gap-3 border-b border-slate-850 pb-3">
+            <div className="flex items-center gap-2 flex-wrap">
               <div className="p-1 px-2 rounded bg-slate-800 border border-slate-700 text-slate-300 text-[10px] font-bold font-mono">
                 {activeCardFilter === "standalone" ? "DESPESAS MANUAIS" : activeCardFilter === "sales" ? "CUSTOS DE VENDAS" : activeCardFilter === "bills" ? "GASTOS DA META DIÁRIA" : "CONSOLIDADO"}
               </div>
-              <h3 className="text-sm font-bold text-white uppercase tracking-tight">
+              <h3 className="text-xs md:text-sm font-bold text-white uppercase tracking-tight">
                 {activeCardFilter === "standalone" ? "Despesas Standalone" : activeCardFilter === "sales" ? "Custos de Vendas" : activeCardFilter === "bills" ? "Gastos Cadastrados de Meta Diária" : "Exibindo Todo o Consolidado"}
               </h3>
             </div>
             
             {/* Extended list period pills including week */}
-            <div className="flex items-center gap-1 bg-slate-950/80 p-0.5 rounded-lg border border-slate-850 text-[10.5px]">
+            <div className="flex items-center gap-1 bg-slate-950/80 p-0.5 rounded-lg border border-slate-850 text-[10.5px] w-full md:w-auto overflow-x-auto">
               <button
                 type="button"
                 onClick={() => setListPeriod("today")}
@@ -1789,34 +1789,34 @@ export function ExpensesManager({ expenses, onAddExpense, onDeleteExpense, sales
 
       {/* 4. ANALYTICAL REPORT MODAL - FULL COCKPIT SCREEN FOR DETAILED GRAPHS */}
       {showLargeReport && (
-        <div className="fixed inset-0 z-55 flex items-center justify-center p-4 bg-slate-950/90 backdrop-blur-md overflow-y-auto animate-fade-in">
-          <div className="relative max-w-4xl w-full bg-slate-900 border border-slate-800 rounded-2xl overflow-hidden shadow-2xl my-8">
+        <div className="fixed inset-0 z-55 flex items-center justify-center p-2.5 md:p-4 bg-slate-950/90 backdrop-blur-md overflow-y-auto animate-fade-in">
+          <div className="relative max-w-4xl w-full bg-slate-900 border border-slate-800 rounded-2xl overflow-hidden shadow-2xl my-2 md:my-8 max-h-[94dvh] md:max-h-none flex flex-col">
             
             {/* Modal Header */}
-            <div className="p-5 border-b border-slate-850 flex justify-between items-center bg-slate-950">
-              <div className="flex items-center gap-3">
-                <div className="p-2.5 rounded-xl bg-red-650/10 border border-red-500/20 text-red-500">
-                  <BarChart3 className="h-5 w-5" />
+            <div className="p-3.5 md:p-5 border-b border-slate-850 flex justify-between items-center gap-2 bg-slate-950">
+              <div className="flex items-center gap-2.5 md:gap-3 min-w-0">
+                <div className="p-2 md:p-2.5 rounded-xl bg-red-650/10 border border-red-500/20 text-red-500 shrink-0">
+                  <BarChart3 className="h-4 w-4 md:h-5 md:w-5" />
                 </div>
-                <div>
-                  <h3 className="text-base font-bold text-white">Relatório Analítico de Gastos</h3>
-                  <p className="text-xs text-slate-400">Visão consolidada por categorias e itens do que mais foi gasto</p>
+                <div className="min-w-0">
+                  <h3 className="text-sm md:text-base font-bold text-white truncate">Relatório Analítico de Gastos</h3>
+                  <p className="text-[11px] md:text-xs text-slate-400">Visão consolidada por categorias e itens do que mais foi gasto</p>
                 </div>
               </div>
               
               <button
                 onClick={() => setShowLargeReport(false)}
-                className="p-1.5 hover:bg-slate-850 text-slate-400 hover:text-slate-100 rounded-xl transition-colors cursor-pointer"
+                className="p-1.5 hover:bg-slate-850 text-slate-400 hover:text-slate-100 rounded-xl transition-colors cursor-pointer shrink-0"
               >
                 <X className="h-5 w-5" />
               </button>
             </div>
 
             {/* Modal Content Dashboard */}
-            <div className="p-6 space-y-6 max-h-[80vh] overflow-y-auto select-none">
+            <div className="p-3.5 md:p-6 space-y-4 md:space-y-6 max-h-[80dvh] md:max-h-[80vh] overflow-y-auto select-none">
               
               {/* Report Controls: Dia, Mês, Custom Date */}
-              <div className="bg-slate-950/80 p-4 rounded-xl border border-slate-850 flex flex-col md:flex-row md:items-center justify-between gap-4">
+              <div className="bg-slate-950/80 p-3 md:p-4 rounded-xl border border-slate-850 flex flex-col md:flex-row md:items-center justify-between gap-3 md:gap-4">
                 <div className="space-y-1">
                   <h4 className="text-xs font-bold text-white uppercase tracking-wider flex items-center gap-1.5">
                     <Filter className="h-3.5 w-3.5 text-red-400" />
@@ -1826,7 +1826,7 @@ export function ExpensesManager({ expenses, onAddExpense, onDeleteExpense, sales
                 </div>
 
                 {/* Period Pills */}
-                <div className="flex items-center gap-1.5 self-start md:self-auto bg-slate-900 p-1 rounded-xl border border-slate-800">
+                <div className="flex items-center gap-1.5 w-full md:w-auto overflow-x-auto self-start md:self-auto bg-slate-900 p-1 rounded-xl border border-slate-800">
                   <button
                     type="button"
                     onClick={() => setReportPeriod("day")}
@@ -1891,7 +1891,7 @@ export function ExpensesManager({ expenses, onAddExpense, onDeleteExpense, sales
                 )}
 
                 {reportPeriod === "custom" && (
-                  <div className="grid grid-cols-2 gap-3 w-full">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-2.5 md:gap-3 w-full">
                     <div className="space-y-1.5">
                       <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest block font-mono">Data de Início</label>
                       <input
@@ -2102,12 +2102,12 @@ export function ExpensesManager({ expenses, onAddExpense, onDeleteExpense, sales
       {/* Modal confirmation for deleting an expense */}
       <AnimatePresence>
         {expenseToDelete && (
-          <div className="fixed inset-0 bg-slate-950/80 backdrop-blur-sm flex items-center justify-center z-[110] p-4 font-sans">
+          <div className="fixed inset-0 bg-slate-950/80 backdrop-blur-sm flex items-center justify-center z-[110] p-2.5 md:p-4 font-sans">
             <motion.div
               initial={{ opacity: 0, scale: 0.95 }}
               animate={{ opacity: 1, scale: 1 }}
               exit={{ opacity: 0, scale: 0.95 }}
-              className="w-full max-w-md bg-brand-card border border-slate-800 p-6 rounded-2xl space-y-6 shadow-2xl text-left"
+              className="w-full max-w-md max-h-[90dvh] overflow-y-auto bg-brand-card border border-slate-800 p-4 md:p-6 rounded-2xl space-y-4 md:space-y-6 shadow-2xl text-left"
             >
               <div className="flex items-start gap-3.5">
                 <div className="p-3 bg-red-950/60 text-red-400 rounded-xl border border-red-900/30">
@@ -2163,8 +2163,8 @@ export function ExpensesManager({ expenses, onAddExpense, onDeleteExpense, sales
 
       {/* LIVE CAMERA CAPTURE MODAL */}
       {isCameraActive && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/90 backdrop-blur-md animate-fade-in">
-          <div className="relative max-w-lg w-full bg-slate-900 border border-slate-800 rounded-2xl overflow-hidden shadow-2xl space-y-4 p-5">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-2.5 md:p-4 bg-slate-950/90 backdrop-blur-md animate-fade-in">
+          <div className="relative max-w-lg w-full max-h-[92dvh] overflow-y-auto bg-slate-900 border border-slate-800 rounded-2xl shadow-2xl space-y-3 md:space-y-4 p-3.5 md:p-5">
             <div className="flex items-center justify-between border-b border-slate-800 pb-3">
               <div className="flex items-center gap-2">
                 <div className="p-2 rounded-xl bg-sky-500/10 border border-sky-500/20 text-sky-400">

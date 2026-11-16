@@ -206,7 +206,7 @@ export const WelcomeModal: React.FC<WelcomeModalProps> = ({
       {isVisible && (
         <div
           id="welcome-modal-overlay"
-          className="fixed inset-0 z-[9999] flex items-center justify-center p-3 sm:p-4 md:p-6 bg-slate-950/85 backdrop-blur-md overflow-y-auto"
+          className="fixed inset-0 z-[9999] flex items-center justify-center p-2.5 md:p-6 bg-slate-950/85 backdrop-blur-md overflow-y-auto"
         >
           <motion.div
             id="welcome-modal-content"
@@ -214,14 +214,14 @@ export const WelcomeModal: React.FC<WelcomeModalProps> = ({
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.94, y: 16 }}
             transition={{ duration: 0.25, ease: "easeOut" }}
-            className="relative w-full max-w-4xl max-h-[92vh] flex flex-col rounded-2xl bg-gradient-to-b from-slate-900 via-slate-900/95 to-slate-950 border border-slate-800 shadow-2xl overflow-hidden text-slate-100"
+            className="relative w-full max-w-4xl max-h-[92dvh] md:max-h-[92vh] flex flex-col rounded-2xl bg-gradient-to-b from-slate-900 via-slate-900/95 to-slate-950 border border-slate-800 shadow-2xl overflow-hidden text-slate-100"
           >
             {/* Barra superior decorativa */}
             <div className="h-1.5 w-full bg-gradient-to-r from-brand-cyan via-brand-magenta to-amber-400" />
 
             {/* Cabeçalho */}
-            <div className="px-6 pt-6 pb-4 sm:px-8 sm:pt-8 border-b border-slate-800/80 bg-slate-900/50">
-              <div className="flex items-center gap-2 mb-2">
+            <div className="px-4 pt-4 pb-3 md:px-8 md:pt-8 md:pb-4 border-b border-slate-800/80 bg-slate-900/50">
+              <div className="flex flex-wrap items-center gap-2 mb-2">
                 <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] font-bold uppercase tracking-wider bg-brand-magenta/15 text-brand-magenta border border-brand-magenta/30">
                   <Sparkles className="w-3.5 h-3.5" />
                   Boas-vindas ao Sistema
@@ -232,29 +232,29 @@ export const WelcomeModal: React.FC<WelcomeModalProps> = ({
                 </span>
               </div>
 
-              <h2 className="text-2xl sm:text-3xl font-black tracking-tight text-white">
+              <h2 className="text-lg md:text-3xl font-black tracking-tight text-white">
                 Tudo o que sua gráfica precisa em um só lugar
               </h2>
-              <p className="mt-1 text-xs sm:text-sm text-slate-400 leading-relaxed max-w-2xl">
+              <p className="mt-1 text-xs md:text-sm text-slate-400 leading-relaxed max-w-2xl">
                 Seu sistema completo de gestão operacional e financeira está pronto para impulsionar suas vendas e organizar sua empresa.
               </p>
             </div>
 
             {/* Corpo rolável com recursos */}
-            <div className="flex-1 overflow-y-auto px-6 py-5 sm:px-8 sm:py-6 space-y-6 custom-scrollbar">
+            <div className="flex-1 overflow-y-auto px-4 py-4 md:px-8 md:py-6 space-y-4 md:space-y-6 custom-scrollbar">
               {/* Grid dos 12 recursos */}
               <div>
                 <h3 className="text-xs font-mono font-bold uppercase tracking-wider text-slate-400 mb-3 flex items-center gap-2">
                   <Zap className="w-3.5 h-3.5 text-amber-400" />
                   Recursos Profissionais Inclusos
                 </h3>
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2.5 sm:gap-3">
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-2.5 md:gap-3">
                   {features.map((feature, idx) => {
                     const Icon = feature.icon;
                     return (
                       <div
                         key={idx}
-                        className="p-3 sm:p-3.5 rounded-xl bg-slate-950/50 hover:bg-slate-800/40 border border-slate-800/70 hover:border-slate-700 transition-all flex items-start gap-3 group"
+                        className="p-3 md:p-3.5 rounded-xl bg-slate-950/50 hover:bg-slate-800/40 border border-slate-800/70 hover:border-slate-700 transition-all flex items-start gap-3 group"
                       >
                         <div className="p-2 rounded-lg bg-slate-900 border border-slate-750 text-brand-cyan group-hover:text-brand-magenta group-hover:border-brand-magenta/40 transition-all shrink-0">
                           <Icon className="w-4 h-4" />
@@ -321,7 +321,7 @@ export const WelcomeModal: React.FC<WelcomeModalProps> = ({
             </div>
 
             {/* Rodapé com Ação Principal */}
-            <div className="px-6 py-4 sm:px-8 sm:py-5 border-t border-slate-800/80 bg-slate-950/80 flex flex-col sm:flex-row items-center justify-between gap-3">
+            <div className="px-4 py-3.5 md:px-8 md:py-5 border-t border-slate-800/80 bg-slate-950/80 flex flex-col md:flex-row items-center justify-between gap-3">
               <div className="flex items-center gap-2 text-xs text-slate-400">
                 <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
                 <span>Sem taxa de instalação. Suporte e atualizações inclusas.</span>
@@ -332,7 +332,7 @@ export const WelcomeModal: React.FC<WelcomeModalProps> = ({
                 type="button"
                 onClick={handleStartExperience}
                 disabled={isUpdating}
-                className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-6 py-3 rounded-xl bg-gradient-to-r from-brand-cyan to-brand-magenta hover:opacity-90 active:scale-[0.98] text-white text-sm font-black uppercase tracking-wider shadow-lg shadow-brand-cyan/15 transition-all cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+                className="w-full md:w-auto inline-flex items-center justify-center gap-2 px-6 py-3 rounded-xl bg-gradient-to-r from-brand-cyan to-brand-magenta hover:opacity-90 active:scale-[0.98] text-white text-sm font-black uppercase tracking-wider shadow-lg shadow-brand-cyan/15 transition-all cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 {isUpdating ? (
                   <>

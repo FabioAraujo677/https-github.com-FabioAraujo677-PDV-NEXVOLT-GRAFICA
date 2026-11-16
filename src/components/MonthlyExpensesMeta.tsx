@@ -417,7 +417,7 @@ export function MonthlyExpensesMeta({ todayNetProfit, bills, setBills, daysWorke
     : bills.filter((b) => b.category === categoryFilter);
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-3.5 md:space-y-6 max-w-full overflow-x-hidden">
       {/* Dynamic Feedback Notification inside tab */}
       <AnimatePresence>
         {feedbackToast && (
@@ -425,7 +425,7 @@ export function MonthlyExpensesMeta({ todayNetProfit, bills, setBills, daysWorke
             initial={{ opacity: 0, y: -20 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -20 }}
-            className={`fixed top-24 right-6 z-50 p-4 rounded-xl shadow-2xl flex items-center gap-2 border text-sm max-w-sm ${
+            className={`fixed top-20 right-3 left-3 md:left-auto md:top-24 md:right-6 z-50 p-3 md:p-4 rounded-xl shadow-2xl flex items-center gap-2 border text-xs md:text-sm md:max-w-sm ${
               feedbackToast.type === "success" 
                 ? "bg-emerald-950/90 border-emerald-500/40 text-emerald-300"
                 : feedbackToast.type === "error"
@@ -440,24 +440,24 @@ export function MonthlyExpensesMeta({ todayNetProfit, bills, setBills, daysWorke
       </AnimatePresence>
 
       {/* Header Info */}
-      <div className="bg-slate-900 border border-slate-800 rounded-3xl p-6 relative overflow-hidden shadow-xl shadow-slate-950/20">
+      <div className="bg-slate-900 border border-slate-800 rounded-2xl md:rounded-3xl p-3.5 md:p-6 relative overflow-hidden shadow-xl shadow-slate-950/20">
         <div className="absolute right-0 top-0 h-40 w-40 bg-gradient-to-tr from-brand-magenta/5 to-brand-cyan/10 rounded-full blur-2xl pointer-events-none" />
-        <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+        <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-3 md:gap-4">
           <div>
-            <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-mono bg-brand-magenta/10 text-brand-magenta border border-brand-magenta/20 mb-2">
+            <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 md:px-3 md:py-1 rounded-full text-[10px] md:text-xs font-mono bg-brand-magenta/10 text-brand-magenta border border-brand-magenta/20 mb-1.5 md:mb-2">
               <Calculator className="h-3.5 w-3.5" />
               <span>PLANEJAMENTO DE CAIXA</span>
             </div>
-            <h2 className="text-2xl font-black text-slate-100 flex items-center gap-2 tracking-tight">
+            <h2 className="text-lg md:text-2xl font-black text-slate-100 flex items-center gap-2 tracking-tight">
               Gastos do Mês & Meta Diária
             </h2>
-            <p className="text-sm text-slate-400 mt-1">
+            <p className="text-xs md:text-sm text-slate-400 mt-1">
               Cadastre suas obrigações do mês, agende vencimentos e distribua o custo planejado de forma realista por seus dias trabalhados.
             </p>
           </div>
           <button
             onClick={openAddForm}
-            className="bg-gradient-to-r from-brand-magenta to-brand-magenta/90 hover:from-brand-magenta/90 hover:to-brand-magenta text-white font-bold text-sm px-5 py-3 rounded-2xl shadow-lg shadow-brand-magenta/15 hover:shadow-brand-magenta/35 transition-all flex items-center gap-2 shrink-0 cursor-pointer hover:-translate-y-0.5"
+            className="w-full md:w-auto justify-center bg-gradient-to-r from-brand-magenta to-brand-magenta/90 hover:from-brand-magenta/90 hover:to-brand-magenta text-white font-bold text-xs md:text-sm px-4 py-2.5 md:px-5 md:py-3 rounded-xl md:rounded-2xl shadow-lg shadow-brand-magenta/15 hover:shadow-brand-magenta/35 transition-all flex items-center gap-2 shrink-0 cursor-pointer hover:-translate-y-0.5"
           >
             <Plus className="h-4 w-4" />
             Adicionar Gasto Mensal
@@ -499,17 +499,17 @@ export function MonthlyExpensesMeta({ todayNetProfit, bills, setBills, daysWorke
       )}
 
       {/* Grid of Key Analytical Metrics Cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-2.5 md:gap-4">
         {/* Total monthly expenses */}
-        <div className="bg-slate-900/80 border border-slate-800/80 rounded-2xl p-5 shadow-lg relative overflow-hidden flex flex-col justify-between">
+        <div className="bg-slate-900/80 border border-slate-800/80 rounded-xl md:rounded-2xl p-3.5 md:p-5 shadow-lg relative overflow-hidden flex flex-col justify-between">
           <div className="flex justify-between items-start">
             <span className="text-[10px] font-black tracking-wider text-slate-450 uppercase">Gastos do Mês</span>
             <div className="h-7 w-7 rounded-lg bg-red-500/10 border border-red-500/25 flex items-center justify-center">
               <TrendingUp className="h-4 w-4 text-red-400 rotate-180" />
             </div>
           </div>
-          <div className="mt-4">
-            <span className="text-2xl font-black text-rose-450 font-mono block leading-none">
+          <div className="mt-2.5 md:mt-4">
+            <span className="text-xl md:text-2xl font-black text-rose-450 font-mono block leading-none">
               {formatBRL(totalExpenses)}
             </span>
             <p className="text-[10.5px] text-slate-400 mt-1.5 flex items-center gap-1">
@@ -520,7 +520,7 @@ export function MonthlyExpensesMeta({ todayNetProfit, bills, setBills, daysWorke
         </div>
 
         {/* Days worked configuration */}
-        <div className="bg-slate-900/80 border border-slate-800/80 rounded-2xl p-5 shadow-lg relative overflow-hidden flex flex-col justify-between">
+        <div className="bg-slate-900/80 border border-slate-800/80 rounded-xl md:rounded-2xl p-3.5 md:p-5 shadow-lg relative overflow-hidden flex flex-col justify-between">
           <div className="flex justify-between items-start">
             <span className="text-[10px] font-black tracking-wider text-slate-450 uppercase">Dias Trabalhados</span>
             <div className="h-7 w-7 rounded-lg bg-brand-cyan/10 border border-brand-cyan/15 flex items-center justify-center">
@@ -657,23 +657,23 @@ export function MonthlyExpensesMeta({ todayNetProfit, bills, setBills, daysWorke
       )}
 
       {/* Monthly Bills Master Table / CRUD Screen */}
-      <div className="bg-slate-900 border border-slate-800 rounded-3xl overflow-hidden shadow-xl">
-        <div className="p-5 border-b border-slate-800 bg-slate-900/60 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
+      <div className="bg-slate-900 border border-slate-800 rounded-2xl md:rounded-3xl overflow-hidden shadow-xl">
+        <div className="p-3.5 md:p-5 border-b border-slate-800 bg-slate-900/60 flex flex-col md:flex-row justify-between items-start md:items-center gap-2.5 md:gap-3">
           <div>
-            <h3 className="text-base font-bold text-slate-100 flex items-center gap-2">
-              <Layers className="h-4.5 w-4.5 text-brand-magenta" />
+            <h3 className="text-sm md:text-base font-bold text-slate-100 flex items-center gap-2">
+              <Layers className="h-4 w-4 md:h-4.5 md:w-4.5 text-brand-magenta shrink-0" />
               <span>Lista de Gastos Cadastrados ({filteredBills.length})</span>
             </h3>
-            <p className="text-xs text-slate-450 mt-0.5">Clique nos botões de ação para alterar ou remover obrigações mensais.</p>
+            <p className="text-[11px] md:text-xs text-slate-450 mt-0.5">Clique nos botões de ação para alterar ou remover obrigações mensais.</p>
           </div>
 
           {/* Quick Category Filter Selector */}
-          <div className="flex items-center gap-2 self-stretch sm:self-auto">
+          <div className="flex items-center gap-2 self-stretch md:self-auto">
             <span className="text-[10px] font-bold text-slate-450 uppercase shrink-0">Filtrar:</span>
             <select
               value={categoryFilter}
               onChange={(e) => setCategoryFilter(e.target.value)}
-              className="bg-slate-950 text-slate-200 text-xs font-semibold px-3 py-1.5 rounded-xl border border-slate-800 focus:border-brand-magenta/60 outline-none flex-grow sm:flex-grow-0"
+              className="bg-slate-950 text-slate-200 text-xs font-semibold px-3 py-1.5 rounded-xl border border-slate-800 focus:border-brand-magenta/60 outline-none flex-grow md:flex-grow-0 min-w-0"
             >
               <option value="Todos">Todas Categorias</option>
               {BILL_CATEGORIES.map((cat) => (
@@ -783,16 +783,16 @@ export function MonthlyExpensesMeta({ todayNetProfit, bills, setBills, daysWorke
       {/* Unified Add/Edit Form Modal overlay */}
       <AnimatePresence>
         {isFormOpen && (
-          <div className="fixed inset-0 z-50 overflow-y-auto bg-slate-950/80 backdrop-blur-sm flex items-center justify-center p-4">
+          <div className="fixed inset-0 z-50 overflow-y-auto bg-slate-950/80 backdrop-blur-sm flex items-center justify-center p-2.5 md:p-4">
             <motion.div
               initial={{ scale: 0.95, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
               exit={{ scale: 0.95, opacity: 0 }}
-              className="bg-slate-900 border border-slate-800 rounded-3xl w-full max-w-lg shadow-2xl relative overflow-hidden"
+              className="bg-slate-900 border border-slate-800 rounded-2xl md:rounded-3xl w-full max-w-lg max-h-[92dvh] overflow-y-auto shadow-2xl relative"
             >
-              <div className="p-6 border-b border-slate-800 bg-slate-950/10 flex justify-between items-center">
+              <div className="p-4 md:p-6 border-b border-slate-800 bg-slate-950/10 flex justify-between items-center gap-2">
                 <div>
-                  <h3 className="text-base font-extrabold text-white">
+                  <h3 className="text-sm md:text-base font-extrabold text-white">
                     {editingBillId ? "Editar Gasto Mensal" : "Adicionar Gasto Mensal"}
                   </h3>
                   <p className="text-[11px] text-slate-400 mt-0.5">
@@ -807,7 +807,7 @@ export function MonthlyExpensesMeta({ todayNetProfit, bills, setBills, daysWorke
                 </button>
               </div>
 
-              <form onSubmit={handleSaveBill} className="p-6 space-y-4">
+              <form onSubmit={handleSaveBill} className="p-4 md:p-6 space-y-3 md:space-y-4">
                 {/* Bill Title Name */}
                 <div className="space-y-1.5">
                   <label className="text-[10px] font-black uppercase tracking-wider text-slate-400 block">Nome do Gasto</label>
@@ -818,12 +818,12 @@ export function MonthlyExpensesMeta({ todayNetProfit, bills, setBills, daysWorke
                     placeholder="Ex: Aluguel da Loja, Internet Banda Larga, Luz"
                     value={formName}
                     onChange={(e) => setFormName(e.target.value)}
-                    className="w-full bg-slate-950 border border-slate-850 rounded-xl px-4 py-2.5 text-sm text-slate-100 placeholder-slate-600 focus:border-brand-magenta outline-none transition-colors"
+                    className="w-full bg-slate-950 border border-slate-850 rounded-xl px-3 py-2 md:px-4 md:py-2.5 text-sm text-slate-100 placeholder-slate-600 focus:border-brand-magenta outline-none transition-colors"
                   />
                 </div>
 
                 {/* Value & Due Date split */}
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3 md:gap-4">
                   {/* Monthly Value */}
                   <div className="space-y-1.5">
                     <label className="text-[10px] font-black uppercase tracking-wider text-slate-400 block">Valor Mensal (R$)</label>

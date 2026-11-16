@@ -434,7 +434,7 @@ export function UsersManager({ currentUser, onUpdateCurrentUser, onNavigateToAte
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-3.5 md:space-y-6 max-w-full overflow-x-hidden">
       
       {/* Upper Alerts */}
       <AnimatePresence>
@@ -474,7 +474,7 @@ export function UsersManager({ currentUser, onUpdateCurrentUser, onNavigateToAte
       </AnimatePresence>
 
       {onNavigateToAtendentes && (
-        <div className="bg-gradient-to-r from-cyan-950/40 via-slate-900/60 to-blue-950/40 border border-cyan-500/30 rounded-xl p-3.5 flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-md">
+        <div className="bg-gradient-to-r from-cyan-950/40 via-slate-900/60 to-blue-950/40 border border-cyan-500/30 rounded-xl p-3 md:p-3.5 flex flex-col md:flex-row md:items-center justify-between gap-3 shadow-md">
           <div className="flex items-center gap-3">
             <div className="p-2 rounded-lg bg-cyan-500/10 border border-cyan-500/30 text-cyan-400 shrink-0">
               <UserCheck className="h-5 w-5" />
@@ -491,7 +491,7 @@ export function UsersManager({ currentUser, onUpdateCurrentUser, onNavigateToAte
           <button
             type="button"
             onClick={onNavigateToAtendentes}
-            className="px-3.5 py-1.5 rounded-lg bg-gradient-to-r from-cyan-600 to-blue-600 hover:from-cyan-500 hover:to-blue-500 text-white text-xs font-bold shadow border border-cyan-400/30 flex items-center justify-center gap-1.5 cursor-pointer whitespace-nowrap transition-all self-start sm:self-auto shrink-0"
+            className="w-full md:w-auto px-3.5 py-1.5 rounded-lg bg-gradient-to-r from-cyan-600 to-blue-600 hover:from-cyan-500 hover:to-blue-500 text-white text-xs font-bold shadow border border-cyan-400/30 flex items-center justify-center gap-1.5 cursor-pointer whitespace-nowrap transition-all self-start md:self-auto shrink-0"
           >
             <UserCheck className="h-4 w-4" />
             <span>Abrir Painel dos Atendentes</span>
@@ -499,7 +499,7 @@ export function UsersManager({ currentUser, onUpdateCurrentUser, onNavigateToAte
         </div>
       )}
 
-      <div className="flex flex-col lg:flex-row gap-6">
+      <div className="flex flex-col lg:flex-row gap-4 md:gap-6">
         
         {/* Left Side: Users Form Panel */}
         <div className="w-full lg:w-5/12 space-y-4">
@@ -520,7 +520,7 @@ export function UsersManager({ currentUser, onUpdateCurrentUser, onNavigateToAte
               <span className="text-xs text-slate-450">Cadastre um novo operador, vendedor ou administrador para a equipe.</span>
             </button>
           ) : (
-            <div className="bg-brand-card rounded-2xl border border-slate-800 p-6 space-y-5 relative">
+            <div className="bg-brand-card rounded-2xl border border-slate-800 p-4 md:p-6 space-y-4 md:space-y-5 relative">
               
               <button
                 onClick={resetForm}
@@ -635,7 +635,7 @@ export function UsersManager({ currentUser, onUpdateCurrentUser, onNavigateToAte
                 <div className="space-y-2 pt-2 border-t border-slate-850">
                   <label className="block text-xs font-semibold text-slate-300 font-mono uppercase">Permissões do Atendente</label>
                   <p className="text-[10px] text-slate-400">Marque o que este operador tem permissão para ver ou executar:</p>
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 pt-1">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-2 pt-1">
                     {[
                       { key: "ver_vendas", label: "Ver Vendas" },
                       { key: "registrar_caixa", label: "Registrar Caixa" },
@@ -664,7 +664,7 @@ export function UsersManager({ currentUser, onUpdateCurrentUser, onNavigateToAte
                 )}
 
                 {/* Action build buttons */}
-                <div className="flex gap-3 pt-2">
+                <div className="flex flex-col md:flex-row gap-2.5 md:gap-3 pt-2">
                   <button
                     type="button"
                     onClick={resetForm}
@@ -708,7 +708,7 @@ export function UsersManager({ currentUser, onUpdateCurrentUser, onNavigateToAte
           <div className="bg-brand-card border border-slate-800 rounded-2xl overflow-hidden shadow-xl shadow-black/20">
             
             {/* Table Navigation Filters */}
-            <div className="p-5 border-b border-slate-850 flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-4">
+            <div className="p-3.5 md:p-5 border-b border-slate-850 flex flex-col md:flex-row items-stretch md:items-center justify-between gap-3 md:gap-4">
               <div>
                 <h3 className="font-bold text-white text-base flex items-center gap-2">
                   <Users className="h-4 w-4 text-brand-cyan" />
@@ -725,7 +725,7 @@ export function UsersManager({ currentUser, onUpdateCurrentUser, onNavigateToAte
                   placeholder="Pesquisar por nome ou login..."
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
-                  className="w-full sm:w-60 p-2 pl-9 bg-slate-950 border border-slate-850 rounded-xl text-xs text-slate-200 focus:border-brand-cyan outline-none transition-all"
+                  className="w-full md:w-60 p-2 pl-9 bg-slate-950 border border-slate-850 rounded-xl text-xs text-slate-200 focus:border-brand-cyan outline-none transition-all"
                 />
               </div>
             </div>
@@ -744,7 +744,7 @@ export function UsersManager({ currentUser, onUpdateCurrentUser, onNavigateToAte
                   return (
                     <div 
                       key={user.id} 
-                      className={`p-4 hover:bg-slate-900/60 transition-colors flex items-center justify-between gap-4 ${
+                      className={`p-3 md:p-4 hover:bg-slate-900/60 transition-colors flex items-center justify-between gap-2.5 md:gap-4 ${
                         isCurrent ? "bg-brand-cyan/5 border-l-2 border-l-brand-cyan" : ""
                       }`}
                     >
@@ -754,7 +754,7 @@ export function UsersManager({ currentUser, onUpdateCurrentUser, onNavigateToAte
                         </div>
                         <div className="min-w-0">
                           <div className="flex items-center gap-2 flex-wrap">
-                            <h4 className="text-sm font-bold text-white truncate max-w-[160px] sm:max-w-[240px]">{user.name}</h4>
+                            <h4 className="text-sm font-bold text-white truncate max-w-[160px] md:max-w-[240px]">{user.name}</h4>
                             <span className={`px-2 py-0.5 rounded text-[9px] font-mono font-extrabold uppercase border ${
                               (!user.role || user.role === "atendente")
                                 ? "bg-brand-cyan/10 text-brand-cyan border-brand-cyan/20"
@@ -774,7 +774,7 @@ export function UsersManager({ currentUser, onUpdateCurrentUser, onNavigateToAte
                           <div className="flex items-center gap-4 text-xs text-slate-450 mt-1 font-mono">
                             <span className="truncate">@{user.username}</span>
                             {user.email && (
-                              <span className="hidden sm:inline truncate max-w-[185px]">/ &nbsp;{user.email}</span>
+                              <span className="hidden md:inline truncate max-w-[185px]">/ &nbsp;{user.email}</span>
                             )}
                           </div>
                         </div>
@@ -811,12 +811,12 @@ export function UsersManager({ currentUser, onUpdateCurrentUser, onNavigateToAte
       {/* Modern Dialog Confirmation Modal for Delete operations */}
       <AnimatePresence>
         {userToDelete && (
-          <div className="fixed inset-0 bg-slate-950/80 backdrop-blur-sm flex items-center justify-center z-[100] p-4">
+          <div className="fixed inset-0 bg-slate-950/80 backdrop-blur-sm flex items-center justify-center z-[100] p-2.5 md:p-4">
             <motion.div
               initial={{ opacity: 0, scale: 0.95 }}
               animate={{ opacity: 1, scale: 1 }}
               exit={{ opacity: 0, scale: 0.95 }}
-              className="w-full max-w-md bg-brand-card border border-slate-800 p-6 rounded-2xl space-y-6 shadow-2xl"
+              className="w-full max-w-md bg-brand-card border border-slate-800 p-4 md:p-6 rounded-2xl space-y-4 md:space-y-6 shadow-2xl max-h-[90dvh] overflow-y-auto"
             >
               <div className="flex items-start gap-3.5">
                 <div className="p-3 bg-red-950 text-red-400 rounded-xl border border-red-900/30">
@@ -842,7 +842,7 @@ export function UsersManager({ currentUser, onUpdateCurrentUser, onNavigateToAte
                 </div>
               )}
 
-              <div className="flex items-center gap-3">
+              <div className="flex flex-col-reverse md:flex-row items-stretch md:items-center gap-2.5 md:gap-3">
                 <button
                   type="button"
                   onClick={() => setUserToDelete(null)}
@@ -873,12 +873,12 @@ export function UsersManager({ currentUser, onUpdateCurrentUser, onNavigateToAte
       {/* Success Credentials WhatsApp Modal */}
       <AnimatePresence>
         {newlyCreatedCredentials && (
-          <div className="fixed inset-0 bg-slate-950/80 backdrop-blur-sm flex items-center justify-center z-[100] p-4">
+          <div className="fixed inset-0 bg-slate-950/80 backdrop-blur-sm flex items-center justify-center z-[100] p-2.5 md:p-4">
             <motion.div
               initial={{ opacity: 0, scale: 0.95 }}
               animate={{ opacity: 1, scale: 1 }}
               exit={{ opacity: 0, scale: 0.95 }}
-              className="w-full max-w-lg bg-brand-card border border-slate-800 p-6 rounded-2xl space-y-5 shadow-2xl"
+              className="w-full max-w-lg bg-brand-card border border-slate-800 p-4 md:p-6 rounded-2xl space-y-4 md:space-y-5 shadow-2xl max-h-[90dvh] overflow-y-auto"
             >
               <div className="flex items-center gap-3">
                 <div className="p-3 bg-emerald-950 text-emerald-400 rounded-xl border border-emerald-900/30">
@@ -915,7 +915,7 @@ export function UsersManager({ currentUser, onUpdateCurrentUser, onNavigateToAte
                 </div>
               </div>
 
-              <div className="flex items-center gap-3 pt-2">
+              <div className="flex flex-col md:flex-row items-stretch md:items-center gap-2.5 md:gap-3 pt-2">
                 <button
                   type="button"
                   onClick={() => {

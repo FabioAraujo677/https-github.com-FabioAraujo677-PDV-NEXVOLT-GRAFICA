@@ -121,11 +121,11 @@ export function CalculatorModal({ isOpen, onClose }: CalculatorModalProps) {
 
   return (
     <div 
-      className="fixed inset-0 z-[9999] flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-md animate-fade-in font-sans"
+      className="fixed inset-0 z-[9999] flex items-center justify-center p-2.5 md:p-4 bg-slate-950/80 backdrop-blur-md animate-fade-in font-sans"
       onClick={onClose}
     >
       <div 
-        className="w-full max-w-xs sm:max-w-sm bg-slate-900 border-2 border-slate-700/80 rounded-3xl shadow-[0_25px_60px_-15px_rgba(0,0,0,0.9)] overflow-hidden animate-scale-in my-auto"
+        className="w-full max-w-xs md:max-w-sm bg-slate-900 border-2 border-slate-700/80 rounded-2xl md:rounded-3xl shadow-[0_25px_60px_-15px_rgba(0,0,0,0.9)] overflow-y-auto max-h-[92dvh] animate-scale-in my-auto"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}

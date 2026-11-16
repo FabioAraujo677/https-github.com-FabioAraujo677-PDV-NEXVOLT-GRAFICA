@@ -6088,7 +6088,7 @@ export default function App() {
 
   if (isInitialLoading) {
     return (
-      <div className="min-h-screen bg-[#090d16] flex flex-col items-center justify-center p-6 select-none font-sans">
+      <div className="min-h-[100dvh] md:min-h-screen max-w-[100vw] overflow-x-hidden bg-[#090d16] flex flex-col items-center justify-center p-4 md:p-6 select-none font-sans">
         {/* Ambient background glows */}
         <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-rose-600/10 rounded-full blur-[120px] pointer-events-none animate-pulse duration-[6000ms]" />
         <div className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-purple-600/10 rounded-full blur-[120px] pointer-events-none animate-pulse duration-[8000ms]" />
@@ -6140,7 +6140,7 @@ export default function App() {
   if (isAdminPath) {
     if (isMasterUser) {
       return (
-        <main className="min-h-screen bg-slate-950 text-slate-100 p-4 sm:p-6">
+        <main className="min-h-[100dvh] md:min-h-screen max-w-[100vw] overflow-x-hidden bg-slate-950 text-slate-100 p-2.5 md:p-6">
                   <AdminPanel isMasterUser={isMasterUser} />
         </main>
       );
@@ -6166,11 +6166,11 @@ export default function App() {
   const renderExitBackupModal = () => {
     if (!showExitBackupModal) return null;
     return (
-      <div className="fixed inset-0 z-[100000] flex items-center justify-center p-4 bg-slate-950/85 backdrop-blur-md animate-fade-in font-sans">
+      <div className="fixed inset-0 z-[100000] flex items-center justify-center p-3 md:p-4 bg-slate-950/85 backdrop-blur-md animate-fade-in font-sans">
         <motion.div
           initial={{ scale: 0.9, opacity: 0, y: 20 }}
           animate={{ scale: 1, opacity: 1, y: 0 }}
-          className="bg-slate-900 border border-slate-800 rounded-3xl p-6 sm:p-8 max-w-md w-full shadow-2xl space-y-6 text-center"
+          className="bg-slate-900 border border-slate-800 rounded-2xl md:rounded-3xl p-4 md:p-8 max-w-md w-full max-h-[90dvh] overflow-y-auto shadow-2xl space-y-4 md:space-y-6 text-center"
         >
           <div className="w-16 h-16 mx-auto rounded-2xl bg-gradient-to-br from-cyan-500/20 to-brand-magenta/20 border border-cyan-500/40 flex items-center justify-center text-brand-cyan shadow-lg shadow-cyan-950/40">
             <Database className="h-8 w-8 text-cyan-400" />
@@ -6285,10 +6285,10 @@ export default function App() {
   }
 
   return (
-    <div className="min-h-screen bg-brand-dark-navy text-slate-100 flex flex-col justify-between">
+    <div className="min-h-[100dvh] md:min-h-screen max-w-[100vw] overflow-x-hidden bg-brand-dark-navy text-slate-100 flex flex-col justify-between">
       
       {isInitialLoading && (
-        <div className="fixed inset-0 z-[9999] bg-[#090d16] flex flex-col items-center justify-center p-6 select-none font-sans">
+        <div className="fixed inset-0 z-[9999] bg-[#090d16] flex flex-col items-center justify-center p-4 md:p-6 select-none font-sans">
           {/* Ambient background glows */}
           <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-rose-600/10 rounded-full blur-[120px] pointer-events-none animate-pulse duration-[6000ms]" />
           <div className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-purple-600/10 rounded-full blur-[120px] pointer-events-none animate-pulse duration-[8000ms]" />
@@ -6338,7 +6338,7 @@ export default function App() {
       
       {/* Master Admin Top Navigation Bar: Exibido APENAS para vendas.impactodigital2@gmail.com */}
       {currentUser?.email?.toLowerCase().trim() === "vendas.impactodigital2@gmail.com" && (
-        <div className="bg-gradient-to-r from-amber-950 via-slate-900 to-amber-950 border-b border-amber-500/40 px-3 sm:px-6 py-2 flex items-center justify-between text-xs text-amber-200 shadow-md">
+        <div className="bg-gradient-to-r from-amber-950 via-slate-900 to-amber-950 border-b border-amber-500/40 px-2.5 md:px-6 py-2 flex flex-wrap items-center justify-between gap-2 text-xs text-amber-200 shadow-md">
           <div className="flex items-center gap-2">
             <span className="flex h-2.5 w-2.5 relative">
               <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-amber-400 opacity-75" />
@@ -6419,7 +6419,7 @@ export default function App() {
       )}
 
       {/* 2. Main content router viewport */}
-      <main className="flex-grow max-w-[1700px] 2xl:max-w-[1920px] w-full mx-auto px-2 xs:px-4 sm:px-6 md:px-8 py-2.5 sm:py-5 space-y-4 sm:space-y-6">
+      <main className="flex-grow max-w-[1700px] 2xl:max-w-[1920px] w-full mx-auto px-2.5 md:px-8 py-2.5 md:py-5 space-y-3 md:space-y-6 overflow-x-hidden">
         {(isInitialLoading || isCheckingCashStatus) ? (
           <div className="flex flex-col items-center justify-center py-20 text-slate-500 space-y-3 animate-fade-in">
             <RefreshCw className="h-8 w-8 animate-spin text-cyan-500 stroke-[1.5]" />
@@ -6442,7 +6442,7 @@ export default function App() {
           /* REGULAR OPERATIONAL VIEWPORTS CONTENT */
           <>
             {/* Unified System Dashboard Controller Bar (Ultra-Compact Dense UI) */}
-            <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-3 p-3 bg-slate-900/60 backdrop-blur-md rounded-xl border border-slate-800 shadow-md">
+            <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-2.5 md:gap-3 p-2.5 md:p-3 bg-slate-900/60 backdrop-blur-md rounded-xl border border-slate-800 shadow-md">
           {/* Left Block: Active Screen Badge & Action Controls Inline */}
           <div className="flex flex-wrap items-center gap-2.5">
             <div className="flex items-center gap-2 px-2.5 py-1 bg-slate-950 rounded-lg border border-slate-850 shrink-0">
@@ -6573,19 +6573,19 @@ export default function App() {
             </div>
 
             {filterPeriod === "custom" && (
-              <div className="flex items-center gap-1 text-xs font-bold text-slate-400 animate-fadeIn">
+              <div className="flex flex-wrap md:flex-nowrap items-center gap-1.5 md:gap-1 text-xs font-bold text-slate-400 animate-fadeIn w-full md:w-auto">
                 <input
                   type="date"
                   value={customStartDate}
                   onChange={(e) => setCustomStartDate(e.target.value)}
-                  className="bg-slate-950 border border-slate-850 rounded-lg px-2 py-0.5 text-xs text-brand-cyan font-mono font-bold focus:outline-none focus:border-brand-cyan transition-all h-[26px]"
+                  className="bg-slate-950 border border-slate-850 rounded-lg px-2 py-0.5 text-xs text-brand-cyan font-mono font-bold focus:outline-none focus:border-brand-cyan transition-all h-[28px] md:h-[26px] flex-1 md:flex-initial min-w-0"
                 />
                 <span className="text-slate-600 text-[10px]">Até</span>
                 <input
                   type="date"
                   value={customEndDate}
                   onChange={(e) => setCustomEndDate(e.target.value)}
-                  className="bg-slate-950 border border-slate-850 rounded-lg px-2 py-0.5 text-xs text-brand-cyan font-mono font-bold focus:outline-none focus:border-brand-cyan transition-all h-[26px]"
+                  className="bg-slate-950 border border-slate-850 rounded-lg px-2 py-0.5 text-xs text-brand-cyan font-mono font-bold focus:outline-none focus:border-brand-cyan transition-all h-[28px] md:h-[26px] flex-1 md:flex-initial min-w-0"
                 />
               </div>
             )}
@@ -7433,7 +7433,7 @@ export default function App() {
       {/* Dynamic Gemini Logistics AI Assistant Modal */}
       <AnimatePresence>
         {showLogisticsAiModal && (
-          <div className="fixed inset-0 bg-slate-950/85 backdrop-blur-md z-[999990] flex items-center justify-center p-4 overflow-y-auto">
+          <div className="fixed inset-0 bg-slate-950/85 backdrop-blur-md z-[999990] flex items-center justify-center p-2.5 md:p-4 overflow-y-auto">
             {/* Ambient Background Glows */}
             <div className="absolute top-1/3 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[500px] h-[350px] rounded-full bg-brand-cyan/10 blur-[130px] pointer-events-none" />
             <div className="absolute bottom-1/3 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[400px] h-[350px] rounded-full bg-brand-magenta/5 blur-[125px] pointer-events-none" />
@@ -7443,7 +7443,7 @@ export default function App() {
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.95, y: 20 }}
               transition={{ type: "spring", damping: 25, stiffness: 250 }}
-              className="bg-slate-900 border border-slate-800 rounded-2xl max-w-5xl w-full p-6 space-y-6 relative shadow-2xl shadow-black/90 my-8 overflow-hidden"
+              className="bg-slate-900 border border-slate-800 rounded-2xl max-w-5xl w-full p-3.5 md:p-6 space-y-4 md:space-y-6 relative shadow-2xl shadow-black/90 my-4 md:my-8 max-h-[92dvh] overflow-y-auto"
             >
               {/* Top aesthetics header bar */}
               <div className="absolute top-0 inset-x-0 h-1 bg-gradient-to-r from-brand-cyan to-brand-magenta" />
@@ -7696,7 +7696,7 @@ export default function App() {
       {/* Rescheduling Delivery Modal with Motive Option */}
       <AnimatePresence>
         {reschedulingSale && (
-          <div className="fixed inset-0 bg-slate-950/85 backdrop-blur-md z-[999999] flex items-center justify-center p-4 overflow-y-auto">
+          <div className="fixed inset-0 bg-slate-950/85 backdrop-blur-md z-[999999] flex items-center justify-center p-2.5 md:p-4 overflow-y-auto">
             {/* Ambient Background Glows */}
             <div className="absolute top-1/3 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[400px] h-[300px] rounded-full bg-brand-cyan/10 blur-[120px] pointer-events-none" />
 
@@ -7705,7 +7705,7 @@ export default function App() {
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.95, y: 20 }}
               transition={{ type: "spring", damping: 25, stiffness: 250 }}
-              className="bg-slate-900 border border-slate-800 rounded-2xl max-w-md w-full p-6 space-y-5 relative shadow-2xl shadow-black/90 overflow-hidden text-left"
+              className="bg-slate-900 border border-slate-800 rounded-2xl max-w-md w-full p-4 md:p-6 space-y-4 md:space-y-5 relative shadow-2xl shadow-black/90 max-h-[92dvh] overflow-y-auto text-left"
             >
               {/* Close Button */}
               <button
@@ -7794,18 +7794,18 @@ export default function App() {
               </div>
 
               {/* Action Buttons */}
-              <div className="flex items-center gap-3 pt-2">
+              <div className="flex flex-col md:flex-row items-stretch md:items-center gap-2 md:gap-3 pt-2">
                 <button
                   type="button"
                   onClick={() => setReschedulingSale(null)}
-                  className="w-1/2 py-2.5 px-4 bg-slate-950 hover:bg-slate-850 hover:text-white text-slate-400 text-xs uppercase font-black tracking-wider rounded-xl border border-slate-805 transition-colors cursor-pointer"
+                  className="w-full md:w-1/2 py-2.5 px-4 bg-slate-950 hover:bg-slate-850 hover:text-white text-slate-400 text-xs uppercase font-black tracking-wider rounded-xl border border-slate-805 transition-colors cursor-pointer"
                 >
                   Cancelar
                 </button>
                 <button
                   type="button"
                   onClick={handleConfirmReschedule}
-                  className="w-1/2 py-2.5 px-4 bg-gradient-to-r from-brand-cyan to-teal-500 hover:from-brand-cyan hover:to-teal-400 text-slate-950 text-xs uppercase font-black tracking-wider rounded-xl shadow-lg shadow-brand-cyan/15 transition-all cursor-pointer hover:shadow-brand-cyan/25"
+                  className="w-full md:w-1/2 py-2.5 px-4 bg-gradient-to-r from-brand-cyan to-teal-500 hover:from-brand-cyan hover:to-teal-400 text-slate-950 text-xs uppercase font-black tracking-wider rounded-xl shadow-lg shadow-brand-cyan/15 transition-all cursor-pointer hover:shadow-brand-cyan/25"
                 >
                   Salvar Reagendamento
                 </button>
@@ -7823,7 +7823,7 @@ export default function App() {
             initial={{ opacity: 0, y: -100, scale: 0.9, x: "-50%" }}
             animate={{ opacity: 1, y: 0, scale: 1, x: "-50%" }}
             exit={{ opacity: 0, y: -40, scale: 0.9, x: "-50%" }}
-            className="fixed top-6 left-1/2 z-[9999] w-full max-w-sm sm:max-w-md bg-slate-900/95 border-2 border-brand-cyan/80 shadow-2xl shadow-brand-cyan/20 rounded-2xl p-4 backdrop-blur-md text-left font-sans"
+            className="fixed top-4 md:top-6 left-1/2 z-[9999] w-[calc(100vw-1.5rem)] md:w-full max-w-md bg-slate-900/95 border-2 border-brand-cyan/80 shadow-2xl shadow-brand-cyan/20 rounded-2xl p-3.5 md:p-4 backdrop-blur-md text-left font-sans"
             style={{ position: "fixed", left: "50%" }}
           >
             <div className="flex items-start gap-3">
@@ -7871,7 +7871,7 @@ export default function App() {
       </AnimatePresence>
 
       {/* Toast Notification Container stack */}
-      <div className="fixed bottom-6 right-6 z-[99999] flex flex-col gap-2.5 max-w-sm w-full pointer-events-none" style={{ position: "fixed", bottom: "24px", right: "24px" }}>
+      <div className="fixed bottom-3 right-3 left-3 md:left-auto md:bottom-6 md:right-6 z-[99999] flex flex-col gap-2 md:gap-2.5 md:max-w-sm md:w-full pointer-events-none">
         <AnimatePresence>
           {toasts.map((toast) => {
             const getColorsAndIcons = () => {
@@ -7955,12 +7955,12 @@ export default function App() {
       {/* 🔔 PERSISTENT RINGING REMINDERS OVERLAY (Sound alarm keeps looping until accepted) - ONLY IF LOGGED IN */}
       <AnimatePresence>
         {currentUser && ringingReminders.length > 0 && (
-          <div className="fixed inset-0 z-[10000] flex items-center justify-center p-4 bg-slate-950/90 backdrop-blur-lg">
+          <div className="fixed inset-0 z-[10000] flex items-center justify-center p-2.5 md:p-4 bg-slate-950/90 backdrop-blur-lg">
             <motion.div
               initial={{ scale: 0.9, opacity: 0, y: 30 }}
               animate={{ scale: 1, opacity: 1, y: 0 }}
               exit={{ scale: 0.9, opacity: 0, y: 30 }}
-              className="relative w-full max-w-3xl bg-gradient-to-b from-slate-900 via-slate-950 to-slate-900 border-4 border-brand-magenta rounded-3xl p-6 md:p-8 shadow-[0_0_60px_rgba(219,39,119,0.35)] font-sans overflow-hidden animate-pulse-slow"
+              className="relative w-full max-w-3xl max-h-[92dvh] overflow-y-auto bg-gradient-to-b from-slate-900 via-slate-950 to-slate-900 border-4 border-brand-magenta rounded-2xl md:rounded-3xl p-4 md:p-8 shadow-[0_0_60px_rgba(219,39,119,0.35)] font-sans animate-pulse-slow"
             >
               {/* Animated decorative glow beams */}
               <div className="absolute top-0 left-0 right-0 h-1.5 bg-gradient-to-r from-brand-magenta via-rose-500 to-brand-magenta shadow-lg animate-pulse" />
@@ -8068,13 +8068,13 @@ export default function App() {
           const closingHour = company?.cashClosingReminderTime || company?.closingTime || "18:00";
 
           return (
-            <div className="fixed inset-0 z-[10000] flex items-center justify-center p-4 bg-slate-950/85 backdrop-blur-md animate-fade-in">
+            <div className="fixed inset-0 z-[10000] flex items-center justify-center p-2.5 md:p-4 bg-slate-950/85 backdrop-blur-md animate-fade-in">
               <motion.div
                 initial={{ scale: 0.92, opacity: 0, y: 15 }}
                 animate={{ scale: 1, opacity: 1, y: 0 }}
                 exit={{ scale: 0.92, opacity: 0, y: 15 }}
                 transition={{ type: "spring", damping: 25, stiffness: 300 }}
-                className="relative w-full max-w-md bg-gradient-to-b from-slate-900 via-slate-900 to-slate-950 border border-amber-500/30 rounded-3xl p-6 sm:p-7 shadow-2xl shadow-amber-950/20 overflow-hidden font-sans"
+                className="relative w-full max-w-md max-h-[92dvh] overflow-y-auto bg-gradient-to-b from-slate-900 via-slate-900 to-slate-950 border border-amber-500/30 rounded-2xl md:rounded-3xl p-4 md:p-7 shadow-2xl shadow-amber-950/20 font-sans"
               >
                 {/* Decorative glowing gradient top bar */}
                 <div className="absolute top-0 left-0 right-0 h-1.5 bg-gradient-to-r from-amber-400 via-rose-400 to-amber-500" />
@@ -8177,7 +8177,7 @@ export default function App() {
                       Fechamento Rápido com Valores do Sistema
                     </button>
 
-                    <div className="grid grid-cols-2 gap-2 pt-1">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-2 pt-1">
                       <button
                         type="button"
                         onClick={handleAutoCloseSnooze}
@@ -8246,13 +8246,13 @@ export default function App() {
       {/* 💾 NOTIFICAÇÃO DE BACKUP AUTOMÁTICO DIÁRIO (FIM DE DIA) */}
       <AnimatePresence>
         {currentUser && showDailyBackupPrompt && (
-          <div className="fixed inset-0 z-[10001] flex items-center justify-center p-4 bg-slate-950/85 backdrop-blur-md animate-fade-in">
+          <div className="fixed inset-0 z-[10001] flex items-center justify-center p-2.5 md:p-4 bg-slate-950/85 backdrop-blur-md animate-fade-in">
             <motion.div
               initial={{ scale: 0.92, opacity: 0, y: 15 }}
               animate={{ scale: 1, opacity: 1, y: 0 }}
               exit={{ scale: 0.92, opacity: 0, y: 15 }}
               transition={{ type: "spring", damping: 25, stiffness: 300 }}
-              className="relative w-full max-w-md bg-gradient-to-b from-slate-900 via-slate-900 to-slate-950 border border-emerald-500/40 rounded-3xl p-6 sm:p-7 shadow-2xl shadow-emerald-950/30 overflow-hidden font-sans"
+              className="relative w-full max-w-md max-h-[92dvh] overflow-y-auto bg-gradient-to-b from-slate-900 via-slate-900 to-slate-950 border border-emerald-500/40 rounded-2xl md:rounded-3xl p-4 md:p-7 shadow-2xl shadow-emerald-950/30 font-sans"
             >
               <div className="absolute top-0 left-0 right-0 h-1.5 bg-gradient-to-r from-emerald-400 via-brand-cyan to-emerald-500" />
               <button

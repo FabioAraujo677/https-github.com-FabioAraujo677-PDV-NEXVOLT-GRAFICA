@@ -124,7 +124,7 @@ export function StandbyScreen({
   const logoUrl = companyProfile?.logo;
 
   return (
-    <div className="relative h-screen w-full bg-slate-950 text-slate-100 flex flex-col justify-between font-sans overflow-hidden select-none">
+    <div className="relative min-h-[100dvh] md:h-screen max-w-[100vw] w-full bg-slate-950 text-slate-100 flex flex-col justify-between font-sans overflow-y-auto overflow-x-hidden md:overflow-hidden select-none">
       {/* Ambient neon background glows */}
       <div className="absolute top-1/4 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[500px] h-[500px] bg-brand-cyan/15 rounded-full blur-[130px] pointer-events-none animate-pulse duration-[4000ms]" />
       <div className="absolute bottom-1/4 left-1/4 w-[450px] h-[450px] bg-brand-magenta/15 rounded-full blur-[130px] pointer-events-none animate-pulse duration-[6000ms]" />
@@ -135,7 +135,7 @@ export function StandbyScreen({
       />
 
       {/* TOP HEADER STRIP */}
-      <header className="relative z-10 w-full px-4 py-2.5 flex items-center justify-between border-b border-slate-900 bg-slate-950/80 backdrop-blur-md">
+      <header className="relative z-10 w-full px-2.5 md:px-4 py-2 md:py-2.5 flex flex-wrap items-center justify-between gap-2 border-b border-slate-900 bg-slate-950/80 backdrop-blur-md">
         <div className="flex items-center gap-2.5">
           <div className="p-1.5 bg-slate-900 border border-slate-800 rounded-lg text-brand-cyan shadow-inner">
             <Building2 className="h-4 w-4 text-brand-cyan" />
@@ -206,7 +206,7 @@ export function StandbyScreen({
       </header>
 
       {/* CENTER HERO AREA */}
-      <main className="relative z-10 flex-1 flex flex-col items-center justify-center px-4 py-2 text-center max-w-sm sm:max-w-md mx-auto my-auto space-y-3.5 animate-fade-in">
+      <main className="relative z-10 flex-1 flex flex-col items-center justify-center px-3 md:px-4 py-2 text-center w-full max-w-md mx-auto my-auto space-y-2.5 md:space-y-3.5 animate-fade-in">
         
         {/* COMPACT NEON DIGITAL CLOCK */}
         <motion.div
@@ -218,46 +218,46 @@ export function StandbyScreen({
           {/* Ambient Glow Box */}
           <div className="absolute -inset-1 bg-gradient-to-r from-brand-cyan via-emerald-400 to-brand-magenta rounded-2xl blur-md opacity-40 group-hover:opacity-70 transition duration-1000 animate-pulse" />
           
-          <div className="relative bg-slate-950/90 border border-slate-800/90 rounded-2xl p-2.5 sm:p-3 backdrop-blur-xl shadow-lg flex flex-col items-center justify-center">
+          <div className="relative bg-slate-950/90 border border-slate-800/90 rounded-2xl p-2 md:p-3 backdrop-blur-xl shadow-lg flex flex-col items-center justify-center">
             
             {/* NEON TIME DIGITS */}
-            <div className="flex items-center justify-center gap-1 sm:gap-2 font-mono font-black text-white select-none">
+            <div className="flex items-center justify-center gap-1 md:gap-2 font-mono font-black text-white select-none">
               {/* Hours */}
-              <div className="relative bg-slate-900/90 border border-slate-800/90 rounded-lg px-2.5 py-1 shadow-inner">
-                <span className="text-2xl sm:text-3xl text-cyan-300 drop-shadow-[0_0_12px_rgba(6,182,212,0.85)] tracking-tighter">
+              <div className="relative bg-slate-900/90 border border-slate-800/90 rounded-lg px-2 md:px-2.5 py-0.5 md:py-1 shadow-inner">
+                <span className="text-xl md:text-3xl text-cyan-300 drop-shadow-[0_0_12px_rgba(6,182,212,0.85)] tracking-tighter">
                   {hours}
                 </span>
               </div>
 
               {/* Colon 1 */}
-              <span className="text-xl sm:text-2xl text-brand-magenta animate-pulse drop-shadow-[0_0_10px_rgba(236,72,153,0.9)] pb-0.5">
+              <span className="text-lg md:text-2xl text-brand-magenta animate-pulse drop-shadow-[0_0_10px_rgba(236,72,153,0.9)] pb-0.5">
                 :
               </span>
 
               {/* Minutes */}
-              <div className="relative bg-slate-900/90 border border-slate-800/90 rounded-lg px-2.5 py-1 shadow-inner">
-                <span className="text-2xl sm:text-3xl text-cyan-300 drop-shadow-[0_0_12px_rgba(6,182,212,0.85)] tracking-tighter">
+              <div className="relative bg-slate-900/90 border border-slate-800/90 rounded-lg px-2 md:px-2.5 py-0.5 md:py-1 shadow-inner">
+                <span className="text-xl md:text-3xl text-cyan-300 drop-shadow-[0_0_12px_rgba(6,182,212,0.85)] tracking-tighter">
                   {minutes}
                 </span>
               </div>
 
               {/* Colon 2 */}
-              <span className="text-xl sm:text-2xl text-brand-magenta animate-pulse drop-shadow-[0_0_10px_rgba(236,72,153,0.9)] pb-0.5">
+              <span className="text-lg md:text-2xl text-brand-magenta animate-pulse drop-shadow-[0_0_10px_rgba(236,72,153,0.9)] pb-0.5">
                 :
               </span>
 
               {/* Seconds */}
-              <div className="relative bg-slate-900/90 border border-slate-800/90 rounded-lg px-2 py-1 shadow-inner">
-                <span className="text-xl sm:text-2xl text-emerald-400 drop-shadow-[0_0_12px_rgba(52,211,153,0.85)] tracking-tighter">
+              <div className="relative bg-slate-900/90 border border-slate-800/90 rounded-lg px-2 py-0.5 md:py-1 shadow-inner">
+                <span className="text-lg md:text-2xl text-emerald-400 drop-shadow-[0_0_12px_rgba(52,211,153,0.85)] tracking-tighter">
                   {seconds}
                 </span>
               </div>
             </div>
 
             {/* NEON DATE BADGE */}
-            <div className="mt-2 pt-1.5 border-t border-slate-800/80 w-full flex items-center justify-center gap-1.5">
+            <div className="mt-1.5 md:mt-2 pt-1.5 border-t border-slate-800/80 w-full flex items-center justify-center gap-1.5">
               <Clock className="h-3 w-3 text-brand-cyan animate-pulse" />
-              <span className="text-[11px] font-bold capitalize tracking-wider text-slate-300 font-sans">
+              <span className="text-[10px] md:text-[11px] font-bold capitalize tracking-wider text-slate-300 font-sans">
                 {formattedDate}
               </span>
             </div>
@@ -271,25 +271,25 @@ export function StandbyScreen({
           transition={{ duration: 0.4, delay: 0.1, ease: "easeOut" }}
           className="relative group w-full"
         >
-          <div className="relative bg-slate-900/80 border border-slate-800 rounded-2xl p-4 sm:p-5 flex flex-col items-center justify-center space-y-3 shadow-lg backdrop-blur-xl">
+          <div className="relative bg-slate-900/80 border border-slate-800 rounded-2xl p-3 md:p-5 flex flex-col items-center justify-center space-y-2 md:space-y-3 shadow-lg backdrop-blur-xl">
             {logoUrl ? (
-              <div className="flex items-center justify-center py-1">
+              <div className="flex items-center justify-center py-0.5 md:py-1">
                 <img
                   src={logoUrl}
                   alt={companyName}
-                  className="h-28 sm:h-36 max-w-[240px] sm:max-w-[280px] object-contain filter drop-shadow-[0_4px_16px_rgba(0,0,0,0.6)] transition-transform duration-300 group-hover:scale-105"
+                  className="h-20 md:h-36 max-w-[190px] md:max-w-[280px] object-contain filter drop-shadow-[0_4px_16px_rgba(0,0,0,0.6)] transition-transform duration-300 group-hover:scale-105"
                   referrerPolicy="no-referrer"
                 />
               </div>
             ) : (
-              <div className="w-20 h-20 sm:w-24 sm:h-24 rounded-2xl bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950 border border-slate-800/80 flex flex-col items-center justify-center p-3 shadow-inner">
-                <Building2 className="h-10 w-10 text-brand-cyan" />
+              <div className="w-16 h-16 md:w-24 md:h-24 rounded-2xl bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950 border border-slate-800/80 flex flex-col items-center justify-center p-2.5 md:p-3 shadow-inner">
+                <Building2 className="h-8 w-8 md:h-10 md:w-10 text-brand-cyan" />
               </div>
             )}
 
             {/* Company Title */}
             <div className="space-y-0.5 text-center">
-              <h1 className="text-lg sm:text-2xl font-black text-transparent bg-clip-text bg-gradient-to-r from-white via-slate-100 to-slate-300 uppercase tracking-tight font-sans">
+              <h1 className="text-base md:text-2xl font-black text-transparent bg-clip-text bg-gradient-to-r from-white via-slate-100 to-slate-300 uppercase tracking-tight font-sans">
                 {companyName}
               </h1>
             </div>
@@ -344,7 +344,7 @@ export function StandbyScreen({
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5, delay: 0.2 }}
-          className="grid grid-cols-3 gap-2 w-full pt-1"
+          className="grid grid-cols-3 gap-1.5 md:gap-2 w-full pt-1"
         >
           {/* Caixa Status - clickable to open cash register if closed */}
           <div 

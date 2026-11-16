@@ -496,73 +496,73 @@ export function ProductCatalogManager({
   );
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-3.5 md:space-y-6 max-w-full overflow-x-hidden">
       {/* Upper Metrics Grid */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-2.5 md:gap-4">
         {/* Total Registered Items */}
-        <div className="bg-brand-card border border-slate-800 p-4 rounded-2xl flex items-center gap-3">
-          <div className="p-2.5 bg-brand-cyan/10 rounded-xl border border-brand-cyan/20 text-brand-cyan">
+        <div className="bg-brand-card border border-slate-800 p-3 md:p-4 rounded-2xl flex items-center gap-3 min-w-0">
+          <div className="p-2.5 bg-brand-cyan/10 rounded-xl border border-brand-cyan/20 text-brand-cyan shrink-0">
             <Package className="h-5 w-5" />
           </div>
-          <div>
+          <div className="min-w-0">
             <span className="text-[10px] text-slate-400 font-mono block uppercase tracking-wider">Itens do Catálogo</span>
-            <span className="text-lg font-bold text-slate-200 mt-0.5 block">{totalItems}</span>
+            <span className="text-base md:text-lg font-bold text-slate-200 mt-0.5 block">{totalItems}</span>
           </div>
         </div>
 
         {/* Cost Stock Value Asset */}
-        <div className="bg-brand-card border border-slate-800 p-4 rounded-2xl flex items-center gap-3">
-          <div className="p-2.5 bg-brand-magenta/10 rounded-xl border border-brand-magenta/20 text-brand-magenta">
+        <div className="bg-brand-card border border-slate-800 p-3 md:p-4 rounded-2xl flex items-center gap-3 min-w-0">
+          <div className="p-2.5 bg-brand-magenta/10 rounded-xl border border-brand-magenta/20 text-brand-magenta shrink-0">
             <Boxes className="h-5 w-5" />
           </div>
-          <div>
+          <div className="min-w-0">
             <span className="text-[10px] text-slate-400 font-mono block uppercase tracking-wider">Custo do Estoque</span>
-            <span className="text-lg font-bold text-slate-200 mt-0.5 block font-mono">
+            <span className="text-base md:text-lg font-bold text-slate-200 mt-0.5 block font-mono">
               R$ {formatBRL(totalCostAsset)}
             </span>
           </div>
         </div>
 
         {/* Sales Asset Value */}
-        <div className="bg-brand-card border border-slate-800 p-4 rounded-2xl flex items-center gap-3">
-          <div className="p-2.5 bg-emerald-500/10 rounded-xl border border-emerald-500/20 text-emerald-450">
+        <div className="bg-brand-card border border-slate-800 p-3 md:p-4 rounded-2xl flex items-center gap-3 min-w-0">
+          <div className="p-2.5 bg-emerald-500/10 rounded-xl border border-emerald-500/20 text-emerald-450 shrink-0">
             <TrendingUp className="h-5 w-5" />
           </div>
-          <div>
+          <div className="min-w-0">
             <span className="text-[10px] text-slate-400 font-mono block uppercase tracking-wider font-bold">Retorno Estimado</span>
-            <span className="text-lg font-bold text-slate-200 mt-0.5 block font-mono">
+            <span className="text-base md:text-lg font-bold text-slate-200 mt-0.5 block font-mono">
               R$ {formatBRL(totalSalesAsset)}
             </span>
           </div>
         </div>
 
         {/* Low inventory alert count */}
-        <div className="bg-brand-card border border-slate-800 p-4 rounded-2xl flex items-center gap-3">
-          <div className={`p-2.5 rounded-xl border flex justify-center items-center h-10 w-10 ${
+        <div className="bg-brand-card border border-slate-800 p-3 md:p-4 rounded-2xl flex items-center gap-3 min-w-0">
+          <div className={`p-2.5 rounded-xl border flex justify-center items-center h-10 w-10 shrink-0 ${
             criticalItemsCount > 0 
               ? "bg-amber-500/10 border-amber-500/20 text-amber-500 animate-pulse" 
               : "bg-slate-800/40 border-slate-800 text-slate-500"
           }`}>
             <AlertTriangle className="h-5 w-5" />
           </div>
-          <div>
+          <div className="min-w-0">
             <span className="text-[10px] text-slate-400 font-mono block uppercase tracking-wider">Alertas de Estoque</span>
-            <span className={`text-lg font-bold mt-0.5 block ${criticalItemsCount > 0 ? "text-amber-500" : "text-slate-450"}`}>
+            <span className={`text-base md:text-lg font-bold mt-0.5 block ${criticalItemsCount > 0 ? "text-amber-500" : "text-slate-450"}`}>
               {criticalItemsCount} {criticalItemsCount === 1 ? "crítico" : "críticos"}
             </span>
           </div>
         </div>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-3.5 md:gap-6">
         {/* Form Column (Left 5/12 width on large screens) */}
-        <div className="lg:col-span-5">
-          <div className={`bg-brand-card border rounded-2xl p-6 relative transition-all duration-300 ${
+        <div className="lg:col-span-5 min-w-0">
+          <div className={`bg-brand-card border rounded-2xl p-3.5 md:p-6 relative transition-all duration-300 ${
             editingId 
               ? "border-brand-magenta ring-1 ring-brand-magenta/30 shadow-[0_0_15px_rgba(255,0,127,0.15)]" 
               : "border-slate-800 shadow-lg shadow-black/20"
           }`}>
-            <h2 className="text-lg font-bold text-white mb-5 flex items-center gap-2">
+            <h2 className="text-base md:text-lg font-bold text-white mb-3.5 md:mb-5 flex items-center gap-2">
               <span className={`h-5 w-1.5 rounded transition-all ${editingId ? "bg-brand-magenta animate-pulse" : "bg-brand-magenta"}`}></span>
               {editingId ? "Editar Produto" : "Novo Produto / Serviço"}
             </h2>
@@ -634,9 +634,9 @@ export function ProductCatalogManager({
                           />
                         </div>
 
-                        <div className="grid grid-cols-2 gap-3">
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-2.5 md:gap-3">
                           {/* Cost Price */}
-                          <div>
+                          <div className="min-w-0">
                             <label className="block text-[10px] uppercase font-bold text-slate-400 mb-1 tracking-wider">
                               Custo Unitário (R$)
                             </label>
@@ -749,8 +749,8 @@ export function ProductCatalogManager({
                   />
                 </div>
 
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-2.5 md:gap-4">
+                  <div className="min-w-0">
                     <label className="block text-[10px] uppercase font-bold text-slate-400 mb-1.5 tracking-wider">
                       Preço de Custo (R$)
                     </label>
@@ -817,8 +817,8 @@ export function ProductCatalogManager({
                   </div>
                 )}
 
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-2.5 md:gap-4">
+                  <div className="min-w-0">
                     <label className="block text-[10px] uppercase font-bold text-slate-400 mb-1.5 tracking-wider">
                       Estoque Mínimo
                     </label>
@@ -877,11 +877,11 @@ export function ProductCatalogManager({
         </div>
 
         {/* Directory Column (Right 7/12 width) */}
-        <div className="lg:col-span-7 flex flex-col space-y-4">
+        <div className="lg:col-span-7 flex flex-col space-y-3 md:space-y-4 min-w-0">
           {/* Controls Bar: Search on left, filter tabs on right */}
-          <div className="flex flex-col md:flex-row gap-3 items-stretch md:items-center justify-between">
+          <div className="flex flex-col md:flex-row gap-2.5 md:gap-3 items-stretch md:items-center justify-between">
             {/* Search inputs */}
-            <div className="relative flex-grow">
+            <div className="relative flex-grow min-w-0">
               <span className="absolute left-3.5 top-3">
                 <Search className="h-4 w-4 text-slate-500" />
               </span>
@@ -977,37 +977,37 @@ export function ProductCatalogManager({
                   <table className="w-full text-left border-collapse">
                     <thead>
                       <tr className="bg-slate-900/90 text-[10px] font-mono font-bold text-slate-400 border-b border-slate-800 uppercase tracking-wider">
-                        <th className="py-3.5 px-4 font-sans text-slate-400">PRODUTO / SERVIÇO EXCLUÍDO</th>
-                        <th className="py-3.5 px-4 font-mono">Custo / Venda</th>
-                        <th className="py-3.5 px-4 font-mono">LUCRO ESTIMADO</th>
-                        <th className="py-3.5 px-4">ESTOQUE</th>
-                        <th className="py-3.5 px-4 text-right">AÇÕES</th>
+                        <th className="py-2.5 px-2.5 md:py-3.5 md:px-4 font-sans text-slate-400">PRODUTO / SERVIÇO EXCLUÍDO</th>
+                        <th className="py-2.5 px-2.5 md:py-3.5 md:px-4 font-mono">Custo / Venda</th>
+                        <th className="py-2.5 px-2.5 md:py-3.5 md:px-4 font-mono">LUCRO ESTIMADO</th>
+                        <th className="py-2.5 px-2.5 md:py-3.5 md:px-4">ESTOQUE</th>
+                        <th className="py-2.5 px-2.5 md:py-3.5 md:px-4 text-right">AÇÕES</th>
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-slate-850/40 text-xs">
                       {displayDeletedProducts.map((p) => (
                         <tr key={p.id} className="hover:bg-slate-900/35 transition-colors bg-red-500/[0.005]">
-                          <td className="py-4 px-4 text-slate-200 font-medium font-sans">
+                          <td className="py-2.5 px-2.5 md:py-4 md:px-4 text-slate-200 font-medium font-sans">
                             <span className="flex items-center gap-1.5">
                               <span className="h-1.5 w-1.5 rounded-full bg-red-500 shrink-0 shadow shadow-red-500/50" />
                               {p.description}
                             </span>
                           </td>
-                          <td className="py-4 px-4 font-mono">
+                          <td className="py-2.5 px-2.5 md:py-4 md:px-4 font-mono">
                             <div className="text-[10px] text-slate-500 font-medium">Custo: R$ {formatBRL(p.costPrice)}</div>
                             <div className="text-slate-100 font-semibold mt-0.5">Venda: R$ {formatBRL(p.salePrice)}</div>
                           </td>
-                          <td className="py-4 px-4 font-mono">
+                          <td className="py-2.5 px-2.5 md:py-4 md:px-4 font-mono">
                             <div className="text-emerald-450 font-bold">R$ {formatBRL(p.profit)}</div>
                             <div className="text-[10.5px] text-slate-450">
                               Margem: {p.salePrice > 0 ? (((Number(p.salePrice) - (Number(p.costPrice) || 0)) / Number(p.salePrice)) * 100).toFixed(1) : "0.0"}%
                             </div>
                           </td>
-                          <td className="py-4 px-4 font-mono text-slate-350">
+                          <td className="py-2.5 px-2.5 md:py-4 md:px-4 font-mono text-slate-350">
                             <span className="text-sm font-bold">{p.currentStock}</span>
                             <span className="text-[9.5px] text-slate-500 font-normal">/{p.minStock}</span>
                           </td>
-                          <td className="py-4 px-4 text-right">
+                          <td className="py-2.5 px-2.5 md:py-4 md:px-4 text-right">
                             <div className="flex items-center justify-end gap-2">
                               <button
                                 type="button"
@@ -1045,11 +1045,11 @@ export function ProductCatalogManager({
                 <table className="w-full text-left border-collapse">
                   <thead>
                     <tr className="bg-slate-900/90 text-[10px] font-mono font-bold text-slate-400 border-b border-slate-800 selection:bg-slate-800 uppercase tracking-wider selection:text-white">
-                      <th className="py-3.5 px-4 font-sans text-slate-400">PRODUTO / SERVIÇO</th>
-                      <th className="py-3.5 px-4 font-mono">Custo / Venda</th>
-                      <th className="py-3.5 px-4 font-mono">LUCRO ESTIMADO</th>
-                      <th className="py-3.5 px-4">Estoque / Min</th>
-                      <th className="py-3.5 px-4 text-right">AÇÕES</th>
+                      <th className="py-2.5 px-2.5 md:py-3.5 md:px-4 font-sans text-slate-400">PRODUTO / SERVIÇO</th>
+                      <th className="py-2.5 px-2.5 md:py-3.5 md:px-4 font-mono">Custo / Venda</th>
+                      <th className="py-2.5 px-2.5 md:py-3.5 md:px-4 font-mono">LUCRO ESTIMADO</th>
+                      <th className="py-2.5 px-2.5 md:py-3.5 md:px-4">Estoque / Min</th>
+                      <th className="py-2.5 px-2.5 md:py-3.5 md:px-4 text-right">AÇÕES</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-slate-850/40 text-xs">
@@ -1064,21 +1064,21 @@ export function ProductCatalogManager({
                               ? "bg-amber-500/[0.01]" 
                               : ""
                         }`}>
-                          <td className="py-4 px-4 text-slate-200 font-medium font-sans">
+                          <td className="py-2.5 px-2.5 md:py-4 md:px-4 text-slate-200 font-medium font-sans">
                             {p.description}
                           </td>
-                          <td className="py-4 px-4 font-mono">
+                          <td className="py-2.5 px-2.5 md:py-4 md:px-4 font-mono">
                             <div className="text-[10px] text-slate-500 font-medium">Custo: R$ {formatBRL(p.costPrice)}</div>
                             <div className="text-slate-100 font-semibold mt-0.5">Venda: R$ {formatBRL(p.salePrice)}</div>
                           </td>
-                          <td className="py-4 px-4 font-mono">
+                          <td className="py-2.5 px-2.5 md:py-4 md:px-4 font-mono">
                             <div className="text-emerald-450 font-bold">R$ {formatBRL(p.profit)}</div>
                             <div className="text-[10.5px] text-slate-450">
                               Margem: {p.salePrice > 0 ? (((Number(p.salePrice) - (Number(p.costPrice) || 0)) / Number(p.salePrice)) * 100).toFixed(1) : "0.0"}%
                             </div>
                           </td>
                           {/* Rich Inventory Adjuster column */}
-                          <td className="py-4 px-4">
+                          <td className="py-2.5 px-2.5 md:py-4 md:px-4">
                             <div className="flex items-center gap-2">
                               {/* Decrease Button */}
                               <button
@@ -1125,7 +1125,7 @@ export function ProductCatalogManager({
                               </div>
                             )}
                           </td>
-                          <td className="py-4 px-4 text-right">
+                          <td className="py-2.5 px-2.5 md:py-4 md:px-4 text-right">
                             {deleteConfirmId === p.id ? (
                               <div className="flex justify-end items-center gap-1.5 animate-fade-in select-none">
                                 <span className="text-[10px] text-red-400 font-bold">Excluir?</span>

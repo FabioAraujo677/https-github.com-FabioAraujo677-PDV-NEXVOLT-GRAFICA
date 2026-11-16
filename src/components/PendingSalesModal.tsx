@@ -917,14 +917,14 @@ export function PendingSalesModal({ isOpen, onClose, sales, onSaveSale, company,
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-2 bg-slate-950/80 backdrop-blur-md overflow-y-auto">
-      <div className="relative w-full max-w-4xl bg-slate-900 border border-slate-800 rounded-xl shadow-2xl flex flex-col my-4 max-h-[95vh]">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-2 md:p-3 bg-slate-950/80 backdrop-blur-md overflow-y-auto">
+      <div className="relative w-full max-w-4xl bg-slate-900 border border-slate-800 rounded-xl shadow-2xl flex flex-col my-2 md:my-4 max-h-[92dvh] md:max-h-[95vh]">
         
         {/* Header containing metadata counters */}
-        <div className="p-4 border-b border-slate-800 flex flex-col md:flex-row md:items-center justify-between gap-3">
+        <div className="p-3 md:p-4 border-b border-slate-800 flex flex-col md:flex-row md:items-center justify-between gap-2.5 md:gap-3">
           <div className="space-y-0.5">
-            <h2 className="text-lg font-extrabold text-white flex items-center gap-2">
-              <span className="h-5 w-1 rounded bg-yellow-500 animate-pulse"></span>
+            <h2 className="text-base md:text-lg font-extrabold text-white flex items-center gap-2">
+              <span className="h-5 w-1 rounded bg-yellow-500 animate-pulse shrink-0"></span>
               <span>Retirada de Material & Recebimento de Saldos</span>
             </h2>
             <p className="text-[11px] text-slate-400">
@@ -1021,7 +1021,7 @@ export function PendingSalesModal({ isOpen, onClose, sales, onSaveSale, company,
         </div>
 
         {/* Scrollable list content block */}
-        <div className="flex-grow overflow-y-auto p-4 space-y-2.5 max-h-[65vh]">
+        <div className="flex-grow overflow-y-auto p-2.5 md:p-4 space-y-2.5 max-h-[62dvh] md:max-h-[65vh]">
           {successMessage && (
             <div className="p-3 bg-emerald-950/30 border border-emerald-500/30 rounded-xl flex items-center gap-2 text-emerald-400 text-xs font-semibold animate-fadeIn">
               <Check className="h-4 w-4 text-emerald-400 shrink-0" />
@@ -1099,7 +1099,7 @@ export function PendingSalesModal({ isOpen, onClose, sales, onSaveSale, company,
                       </div>
                     </div>
 
-                    <div className="grid grid-cols-2 gap-1.5 text-[10px] font-mono text-slate-400">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-1.5 text-[10px] font-mono text-slate-400">
                       <div className="flex items-center gap-1">
                         <Calendar className="h-3 w-3 text-slate-500" />
                         <span>Data: {formatDate(sale.date)}</span>
@@ -1123,7 +1123,7 @@ export function PendingSalesModal({ isOpen, onClose, sales, onSaveSale, company,
                         </div>
                       )}
                       {sale.deliveryAddress && (
-                        <div className="col-span-2 flex items-center justify-between gap-1.5 bg-slate-950/80 p-1.5 rounded-lg border border-slate-850 mt-1">
+                        <div className="md:col-span-2 flex items-center justify-between gap-1.5 bg-slate-950/80 p-1.5 rounded-lg border border-slate-850 mt-1">
                           <div className="flex items-center gap-1.5 min-w-0">
                             <MapPin className="h-3 w-3 text-brand-cyan shrink-0" />
                             <span className="text-[10px] text-slate-300 truncate" title={sale.deliveryAddress}>
@@ -1187,7 +1187,7 @@ export function PendingSalesModal({ isOpen, onClose, sales, onSaveSale, company,
                                 <div key={p.id || pIdx} className="bg-slate-900/40 p-1.5 rounded border border-slate-850 flex flex-col gap-1">
                                   {isEditingThis ? (
                                     <div className="space-y-1">
-                                      <div className="grid grid-cols-2 gap-1">
+                                      <div className="grid grid-cols-1 md:grid-cols-2 gap-1">
                                         <div>
                                           <span className="text-[7.5px] text-slate-500 block uppercase font-mono font-bold">Valor R$</span>
                                           <input
@@ -1272,7 +1272,7 @@ export function PendingSalesModal({ isOpen, onClose, sales, onSaveSale, company,
 
                   {/* Right Financial & Interactive Payments Block */}
                   <div className="flex flex-col justify-between gap-2.5 lg:w-72 w-full bg-slate-900/40 p-2.5 rounded-xl border border-slate-850/60">
-                    <div className="grid grid-cols-3 gap-1.5 text-center text-[9px] font-mono">
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-1.5 text-center text-[9px] font-mono">
                       <div className="bg-slate-900 p-1.5 rounded-lg border border-slate-800">
                         <span className="text-slate-500 block uppercase">Total</span>
                         <span className="text-[10px] font-bold text-white">{formatBRL(sale.totalValue)}</span>
@@ -1425,7 +1425,7 @@ export function PendingSalesModal({ isOpen, onClose, sales, onSaveSale, company,
         </div>
 
         {/* Modal simple stats summary footer */}
-        <div className="p-5 border-t border-slate-800 bg-slate-950/40 rounded-b-3xl text-right text-xs text-slate-500 font-mono">
+        <div className="p-3.5 md:p-5 border-t border-slate-800 bg-slate-950/40 rounded-b-3xl text-right text-xs text-slate-500 font-mono">
           <span>Total de Clientes Pendentes: </span>
           <strong className="text-white">{pendingSales.length}</strong>
         </div>
